@@ -53,6 +53,24 @@ class ConfigurationTests(unittest.TestCase):
 
         self.assertEqual(controller.render_dmx(1.0), bytes(512))
 
+    def test_controller_smoothly_transitions_between_effects(self) -> None:
+        config = load_config()
+        engine = SceneEngine(config.fixtures)
+        controller = Controller(config, engine)
+        engine.select_effect("Cube A", "plasma")
+        engine.select_effect("Cube B", "plasma")
+        before = controller.render_scene(0.0, apply_safety=False)
+        controller.begin_transition(0.0, duration=1.0)
+        engine.select_effect("Cube A", "fire")
+
+        start = controller.render_scene(0.0, apply_safety=False)
+        middle = controller.render_scene(0.5, apply_safety=False)
+        end = controller.render_scene(1.0, apply_safety=False)
+
+        self.assertEqual(start["Cube A"].rows(), before["Cube A"].rows())
+        self.assertNotEqual(middle["Cube A"].rows(), start["Cube A"].rows())
+        self.assertNotEqual(end["Cube A"].rows(), middle["Cube A"].rows())
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -107,7 +107,7 @@ class TkSimulator:
         preset.grid(row=0, column=1, padx=4)
         preset.bind(
             "<<ComboboxSelected>>",
-            lambda event: self._controller.show.activate_preset(preset_variable.get()),
+            lambda event: self._preset_changed(preset_variable.get()),
         )
 
         self._ttk.Label(controls, text="Speed").grid(row=0, column=2, padx=(12, 0))
@@ -197,15 +197,21 @@ class TkSimulator:
             self._rebuild_parameters(fixture.name)
 
     def _effect_changed(self, fixture_name: str) -> None:
+        self._controller.begin_transition(self._animation_time)
         effect_id = self._effect_variables[fixture_name].get()
         self._controller.show.select_effect(fixture_name, effect_id)
         self._palette_variables[fixture_name].set("spectrum")
         self._rebuild_parameters(fixture_name)
 
     def _palette_changed(self, fixture_name: str) -> None:
+        self._controller.begin_transition(self._animation_time)
         self._controller.show.update_parameter(
             fixture_name, "palette", self._palette_variables[fixture_name].get()
         )
+
+    def _preset_changed(self, preset_id: str) -> None:
+        self._controller.begin_transition(self._animation_time)
+        self._controller.show.activate_preset(preset_id)
 
     def _rebuild_parameters(self, fixture_name: str) -> None:
         frame = self._parameter_frames[fixture_name]

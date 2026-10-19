@@ -36,6 +36,21 @@ class Controller:
         self.show = ShowController(self.engine)
         self.speed = speed
         self.safety_limiter = safety_limiter or FrameSafetyLimiter()
+        self._last_scene: Scene | None = None
+        self._transition_from: Scene | None = None
+        self._transition_started = 0.0
+        self._transition_duration = 0.0
+
+    def begin_transition(self, elapsed: float, *, duration: float = 0.45) -> None:
+        if duration <= 0.0:
+            raise ValueError("transition duration must be positive")
+        if self._last_scene is None:
+            return
+        self._transition_from = {
+            name: grid.copy() for name, grid in self._last_scene.items()
+        }
+        self._transition_started = elapsed
+        self._transition_duration = duration
 
     def render_scene(
         self,
@@ -46,7 +61,17 @@ class Controller:
     ) -> Scene:
         context = self.show.context() if context is None else context
         scene = self.engine.render(elapsed * self.speed, context)
-        return self.safety_limiter.apply(scene, elapsed) if apply_safety else scene
+        if self._transition_from is not None:
+            progress = (elapsed - self._transition_started) / self._transition_duration
+            if progress >= 1.0:
+                self._transition_from = None
+            else:
+                scene = self.engine.compositor.transition(
+                    self._transition_from, scene, max(0.0, progress)
+                )
+        result = self.safety_limiter.apply(scene, elapsed) if apply_safety else scene
+        self._last_scene = {name: grid.copy() for name, grid in result.items()}
+        return result
 
     def render_dmx(
         self, elapsed: float, *, context: PerformanceContext | None = None
