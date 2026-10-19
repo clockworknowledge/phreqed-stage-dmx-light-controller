@@ -2,6 +2,7 @@ import unittest
 
 from phreqed_dmx.fixtures import FixtureConfig
 from phreqed_dmx.frame import PixelGrid, RGB
+from phreqed_dmx.color import NormalizedGrid, NormalizedRGB
 from phreqed_dmx.render import compose_dmx
 
 
@@ -43,6 +44,15 @@ class RenderTests(unittest.TestCase):
 
         self.assertTrue(any(dmx[0:144]))
         self.assertEqual(dmx[152:296], bytes(144))
+
+    def test_normalized_rgb_is_quantized_at_output_boundary(self) -> None:
+        fixture = FixtureConfig(name="Cube A", start_address=1)
+        grid = NormalizedGrid(8, 6)
+        grid[7, 5] = NormalizedRGB(0.5, 0.25, 1.0)
+
+        dmx = compose_dmx((fixture,), {"Cube A": grid})
+
+        self.assertEqual(dmx[0:3], bytes((128, 64, 255)))
 
 
 if __name__ == "__main__":
