@@ -1,0 +1,25 @@
+[controller]
+artnet_host = "127.0.0.1"
+artnet_port = 6454
+universe = 0
+fps = 25
+
+[[fixtures]]
+name = "Cube A"
+start_address = 1
+channel_count = 152
+width = 8
+height = 6
+channels_per_pixel = 3
+horizontal_order = "right_to_left"
+vertical_order = "bottom_to_top"
+
+[[fixtures]]
+name = "Cube B"
+start_address = 153
+channel_count = 152
+width = 8
+height = 6
+channels_per_pixel = 3
+horizontal_order = "right_to_left"
+vertical_order = "bottom_to_top"
