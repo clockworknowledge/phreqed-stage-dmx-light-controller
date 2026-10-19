@@ -36,12 +36,17 @@ class SceneEngine:
         self.presets = {preset.preset_id: preset for preset in presets}
         self.preset_order = tuple(self.presets)
         self.active_preset_id = self.preset_order[0] if self.preset_order else None
+        self.global_brightness_override: float | None = None
         self.manual_mode = False
         self.blackout_enabled = False
         self.fixture_selections = {
             fixture.name: FixtureSelection("plasma" if index == 0 else "tunnel")
             for index, fixture in enumerate(fixtures)
         }
+        if self.active_preset_id is not None:
+            self.compositor.set_global_brightness(
+                self.presets[self.active_preset_id].global_brightness
+            )
 
     @property
     def geometry(self) -> dict[str, tuple[int, int]]:
@@ -67,7 +72,12 @@ class SceneEngine:
             if self.active_preset_id is None:
                 raise RuntimeError("no active preset")
             preset = self.presets[self.active_preset_id]
-            self.compositor.set_global_brightness(preset.global_brightness)
+            level = (
+                preset.global_brightness
+                if self.global_brightness_override is None
+                else self.global_brightness_override
+            )
+            self.compositor.set_global_brightness(level)
             layer_specs = preset.layers
         layers = tuple(
             self._render_layer(layer_spec, animation_time, context)
@@ -131,6 +141,10 @@ class SceneEngine:
 
     def set_blackout(self, enabled: bool) -> None:
         self.blackout_enabled = bool(enabled)
+
+    def set_global_brightness(self, value: float) -> None:
+        self.compositor.set_global_brightness(value)
+        self.global_brightness_override = value
 
     def _selection(self, fixture_name: str) -> FixtureSelection:
         try:

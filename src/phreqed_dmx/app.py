@@ -8,31 +8,59 @@ import time
 from pathlib import Path
 
 from .artnet import ArtNetSender
+from .compositor import FrameSafetyLimiter, Scene
 from .config import DEFAULT_CONFIG_PATH, ControllerConfig, load_config
-from .effects import CUBE_MODES, EFFECT_NAMES, STANDARD_EFFECTS, Effect, VisualEngine
-from .frame import PixelGrid
-from .render import compose_dmx, create_grids
+from .effect_api import PerformanceContext
+from .effect_library import EFFECT_REGISTRY
+from .engine import SceneEngine
+from .presets import PRESETS
+from .render import compose_dmx
+from .show_control import ShowController
 
 
 class Controller:
-    def __init__(self, config: ControllerConfig, effect: Effect, *, speed: float = 1.0) -> None:
+    """Owns visual state; network output remains outside this class."""
+
+    def __init__(
+        self,
+        config: ControllerConfig,
+        engine: SceneEngine | None = None,
+        *,
+        speed: float = 1.0,
+        safety_limiter: FrameSafetyLimiter | None = None,
+    ) -> None:
         if speed <= 0:
             raise ValueError("speed must be positive")
         self.config = config
-        self.effect = effect
+        self.engine = engine or SceneEngine(config.fixtures)
+        self.show = ShowController(self.engine)
         self.speed = speed
-        self.grids: dict[str, PixelGrid] = create_grids(config.fixtures)
+        self.safety_limiter = safety_limiter or FrameSafetyLimiter()
 
-    def render(self, elapsed: float) -> bytes:
-        ordered_grids = [self.grids[fixture.name] for fixture in self.config.fixtures]
-        self.effect.render(elapsed * self.speed, ordered_grids)
-        return compose_dmx(self.config.fixtures, self.grids)
+    def render_scene(
+        self,
+        elapsed: float,
+        *,
+        context: PerformanceContext | None = None,
+        apply_safety: bool = True,
+    ) -> Scene:
+        context = self.show.context() if context is None else context
+        scene = self.engine.render(elapsed * self.speed, context)
+        return self.safety_limiter.apply(scene, elapsed) if apply_safety else scene
+
+    def render_dmx(
+        self, elapsed: float, *, context: PerformanceContext | None = None
+    ) -> bytes:
+        return compose_dmx(
+            self.config.fixtures,
+            self.render_scene(elapsed, context=context, apply_safety=True),
+        )
 
 
 def _brightness(value: str) -> float:
     parsed = float(value)
-    if not 0.0 <= parsed <= 1.0:
-        raise argparse.ArgumentTypeError("brightness must be between 0.0 and 1.0")
+    if not 0.0 <= parsed <= 0.65:
+        raise argparse.ArgumentTypeError("brightness must be between 0.0 and 0.65")
     return parsed
 
 
@@ -44,6 +72,7 @@ def _positive(value: str) -> float:
 
 
 def build_parser() -> argparse.ArgumentParser:
+    effect_ids = tuple(metadata.effect_id for metadata in EFFECT_REGISTRY.metadata())
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "command",
@@ -56,27 +85,70 @@ def build_parser() -> argparse.ArgumentParser:
         "--config", type=Path, default=DEFAULT_CONFIG_PATH, help="fixture TOML path"
     )
     parser.add_argument(
-        "--effect", choices=EFFECT_NAMES, default="plasma", help="Cube A effect"
+        "--preset", choices=tuple(PRESETS), default="psychedelic-bloom", help="initial preset"
     )
     parser.add_argument(
-        "--mode", choices=CUBE_MODES, default="mirror", help="two-cube relationship"
+        "--effect",
+        choices=effect_ids,
+        help="optional manual Cube A effect; overrides the preset",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=("mirror", "complementary", "independent"),
+        default="mirror",
+        help="manual two-cube relationship when --effect is supplied",
     )
     parser.add_argument(
         "--second-effect",
-        choices=STANDARD_EFFECTS,
+        choices=effect_ids,
         default="tunnel",
         help="Cube B effect in independent mode",
     )
     parser.add_argument(
-        "--brightness", type=_brightness, default=0.35, help="output level from 0.0 to 1.0"
+        "--palette",
+        choices=("spectrum", "magma", "ocean", "neon", "ember", "monochrome"),
+        default="spectrum",
+        help="manual effect palette",
     )
     parser.add_argument(
-        "--speed", type=_positive, default=1.0, help="animation speed multiplier"
+        "--brightness",
+        type=_brightness,
+        help="optional global output level from 0.0 to the safety ceiling of 0.65",
+    )
+    parser.add_argument(
+        "--speed", type=_positive, default=1.0, help="global animation speed multiplier"
     )
     parser.add_argument(
         "--duration", type=_positive, help="optional live-mode run time in seconds"
     )
     return parser
+
+
+def _configure_engine(args: argparse.Namespace, config: ControllerConfig) -> SceneEngine:
+    engine = SceneEngine(config.fixtures)
+    engine.activate_preset(args.preset)
+    if args.brightness is not None:
+        engine.set_global_brightness(args.brightness)
+    if args.effect is None:
+        return engine
+
+    fixture_names = [fixture.name for fixture in config.fixtures]
+    engine.select_effect(fixture_names[0], args.effect)
+    engine.update_parameter(fixture_names[0], "palette", args.palette)
+    if args.mode == "independent":
+        second_effect = args.second_effect
+        second_palette = args.palette
+    elif args.mode == "complementary":
+        second_effect = args.effect
+        second_palette = "neon" if args.palette == "spectrum" else "spectrum"
+    else:
+        second_effect = args.effect
+        second_palette = args.palette
+    engine.select_effect(fixture_names[1], second_effect)
+    engine.update_parameter(fixture_names[1], "palette", second_palette)
+    if args.brightness is not None:
+        engine.set_global_brightness(args.brightness)
+    return engine
 
 
 def _run_live(controller: Controller, duration: float | None) -> None:
@@ -92,7 +164,7 @@ def _run_live(controller: Controller, duration: float | None) -> None:
     with ArtNetSender(config.artnet_host, config.artnet_port, config.universe) as sender:
         while duration is None or time.monotonic() - started < duration:
             now = time.monotonic()
-            sender.send(controller.render(now - started))
+            sender.send(controller.render_dmx(now - started))
             next_frame += interval
             time.sleep(max(0.0, next_frame - time.monotonic()))
 
@@ -104,12 +176,7 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--duration is available only in live mode")
 
     config = load_config(args.config)
-    engine = VisualEngine(
-        args.effect,
-        mode=args.mode,
-        second_effect=args.second_effect,
-        brightness=args.brightness,
-    )
+    engine = _configure_engine(args, config)
     controller = Controller(config, engine, speed=args.speed)
 
     try:
