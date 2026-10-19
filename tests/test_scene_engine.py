@@ -2,6 +2,7 @@ import unittest
 
 from phreqed_dmx.color import BLACK_NORMALIZED
 from phreqed_dmx.engine import SceneEngine
+from phreqed_dmx.effect_library import EFFECT_REGISTRY
 from phreqed_dmx.fixtures import FixtureConfig
 from phreqed_dmx.presets import EXAMPLE_PRESETS
 from phreqed_dmx.render import compose_dmx
@@ -66,6 +67,15 @@ class SceneEngineTests(unittest.TestCase):
         )
         self.assertEqual(len(scene["Cube A"].rows()), 6)
         self.assertTrue(all(len(row) == 8 for row in scene["Cube B"].rows()))
+
+    def test_every_effect_keeps_unverified_fixture_channels_zero(self) -> None:
+        for metadata in EFFECT_REGISTRY.metadata():
+            with self.subTest(effect=metadata.effect_id):
+                for fixture in FIXTURES:
+                    self.engine.select_effect(fixture.name, metadata.effect_id)
+                dmx = compose_dmx(FIXTURES, self.engine.render(0.6))
+                self.assertEqual(dmx[144:152], bytes(8))
+                self.assertEqual(dmx[296:304], bytes(8))
 
 
 class ShowControllerTests(unittest.TestCase):

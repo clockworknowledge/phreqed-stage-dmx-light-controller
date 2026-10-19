@@ -133,7 +133,7 @@ class FrameSafetyLimiter:
         *,
         maximum_brightness: float = 0.65,
         maximum_luminance_jump: float = 0.22,
-        minimum_flash_interval: float = 0.125,
+        minimum_flash_interval: float = 0.25,
     ) -> None:
         if not 0.0 < maximum_brightness <= 1.0:
             raise ValueError("maximum_brightness must be in (0.0, 1.0]")

@@ -1,4 +1,5 @@
 import unittest
+import hashlib
 
 from phreqed_dmx.color import NormalizedRGB, Palette, palette_color
 from phreqed_dmx.effect_api import FixtureIdentity, PerformanceContext
@@ -119,6 +120,41 @@ class EffectLibraryTests(unittest.TestCase):
             self.context,
         )
         self.assertNotEqual(left, right)
+
+    def test_representative_animation_sequences_match_fingerprints(self) -> None:
+        expected = {
+            "flow-noise": "e08695bfb4a4d03d393072fe4cbba87dd310e9a1ab4bfb5943d254863b37c60f",
+            "vortex": "3653c5e47df75a6b60fa957492f3378d99a5139453ca12db2f96ba2a18b407cb",
+            "fire": "34f2f807329a7cffc93744fbc925e511d61b5c1ad0141d6cc48d5bad5f623977",
+            "energy-transfer": "4c6425ebe8dd6f0caea2f50b98950b95367b1c63918e5f31032631d64b8eb2c3",
+            "glitch": "2eea8c4428c5292f842b7b14daf4f483b8de57548ae61469c265130809691aea",
+        }
+        for effect_id, fingerprint in expected.items():
+            effect = EFFECT_REGISTRY.get(effect_id)
+            parameters = EFFECT_REGISTRY.parameters(effect_id)
+            frames = bytearray()
+            for animation_time in (0.0, 0.4, 0.8):
+                for y in range(6):
+                    for x in range(8):
+                        color = effect.sample(
+                            x,
+                            y,
+                            8,
+                            6,
+                            animation_time,
+                            self.fixture,
+                            parameters,
+                            self.context,
+                        )
+                        frames.extend(
+                            (
+                                round(color.red * 255),
+                                round(color.green * 255),
+                                round(color.blue * 255),
+                            )
+                        )
+            with self.subTest(effect=effect_id):
+                self.assertEqual(hashlib.sha256(frames).hexdigest(), fingerprint)
 
 
 if __name__ == "__main__":
