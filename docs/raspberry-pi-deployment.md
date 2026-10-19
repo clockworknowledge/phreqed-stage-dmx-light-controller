@@ -1,21 +1,44 @@
 # Raspberry Pi deployment
 
-## Install
+## Independent terminal deployment
+
+The deployed controller does not require Codex, ChatGPT, VS Code, or a
+connection to the Windows development computer. GitHub carries the source and
+the checked-in scripts perform installation, validation, and later updates.
+
+## First installation
 
 On the Raspberry Pi 5 running Debian Trixie:
 
 ```bash
+sudo apt update
+sudo apt install -y git python3 python3-venv
 git clone https://github.com/clockworknowledge/phreqed-stage-dmx-light-controller.git
 cd phreqed-stage-dmx-light-controller
-python3 -m venv .venv
-source .venv/bin/activate
-python -m pip install --upgrade pip
-python -m pip install -e .
-python -m unittest discover -s tests -v
+bash scripts/pi-install.sh
 ```
+
+The installer requires Python 3.11 or newer, creates `.venv`, installs the
+package, and runs the complete hardware-free test suite. It stops immediately
+if installation or a test fails.
 
 Tkinter is needed only for local simulation. If it is absent on Debian, install
 the distribution's `python3-tk` package. Live mode itself does not use Tkinter.
+
+## Updating an existing clean checkout
+
+Push and review changes on the development computer first. Then, on the Pi:
+
+```bash
+cd ~/phreqed-stage-dmx-light-controller
+bash scripts/pi-update.sh
+```
+
+The updater refuses to run when the checkout has modified or untracked files,
+requires the `main` branch, fetches `origin/main`, permits only a fast-forward,
+and reruns installation and all tests. This protects Pi-only diagnostic scripts
+from accidental replacement. Preserve any such files outside the checkout or
+follow `docs/pi-script-import.md` before updating.
 
 ## QLC+ and live run
 
@@ -29,8 +52,7 @@ Keep QLC+'s blackout control immediately available. With fixtures pointed away
 from people and no unverified channels enabled, start:
 
 ```bash
-source .venv/bin/activate
-phreqed-dmx live --preset psychedelic-bloom
+.venv/bin/phreqed-dmx live --preset psychedelic-bloom
 ```
 
 Press Ctrl+C for a handled shutdown. The sender requests one full-universe
@@ -41,7 +63,7 @@ QLC+ as the final safety layer.
 The default command remains safe simulation mode:
 
 ```bash
-phreqed-dmx simulate
+.venv/bin/phreqed-dmx simulate
 ```
 
 Before a performance, run a sustained 25 FPS soak test on the Pi while watching

@@ -77,6 +77,11 @@ constructs an Art-Net sender.
 
 ## Run live on the Raspberry Pi
 
+The Pi deployment is terminal-only and does not require Codex or VS Code. After
+cloning the repository, `bash scripts/pi-install.sh` creates the environment,
+installs the controller, and runs its tests. Later clean deployments use
+`bash scripts/pi-update.sh`.
+
 Live network output requires the explicit flag:
 
 ```bash
