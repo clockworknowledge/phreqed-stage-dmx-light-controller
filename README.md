@@ -23,7 +23,8 @@ and [Pi comparison checklist](docs/pi-script-import.md).
 - interactive Tk simulator with live FPS, pause, step, parameters, and PPM export
 
 See the complete [effect catalog](docs/effects.md) and
-[Phase 2 implementation report](docs/phase-2-implementation-report.md).
+[Phase 2 implementation report](docs/phase-2-implementation-report.md). Feature
+status and upcoming work are tracked on the [project Kanban](docs/kanban.md).
 
 ## Hardware configuration
 
