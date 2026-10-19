@@ -3,21 +3,31 @@
 The engine follows a one-way data flow:
 
 ```text
-effect / sprite -> logical 8x6 PixelGrid -> fixture mapper -> 512-byte DMX frame
-                                                         |-> Tk simulator
-                                                         `-> ArtDMX UDP -> QLC+ -> USB-DMX
+effect samples -> normalized grids -> layers/masks/blends -> safety limiter
+                                                        |-> Tk simulator
+                                                        `-> DMX quantizer
+                                                            -> ArtDMX UDP
+                                                            -> QLC+ -> USB-DMX
 ```
 
-Effects and sprites know only grid dimensions and RGB values. `FixtureConfig`
-owns physical ordering and one-based DMX start addresses. `compose_dmx` is the
-only layer that writes logical colors into a universe. The simulator reads the
-same logical grids without constructing a socket; the live controller sends the
-composed universe through `ArtNetSender`.
+Effects know logical coordinates, fixture identity, animation time, validated
+parameters, and optional performance context. They do not know DMX addresses or
+transport details. `FixtureConfig` owns physical ordering and one-based DMX
+start addresses. `compose_dmx` is the only layer that quantizes normalized RGB
+and writes logical colors into a universe. The simulator calls `render_scene()`;
+only the explicit live loop calls `render_dmx()` and constructs `ArtNetSender`.
 
 `VisualEngine` preserves the four formulas from the reconstructed v2 baseline:
 plasma, tunnel, pulse, and chase. It also treats both cubes as one logical 16x6
 surface for cross-cube chase. Mirror, complementary, and independent modes are
 resolved entirely in logical-grid space before DMX composition.
+
+Phase 2 adds a standardized effect registry beside the legacy compatibility
+engine. `SceneEngine` renders registry effects into `NormalizedGrid` instances.
+`Compositor` applies per-layer fixture targeting, opacity, alpha/additive/lighten
+blending, masks, global brightness limiting, and crossfades. `ShowController`
+provides effect, parameter, preset, event, blackout, tap-tempo, and scene
+navigation commands without importing Art-Net.
 
 ## Coordinates and physical zones
 
@@ -40,8 +50,9 @@ safely before any mapping is added.
 
 ## Extension points
 
-- Add effects by implementing `Effect.render(elapsed, grids)` with no transport
-  imports.
+- Preserve the legacy grid renderer only for baseline compatibility tests.
+- Add new effects through the per-pixel `Effect.sample` contract with complete
+  metadata and no transport imports.
 - Add sprites as `Sprite` data and render them onto any `PixelGrid`.
 - Add fixture variants in TOML only when their channel layout is known.
 - Add transports behind a small `send(bytes)` boundary without changing effects.

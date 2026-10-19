@@ -9,6 +9,12 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 ## Architecture
 
 - `src/phreqed_dmx/frame.py`: address-independent RGB values and pixel grids.
+- `src/phreqed_dmx/color.py`: normalized RGB values, palettes, and grids.
+- `src/phreqed_dmx/effect_api.py`: effect contract, metadata, context, and parameters.
+- `src/phreqed_dmx/effect_library.py`: deterministic procedural effect catalog.
+- `src/phreqed_dmx/compositor.py`: layers, blends, masks, transitions, and limits.
+- `src/phreqed_dmx/engine.py`: preset and per-fixture normalized scene rendering.
+- `src/phreqed_dmx/show_control.py`: transport-independent performance commands.
 - `src/phreqed_dmx/fixtures.py`: fixture geometry and logical-pixel-to-DMX mapping.
 - `src/phreqed_dmx/render.py`: composes logical grids into one DMX universe.
 - `src/phreqed_dmx/artnet.py`: ArtDMX packet construction and UDP transmission.
@@ -46,6 +52,9 @@ not effect code, converts those coordinates to physical zone order.
   `live` command.
 - Never activate, probe, sweep, or infer the eight unverified channels on either
   fixture. They may include strobe or other high-output functions.
+- Keep the default global brightness at or below 0.65 and retain the frame safety
+  limiter unless a documented hardware test justifies a change.
+- New default effects must avoid rapid high-intensity full-frame flashes.
 - New configuration must be rejected if a fixture falls outside the 512-channel
   universe or overlaps another fixture.
 - Validate ArtDMX payload size, universe, sequence, and channel values before
@@ -64,6 +73,10 @@ not effect code, converts those coordinates to physical zone order.
 - Treat DMX addresses in configuration as one-based; use zero-based offsets only
   internally and name them accordingly.
 - Keep effect output deterministic for a supplied elapsed time when practical.
+- Effects implement the standardized per-pixel interface, declare complete
+  metadata, and use normalized RGB. Quantize only in `compose_dmx`.
+- Every effect exposes speed, effect level, palette, and at least two validated
+  effect-specific parameters.
 - Do not import Tkinter from core rendering or transport modules.
 - Raise clear `ValueError` exceptions at configuration and protocol boundaries.
 - Tests must run on Windows without QLC+, network transmission, or DMX hardware.

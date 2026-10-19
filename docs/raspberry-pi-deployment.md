@@ -30,7 +30,7 @@ from people and no unverified channels enabled, start:
 
 ```bash
 source .venv/bin/activate
-phreqed-dmx live --effect plasma --mode mirror
+phreqed-dmx live --preset psychedelic-bloom
 ```
 
 Press Ctrl+C for a handled shutdown. The sender requests one full-universe
@@ -43,3 +43,8 @@ The default command remains safe simulation mode:
 ```bash
 phreqed-dmx simulate
 ```
+
+Before a performance, run a sustained 25 FPS soak test on the Pi while watching
+CPU temperature and QLC+ input stability. Start with `--brightness 0.25` during
+fixture validation. Phase 2 defaults retain a hard 0.65 software ceiling, but
+that limit is not a substitute for safe fixture placement or QLC+ blackout.

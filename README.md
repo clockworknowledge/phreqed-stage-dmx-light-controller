@@ -1,15 +1,29 @@
 # Phreqed Stage DMX Light Controller
 
-A simulation-first Python 3.11+ lighting engine for a Calgary rock band's two
-Betopper LF4808 RGB matrix fixtures. It renders effects into logical 8x6 grids,
-previews both grids locally, and can explicitly send full 512-channel Art-Net
-frames to QLC+.
+A simulation-first Python 3.11+ visual engine for a Calgary rock band's two
+Betopper LF4808 RGB matrix fixtures. It provides deterministic procedural
+effects, normalized RGB layer compositing, presets, an interactive two-cube
+simulator, and explicit live 512-channel Art-Net output through QLC+.
 
 The reconstructed conversation baseline is preserved unchanged under
-`phreqed-stage-dmx-baseline/`. The package implementation reproduces its plasma,
-tunnel, pulse, chase, cross-cube chase, and dual-cube operating modes. These
+`phreqed-stage-dmx-baseline/`. The package retains its plasma, tunnel, pulse,
+chase, and cross-cube chase while adding fifteen advanced effects. These
 snapshots are not direct Pi exports; see the [baseline inventory](docs/baseline-inventory.md)
 and [Pi comparison checklist](docs/pi-script-import.md).
+
+## Phase 2 capabilities
+
+- 19 registered effects with validated metadata and deterministic output
+- spectrum, magma, ocean, neon, ember, and monochrome palettes
+- alpha, additive, and lighten layers with opacity and masks
+- independent per-cube effects or continuous cross-cube effects
+- four example multi-layer presets
+- conservative global brightness ceiling and frame-rise limiter
+- transport-independent blackout, preset, event, tap-tempo, and navigation APIs
+- interactive Tk simulator with live FPS, pause, step, parameters, and PPM export
+
+See the complete [effect catalog](docs/effects.md) and
+[Phase 2 implementation report](docs/phase-2-implementation-report.md).
 
 ## Hardware configuration
 
@@ -42,29 +56,41 @@ Simulation is the default and does not create an Art-Net socket:
 
 ```powershell
 phreqed-dmx simulate
-phreqed-dmx simulate --effect pulse
-phreqed-dmx simulate --effect chase --mode independent --second-effect tunnel
-phreqed-dmx simulate --effect cross-cube
+phreqed-dmx simulate --preset molten-motion
+phreqed-dmx simulate --effect kaleidoscope --palette neon
+phreqed-dmx simulate --effect fire --mode independent --second-effect digital-rain
+phreqed-dmx simulate --effect energy-transfer
 ```
 
-The preview shows the two cubes from the front with top-left logical origins.
+The preview shows both cubes from the front and provides:
+
+- preset and independent per-cube effect selection;
+- palette and validated parameter controls;
+- global speed and brightness;
+- pause/resume and manual frame stepping;
+- measured frame rate, blackout, and PPM screenshot export.
+
+Changing a cube control switches the engine from its active preset to manual
+per-fixture mode. Simulation calls normalized scene rendering only and never
+constructs an Art-Net sender.
 
 ## Run live on the Raspberry Pi
 
 Live network output requires the explicit flag:
 
 ```bash
-phreqed-dmx live --effect plasma --mode mirror
+phreqed-dmx live --preset psychedelic-bloom
 ```
 
 Do this only after checking QLC+, fixture modes, addresses, physical safety, and
 the operator blackout control. On handled shutdown, the app sends a best-effort
 blackout. See [Raspberry Pi deployment](docs/raspberry-pi-deployment.md).
 
-Both commands accept `--brightness 0.35` and `--speed 1.0`. Supported effects
-are `plasma`, `tunnel`, `pulse`, `chase`, and `cross-cube`; supported two-cube
-modes are `mirror`, `complementary`, and `independent`. With no command, the CLI
-defaults to simulation. `live` can only be selected explicitly.
+Both commands accept `--brightness` up to the 0.65 safety ceiling and `--speed`.
+Use `--effect` for manual mode, with `--mode mirror|complementary|independent`
+and `--second-effect` where needed. Run `phreqed-dmx --help` for the complete
+effect and preset lists. With no command, the CLI defaults to simulation;
+network output can only be selected with the literal `live` command.
 
 ## Test
 

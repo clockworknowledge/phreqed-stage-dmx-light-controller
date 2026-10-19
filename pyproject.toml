@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "phreqed-stage-dmx-light-controller"
-version = "0.1.0"
-description = "Simulation-first Art-Net lighting engine for two Betopper LF4808 fixtures"
+version = "0.2.0"
+description = "Layered procedural Art-Net visual engine for two Betopper LF4808 fixtures"
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
