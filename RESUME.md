@@ -10,9 +10,9 @@ design remains in `docs/architecture.md`, `docs/effects.md`, and
 ## Objective in progress
 
 Commission the Phase 2 controller on the Raspberry Pi 5 without making live
-output automatic. Finish the headless QLC+ service, verify the package and tests
-on the Pi, run a 25 FPS soak test, and only then perform a controlled,
-low-brightness two-fixture smoke test.
+output automatic. Finish validating the headless QLC+ service, verify the
+package and tests on the Pi, run a 25 FPS soak test, and only then perform a
+controlled, low-brightness two-fixture smoke test.
 
 Do not start live Art-Net output merely to inspect the installation.
 
@@ -54,16 +54,42 @@ secret. Keep QLC+ password/authentication files outside Git.
 - QLC+ returned HTTP 200 on local TCP port 9999.
 - QLC+ owned UDP port 6454 for Art-Net input.
 - `/home/mmorley/.qlcplus/autostart.qxw` is the runtime workspace.
-- No `qlcplus.service` unit existed when checked; the observed process was not
-  managed by systemd.
-- The current QLC+ command enables unauthenticated web access. Keep it on a
-  trusted private LAN until web authentication or network isolation is added.
+- `/etc/systemd/system/qlcplus.service` is enabled and successfully restarted
+  QLC+ after a Pi reboot. It runs as `mmorley`, requires the runtime workspace,
+  restarts on failure, and uses the already-proven offscreen command.
+- The service uses systemd IP filtering: deny all by default, then allow
+  loopback and `192.168.1.0/24`. Update this rule before moving the Pi to a
+  different subnet.
+- QLC+ web access is unauthenticated but restricted to the trusted LAN by the
+  service. Do not expose TCP 9999 through a router or public network.
+- The service log contains only the expected QLC+ 4.14.1 startup messages and a
+  harmless Qt fallback because `XDG_RUNTIME_DIR` is unset.
+- After reboot the Pi reported 4 GiB RAM with about 3.5 GiB available, 2 GiB
+  unused swap, and 17 GiB free on the root filesystem.
+- Persistent systemd journaling is now enabled at `/var/log/journal`; its first
+  recorded boot used about 8 MiB. Future reboot/crash investigations can use
+  `journalctl -b -1`.
+
+## Pi Codex/SSH incident
+
+An interactive Codex CLI attempt on the Pi was followed by an unresponsive SSH
+service. The host still answered ping and accepted TCP port 22 connections, but
+never sent the SSH protocol banner. QLC+ port 9999 also continued listening.
+The Pi was rebooted and recovered normally.
+
+The root cause is unknown because the previous boot used volatile journals.
+There is no evidence proving an out-of-memory event, thermal fault, storage
+error, or Codex defect. After reboot no `codex` or `node` process remained and
+resource use was normal. Do not reproduce the failure merely to investigate it.
+Keep Codex on the Windows development computer and use SSH for Pi deployment
+until persistent logs capture any natural recurrence.
 
 ## Not yet verified
 
 - A successful `bash scripts/pi-install.sh` run and 57 passing tests on the Pi
   have not been captured in this handoff.
-- QLC+ restart and recovery through a systemd service have not been tested.
+- QLC+ service stop/restart behavior and retained physical DMX output have not
+  yet been tested under controlled fixture conditions.
 - The Phase 2 effects have not completed the Raspberry Pi 25 FPS soak test.
 - The new controller has not completed a controlled physical-fixture smoke test.
 - Shutdown blackout has not yet been observed on the physical fixtures.
@@ -93,24 +119,25 @@ the backup until the committed file and runtime configuration are verified.
 
 ## Next actions, in order
 
-1. From the development computer, commit and push the reviewed QLC+ workspace,
-   this resume file, and the Kanban update.
-2. On the Pi, preserve the untracked workspace as shown above, then pull the
-   new commit and compare the files.
-3. Confirm the runtime workspace still matches the committed master:
+1. On the Pi, run `git status --short --branch`. If the workspace is still
+   untracked, preserve it as shown above, then pull `origin/main` and compare
+   the files. Commit `36ab1e5` containing the first workspace/handoff update is
+   already on `origin/main`.
+2. Confirm the runtime workspace still matches the committed master:
 
    ```bash
    cmp /home/mmorley/phreqed-stage-dmx-light-controller/config/qlc/phreqed_qlc_workspace.qxw \
      /home/mmorley/.qlcplus/autostart.qxw
    ```
 
-4. With QLC+ blackout active, create and test `qlcplus.service` using the exact
-   already-working offscreen command. The service must run as `mmorley`, set
-   `HOME=/home/mmorley`, and open the runtime workspace, not the Git copy.
-5. Run `bash scripts/pi-install.sh` and record the test count and result.
-6. Run RPI-002, the simulation-only 25 FPS soak test.
-7. Perform LIVE-001 only with QLC+ blackout immediately available, fixtures
+3. Preserve the existing `qlcplus.service.before-lan-restriction` backup until
+   service validation is complete. Do not create a second QLC+ service.
+4. Run `bash scripts/pi-install.sh` and record the test count and result.
+5. Run RPI-002, the simulation-only 25 FPS soak test.
+6. Perform LIVE-001 only with QLC+ blackout immediately available, fixtures
    positioned safely, people warned, and brightness initially limited to 0.25.
+7. During controlled fixture validation, confirm that stopping and restarting
+   `qlcplus.service` does not leave unsafe retained DMX output.
 8. Record results in `docs/phase-2-implementation-report.md` and update the
    corresponding Kanban cards.
 

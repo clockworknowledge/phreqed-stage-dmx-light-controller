@@ -36,17 +36,6 @@ Acceptance: `bash scripts/pi-install.sh` completes on the Pi, all 57 tests pass,
 the CLI help loads from `.venv`, and the evidence is added to `RESUME.md` or the
 Phase 2 implementation report.
 
-### QLC-002 — Manage headless QLC+ with systemd (`P0`, reliability)
-
-QLC+ is currently proven to run offscreen with web access, its runtime
-workspace, TCP 9999, and Art-Net UDP 6454. No `qlcplus.service` unit existed
-when inspected.
-
-Acceptance: a service running as `mmorley` loads
-`/home/mmorley/.qlcplus/autostart.qxw`, starts after reboot without a physical
-display, owns the expected ports, exposes its web UI only on the trusted stage
-LAN, and stops/restarts without unsafe retained output.
-
 ## Ready
 
 ### RPI-002 — Raspberry Pi 25 FPS soak test (`P0`, reliability)
@@ -97,6 +86,16 @@ safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
 
+### QLC-002 — Validate headless QLC+ service (`P0`, reliability)
+
+The enabled systemd service now runs QLC+ 4.14.1 as `mmorley`, loads the runtime
+workspace, starts after reboot without a display, owns TCP 9999 and UDP 6454,
+and restricts network traffic to loopback plus `192.168.1.0/24`.
+
+Acceptance: under controlled fixture conditions, service stop/restart and host
+shutdown do not leave unsafe retained DMX output; browser access is confirmed
+from the trusted stage LAN and rejected from outside its allowed subnet.
+
 ### P2-VAL-001 — Phase 2 validation on target hardware (`P0`, release)
 
 The Phase 2 engine passes all Windows automated and simulator checks. Raspberry
@@ -106,6 +105,14 @@ Acceptance: both linked cards are Done and the Phase 2 report contains their
 measured results and any resulting operating limits.
 
 ## Blocked
+
+### PI-DIAG-001 — Root-cause Pi SSH banner stall (`P1`, reliability)
+
+An interactive Pi Codex session was followed by SSH accepting TCP connections
+without sending a protocol banner. A reboot recovered the Pi, but the prior
+boot had no persistent journal, so no cause can be established. Persistent
+journaling is now enabled. Do not deliberately reproduce this on the lighting
+controller; investigate only if it recurs naturally with retained logs.
 
 ### RPI-001 — Import and compare original Raspberry Pi scripts (`P1`, baseline)
 
@@ -167,6 +174,8 @@ times so performers can browse looks and reviewers can spot visual changes.
   output; no credentials or private paths are embedded.
 - **OPS-001 (`P1`)** — Added independent Raspberry Pi install and guarded update
   scripts that require no Codex, VS Code, or Windows host after deployment.
+- **OPS-002 (`P1`)** — Enabled persistent systemd journaling on the Pi so future
+  crashes and previous-boot kernel/service events remain diagnosable.
 - **FOUND-001 (`P0`)** — Python 3.11+ package, simulation-first CLI, fixture
   configuration, ArtDMX transport, and hardware-free test environment.
 - **MAP-001 (`P0`)** — Independent A001/A153 fixture mapping with verified 8 x 6
