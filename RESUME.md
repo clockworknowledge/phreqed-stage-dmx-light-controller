@@ -1,4 +1,4 @@
-# Codex Resume: LF4808 12-by-4 Mapping Validation
+# Codex Resume: Ampero Control and Show Scene Pack
 
 Last updated: 2026-10-20
 
@@ -17,9 +17,27 @@ serialized cue and blackout commands. USB is the initial supported transport;
 Bluetooth MIDI remains pending Pi pairing and reconnect characterization.
 
 The adapter is disabled unless `--foot-midi-device` is supplied and cannot
-enable Art-Net. Hardware-free tests pass on Windows. Pi acceptance still needs
-the pedal's actual raw-MIDI path, browser-simulation validation, a stable udev
-link, and a rehearsal-length USB soak test. See `docs/ampero-control.md`.
+enable Art-Net. On 2026-10-20 the operator updated the pedal to firmware 1.1.8,
+configured the documented bank, and captured the expected raw USB messages on
+`/dev/snd/midiC3D0`: notes 60, 61, and 62 at velocity 127, plus CC 23 values
+127 and 0. The operator then confirmed previous/next scene, tap tempo, and
+blackout in trusted-LAN browser simulation and reported that guarded browser
+live control worked correctly. A stable udev link and rehearsal-length USB
+soak remain before final acceptance. See `docs/ampero-control.md`.
+
+## Latest checkpoint — show scene pack
+
+`feat/show-scene-pack` is stacked on `feat/ampero-control`. It adds eight
+conservative built-in looks, bringing the catalog to twelve presets. The pack
+includes three independent-fixture compositions and several tap-tempo-aware or
+cross-cube layers. All new preset global levels are at or below 0.48, and no
+reserved fixture channels or white-strobe controls are exposed.
+
+The complete Windows suite passes 95 tests on Python 3.12 with `PYTHONPATH=src`.
+Every new preset is rendered deterministically, checked for complete 12-by-4
+geometry, quantized into a full 512-channel frame, and verified to leave both
+fixtures' eight unverified channels at zero. Visual and low-brightness Pi
+acceptance of the new looks remains pending.
 
 ## Objective in progress
 

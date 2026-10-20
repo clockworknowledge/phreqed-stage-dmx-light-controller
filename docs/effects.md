@@ -44,6 +44,16 @@ ceiling of 0.65.
 - `molten-motion`: magma lava forms plus restrained ember sparks.
 - `digital-storm`: ocean digital rain plus a low-opacity neon glitch layer.
 - `energy-bridge`: cross-cube energy transfer plus a subtle radial pulse.
+- `midnight-current`: slow ocean flow and faint neon shafts for intros.
+- `acid-mirrors`: independent vortex and kaleidoscope motion with a shared pulse.
+- `phase-collider`: wave interference reinforced by tempo-aware radial motion.
+- `neon-blades`: diagonal neon bars cutting across a restrained moving grid.
+- `inferno-rise`: turbulent ember fire with a smooth particle overlay.
+- `split-signal`: independent digital rain and glitch fields joined by moving energy.
+- `hypnotic-drive`: a forward tunnel reinforced by expanding neon rings.
+- `crossfire`: hot and cool independent cube fields with cross-cube energy transfer.
 
 All presets default below the 0.65 global safety ceiling and contain no
-strobe-channel behavior.
+strobe-channel behavior. The added show pack is capped at 0.48 global
+brightness and avoids hard full-frame flashing. `acid-mirrors`, `split-signal`,
+and `crossfire` deliberately render different material on each fixture.

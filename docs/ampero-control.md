@@ -10,6 +10,11 @@ powers the Ampero Control, avoids radio pairing and reconnection uncertainty,
 and is easy to diagnose locally. Bluetooth remains a planned optional transport
 after the wired mapping passes a rehearsal-length soak test.
 
+The tested pedal was updated to firmware 1.1.8 with iOS app 1.1.0. On the Pi it
+enumerated as ALSA sequencer port `28:0`, raw device `hw:3,0,0`, and filesystem
+path `/dev/snd/midiC3D0`. These numeric identifiers are observational, not a
+stable deployment contract.
+
 ## Program the Phreqed bank
 
 Use the Hotone Ampero Control mobile app and create a bank on MIDI channel 1.
@@ -53,7 +58,7 @@ For a pedal test with no Art-Net output, use browser simulation and the actual
 raw-MIDI path:
 
 ```bash
-phreqed-dmx web --foot-midi-device /dev/snd/midiC1D0
+phreqed-dmx web --foot-midi-device /dev/snd/midiC3D0
 ```
 
 The browser should show `Preview · no output`. Confirm previous/next scene, tap
@@ -62,11 +67,16 @@ tempo, blackout on, and blackout off before testing live output.
 Live browser control remains a separate, explicit choice:
 
 ```bash
-phreqed-dmx live --web --foot-midi-device /dev/snd/midiC1D0
+phreqed-dmx live --web --foot-midi-device /dev/snd/midiC3D0
 ```
 
 The pedal cannot start Art-Net transmission. Browser live confirmation and its
 disconnect watchdog remain active.
+
+On 2026-10-20 the operator observed `90 3C 7F`, `90 3D 7F`, `90 3E 7F`,
+`B0 17 7F`, and `B0 17 00` from the raw device. All mapped actions passed in
+trusted-LAN browser simulation, and guarded browser-live operation was reported
+working. A rehearsal-length USB soak and stable udev link remain pending.
 
 ## Bluetooth status
 

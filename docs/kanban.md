@@ -41,6 +41,29 @@ safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
 
+### SHOWPACK-001 — First performance scene pack (`P1`, visuals)
+
+Eight built-in looks extend the catalog to twelve presets using the existing
+deterministic effect and compositor APIs. Three presets deliberately target the
+fixtures independently; cross-cube and tap-tempo-aware layers are included.
+All new global brightness levels are at or below 0.48, and automated tests
+verify deterministic output and zero values on all reserved fixture channels.
+
+Acceptance: visually review all eight looks in browser simulation, then perform
+a deliberate low-brightness Pi check before promoting the pack to Done.
+
+### CONTROL-001 — Hotone Ampero foot-controller adapter (`P1`, performance control)
+
+The dependency-free USB MIDI parser and explicit raw-device adapter are
+implemented. The operator updated the pedal to firmware 1.1.8, verified notes
+60–62 and CC 23 values 127/0 from `/dev/snd/midiC3D0`, and confirmed scene
+navigation, tap tempo, and blackout in browser simulation. Guarded browser-live
+operation was subsequently reported working correctly.
+
+Acceptance: create a stable udev link and pass a rehearsal-length USB soak.
+Bluetooth MIDI remains a separate follow-up until Pi pairing and reconnect
+behavior are characterized.
+
 ### MAP-002 — Correct LF4808 geometry to 12 x 4 (`P0`, mapping)
 
 The package configuration, fixture defaults, simulators, browser previews,
@@ -129,18 +152,6 @@ inputs in the performance context before selecting an audio capture library.
 
 Add opt-in audio capture and analysis after AUDIO-001. Effects must continue to
 render deterministically when supplied recorded analysis frames.
-
-### CONTROL-001 — Hotone Ampero foot-controller adapter (`P1`, performance control)
-
-In progress on `feat/ampero-control`. The dependency-free USB MIDI parser and
-Ampero message mapper are implemented behind an explicit device option. The
-visual engine and Art-Net transport do not import the adapter, and simulation
-remains the default.
-
-Acceptance: configure the documented four-switch bank, identify a stable Pi
-device path, confirm all five explicit actions in browser simulation, and pass
-a rehearsal-length USB soak test. Bluetooth MIDI remains a follow-up until its
-pairing and reconnect behavior is characterized on the Pi.
 
 ### VIDEO-001 — Video-to-grid sampler (`P2`, visuals)
 
@@ -266,8 +277,8 @@ measured results and any resulting operating limits.
 - **SHOW-001 (`P1`)** — Transport-independent effect, parameter, preset, event,
   blackout, tap-tempo, and scene-navigation commands.
 - **PRESET-001 (`P1`)** — Psychedelic Bloom, Molten Motion, Digital Storm, and
-  Energy Bridge example presets.
-- **TEST-001 (`P0`)** — Eighty-two Windows-compatible tests covering effects,
+  Energy Bridge example presets. SHOWPACK-001 adds the next eight looks.
+- **TEST-001 (`P0`)** — Ninety-five Windows-compatible tests covering effects,
   composition, fixtures, scenes, persistence, browser safety, blackout, ArtDMX
   integrity, and simulation network isolation.
 - **DOC-001 (`P1`)** — Architecture, effect catalog, installation, operation,

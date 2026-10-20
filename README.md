@@ -22,7 +22,7 @@ and [Pi comparison checklist](docs/pi-script-import.md).
 - spectrum, magma, ocean, neon, ember, and monochrome palettes
 - alpha, additive, and lighten layers with opacity and masks
 - independent per-cube effects or continuous cross-cube effects
-- four example multi-layer presets
+- twelve built-in multi-layer presets, including independent and cross-cube show looks
 - conservative global brightness ceiling and frame-rise limiter
 - transport-independent blackout, preset, event, tap-tempo, and navigation APIs
 - optional Hotone Ampero Control input over an explicitly selected ALSA
@@ -80,6 +80,8 @@ phreqed-dmx simulate --preset molten-motion
 phreqed-dmx simulate --effect kaleidoscope --palette neon
 phreqed-dmx simulate --effect fire --mode independent --second-effect digital-rain
 phreqed-dmx simulate --effect energy-transfer
+phreqed-dmx simulate --preset acid-mirrors
+phreqed-dmx simulate --preset crossfire
 ```
 
 The preview shows both cubes from the front and provides:

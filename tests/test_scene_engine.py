@@ -28,6 +28,39 @@ class SceneEngineTests(unittest.TestCase):
                 self.assertEqual(first["Cube A"].rows(), second["Cube A"].rows())
                 self.assertEqual(set(first), {"Cube A", "Cube B"})
 
+    def test_show_scene_pack_is_unique_safe_and_exercises_fixture_targeting(self) -> None:
+        expected = {
+            "midnight-current",
+            "acid-mirrors",
+            "phase-collider",
+            "neon-blades",
+            "inferno-rise",
+            "split-signal",
+            "hypnotic-drive",
+            "crossfire",
+        }
+        identifiers = [preset.preset_id for preset in EXAMPLE_PRESETS]
+        self.assertEqual(len(identifiers), len(set(identifiers)))
+        self.assertTrue(expected.issubset(identifiers))
+        self.assertTrue(all(preset.global_brightness <= 0.5 for preset in EXAMPLE_PRESETS))
+
+        for preset_id in expected:
+            with self.subTest(preset=preset_id):
+                preset = next(
+                    preset for preset in EXAMPLE_PRESETS if preset.preset_id == preset_id
+                )
+                self.assertTrue(preset.description)
+                scene = self.engine.render_preset(preset_id, 2.0)
+                dmx = compose_dmx(FIXTURES, scene)
+                self.assertEqual(dmx[144:152], bytes(8))
+                self.assertEqual(dmx[296:304], bytes(8))
+
+        targeted = next(
+            preset for preset in EXAMPLE_PRESETS if preset.preset_id == "split-signal"
+        )
+        self.assertIn(("Cube A",), {layer.fixtures for layer in targeted.layers})
+        self.assertIn(("Cube B",), {layer.fixtures for layer in targeted.layers})
+
     def test_manual_fixture_effects_remain_independent(self) -> None:
         self.engine.select_effect("Cube A", "plasma")
         self.engine.select_effect("Cube B", "tunnel")

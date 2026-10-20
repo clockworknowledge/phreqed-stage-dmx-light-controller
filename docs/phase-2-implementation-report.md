@@ -10,7 +10,8 @@
 - A compositor with alpha, additive, and lighten blending; layer opacity;
   per-fixture targeting; radial masks; global limits; and pure crossfades.
 - A configurable stateful limiter for large repeated full-frame luminance rises.
-- Four example multi-layer presets.
+- Twelve built-in multi-layer presets, including independent and cross-cube
+  show looks.
 - Transport-independent show commands for effect and parameter changes, preset
   activation, events, blackout, tap tempo, and scene navigation.
 - An interactive two-cube Tk simulator with dynamic parameters, independent
@@ -27,8 +28,8 @@
 
 ## Verification
 
-- 82 automated tests pass on Python 3.12 after browser control, persistent user
-  looks, and deterministic scene sequencing were integrated.
+- 95 automated tests pass on Python 3.12 after browser control, persistent user
+  looks, foot control, and the show scene pack were integrated.
 - A real Tk smoke run constructed two 48-cell grids and both parameter panels.
 - The deadline scheduler measured 25.0 FPS over a 2.2-second local GUI run.
 - On the Windows development machine, the slowest single-effect two-cube frame
@@ -61,8 +62,33 @@
   is intentionally out of scope.
 - PPM export avoids dependencies; PNG export would require either a platform
   conversion step or an image library.
-- Foot-controller drivers and video-to-RGB mapping remain future work.
+- USB foot control is implemented and has passed an initial browser-simulation
+  and guarded-live operator check; a stable udev link and rehearsal-length soak
+  remain. Bluetooth MIDI and video-to-RGB mapping remain future work.
 - The eight unverified fixture channels remain zero and inaccessible.
+
+## Show scene pack and Ampero validation — 2026-10-20
+
+Eight additional built-in looks extend the original four presets: Midnight
+Current, Acid Mirrors, Phase Collider, Neon Blades, Inferno Rise, Split Signal,
+Hypnotic Drive, and Crossfire. The pack uses the existing deterministic effect
+and compositor APIs; no effect, transport, fixture mapping, or Art-Net code was
+changed. Acid Mirrors, Split Signal, and Crossfire deliberately target Cube A
+and Cube B independently. All new global brightness levels are 0.48 or lower,
+and none can address the fixtures' reserved channels.
+
+The Windows Python 3.12 suite passes 95 tests. New coverage validates unique
+preset IDs, conservative global levels, independent fixture targeting,
+deterministic rendering, complete DMX frames, and zero output on channels
+145–152 and 297–304.
+
+The operator updated the Hotone Ampero Control to firmware 1.1.8 and observed
+the documented USB MIDI messages on `/dev/snd/midiC3D0`. Previous/next scene,
+tap tempo, and explicit blackout toggling worked in trusted-LAN simulation;
+the subsequent guarded browser-live check was also reported working correctly.
+This is an initial functional acceptance, not the planned rehearsal-length USB
+soak. Automatic audio capture remains deferred until the visual scene vocabulary
+and manual tempo behavior are accepted.
 
 ## Post-integration Pi verification — 2026-10-20
 
