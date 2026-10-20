@@ -7,7 +7,7 @@ This is the short operational handoff for a new Codex session. Read
 design remains in `docs/architecture.md`, `docs/effects.md`, and
 `docs/raspberry-pi-deployment.md`.
 
-## Latest checkpoint — audio-analysis contract
+## Latest checkpoint — Pi audio capture accepted functionally
 
 `feat/audio-context` now includes the first AUDIO-002 capture slice. The Blue
 Snowball was detected on the Pi as `plughw:CARD=Snowball,DEV=0`, and direct
@@ -22,6 +22,13 @@ first bounded consumer. No runtime dependency was added. Windows automated
 tests cover PCM bands, normalization, lifecycle, start failure, explicit CLI
 gating, browser meters, simulation isolation, and the original contract. A Pi
 application-level 25 FPS/latency run remains before performance acceptance.
+
+The operator then ran the simulation-only browser command on the Raspberry Pi
+with `plughw:CARD=Snowball,DEV=0` and Phase Collider, and reported the complete
+path working: capture stayed active, the browser meters responded, and the
+audio-reactive visual changed with the room input. This did not enable Art-Net
+or exercise physical light output. Functional Pi acceptance has passed; only a
+sustained CPU, latency, and missed-frame measurement remains for AUDIO-002.
 
 ## Hotone Ampero Control branch
 

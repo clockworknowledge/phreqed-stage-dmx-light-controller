@@ -49,10 +49,13 @@ implemented without a new dependency. The Blue Snowball hardware name and raw
 input levels have been verified on the Pi. Capture remains off unless an ALSA
 device is explicitly supplied and cannot select or enable Art-Net output.
 
-Acceptance remaining: run the controller with the Snowball on the Pi, tune the
-initial sensitivity in a room test, and document CPU use, analysis latency, and
-missed 25 FPS frames. Automatic scene switching and hard onset flashes remain
-out of scope.
+The operator subsequently confirmed the full simulation path on the Pi: audio
+capture, browser meters, and the reactive Phase Collider visual all responded.
+No Art-Net output was enabled during this test.
+
+Acceptance remaining: document sustained CPU use, analysis latency, and missed
+25 FPS frames, then tune sensitivity under rehearsal-level sound. Automatic
+scene switching and hard onset flashes remain out of scope.
 
 ### AUDIO-001 — Audio-analysis input contract (`P1`, music)
 

@@ -128,6 +128,12 @@ tests use generated PCM and fake processes; no test opens a microphone or
 network socket. Application-level Pi CPU, latency, and missed-frame measurements
 remain the final AUDIO-002 acceptance gate.
 
+The operator then ran Phase Collider through simulation-only browser control on
+the Pi with the explicit Snowball device and reported the whole path working:
+capture, five meters, and audio-reactive rendering. Art-Net could not be enabled
+in that mode. This passes functional Pi validation; it does not replace the
+remaining sustained performance and rehearsal-level sensitivity checks.
+
 ## Post-integration Pi verification — 2026-10-20
 
 The recovered Pi branch was reconciled with `main` in merge commit `67004ad`

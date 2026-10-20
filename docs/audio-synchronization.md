@@ -50,6 +50,11 @@ check passed. The application uses `plughw:CARD=Snowball,DEV=0` so ALSA may
 perform safe format conversion without relying on the unstable numeric card
 index. PipeWire/PulseAudio and `pactl` are not required.
 
+The operator also completed an application-level browser simulation on the Pi
+with Phase Collider and reported that capture, all browser meters, and the
+audio-reactive visual worked. Art-Net remained unavailable in this mode. This
+is functional acceptance, not the outstanding sustained performance test.
+
 Capture will remain optional and disabled by default. Starting capture will not
 select live mode, start Art-Net, change scenes, or bypass browser confirmation.
 Initial audio response will modulate continuous visual parameters only; automatic
