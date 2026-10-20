@@ -171,6 +171,47 @@ procedure before package configuration or effect changes.
 
 ## Backlog
 
+### WEAR-001 — Performer-safe wearable lighting prototype (`P2`, visual output)
+
+Build one low-profile 20-to-50-pixel prototype using diffused LEDs on a guitar
+strap, vest, or shoulder/torso channel. Keep hands and forearms clear; place the
+enclosed controller and protected power pack at the rear waist; provide local
+power-off, strain relief, quick disconnection, current limiting, and removable
+electronics. Begin with WLED/ESP32 or Pixelblaze only as a prototype platform.
+
+Acceptance: a full-motion rehearsal shows no playing restriction, snag hazard,
+pressure point, excessive heat, or audible instrument interference; measured
+worst-case current and runtime meet the show requirement; startup and fault
+states are black; and the unit can be removed quickly. Do not replicate it for
+the band before this prototype passes. See `docs/wearable-lighting.md`.
+
+### WEAR-002 — Reliable wireless wearable synchronization (`P2`, transport)
+
+Prototype cue-level synchronization from the Pi using a private WLED network,
+then compare it with an ESP-NOW gateway and professional wireless-DMX pixel
+hardware. Wearables render locally from cue, palette, level, tempo/phase, and
+bounded audio values rather than receiving continuous full-pixel video.
+
+Acceptance: the chosen link has measured latency, loss, recovery, range, and
+congested-venue behavior; sequence and heartbeat handling reject stale packets;
+brief loss coasts safely and sustained loss fades black; device identity and
+group targeting are deterministic; and failures cannot disturb Art-Net, QLC+,
+DMX timing, audio capture, MIDI, browser control, or projector output.
+
+### SHOW-003 — Wearables in unified show cues (`P2`, show control)
+
+Add optional wearable states to the planned unified lighting/projector cue.
+The current Ampero previous/next and tap-tempo actions control the combined cue,
+so no second pedal is required initially. Keep wearable blank separate from the
+existing lighting blackout until both paths have independent failure tests; an
+additional Ampero bank or second pedal remains optional for wearable-only
+triggers.
+
+Acceptance: cues remain valid when no wearable is paired; target groups and
+performer assignments are explicit; missing devices report health without
+blocking scene changes; show shutdown fades all wearables black; and no pedal
+message can implicitly enable DMX or wearable output.
+
 ### PROJ-001 — Projector playback foundation (`P2`, visual output)
 
 Add an explicitly enabled projection adapter that plays validated local video

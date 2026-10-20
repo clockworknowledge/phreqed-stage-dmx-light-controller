@@ -68,6 +68,12 @@ unified cues; a second pedal is optional only for independent projector
 transport. See `docs/projector-output.md` and PROJ-001/PROJ-002/SHOW-002 in the
 Kanban.
 
+Wireless wearables follow the same future show-coordinator boundary. Each unit
+renders a local effect from compact cue, palette, brightness, tempo/phase, and
+bounded audio state; it does not receive DMX-universe frames or block the DMX
+thread. Link loss affects only that wearable and must fade it to black. See
+`docs/wearable-lighting.md` and WEAR-001/WEAR-002/SHOW-003 in the Kanban.
+
 ## Coordinates and physical zones
 
 Logical `(0, 0)` is top-left when looking at a cube from the front. For the

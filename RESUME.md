@@ -37,6 +37,14 @@ and unified light/projection cues. The current Ampero can control those cues, so
 a second pedal is not required for the foundation. No projector code or runtime
 dependency has been added yet.
 
+Wireless wearable lighting is also scoped in WEAR-001, WEAR-002, and SHOW-003.
+The recommended first prototype is a low-pixel-count diffused guitar strap or
+torso/shoulder channel with rear belt electronics. Candidate transports are
+WLED/ESP32, a custom ESP-NOW gateway, Pixelblaze, and professional wireless DMX.
+Wearables render locally from compact synchronized cues and fail black without
+touching DMX. The existing Ampero can control unified cues; a second pedal is
+optional rather than required. See `docs/wearable-lighting.md`.
+
 ## Hotone Ampero Control branch
 
 `feat/ampero-control` is stacked on the 12-by-4 correction branch. It adds a
