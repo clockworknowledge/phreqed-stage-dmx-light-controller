@@ -265,3 +265,15 @@ this verifies the harness and does not replace the stored 30-second-per-look
 soak. No live output was started during review. Installation, soak, live smoke,
 and Phase 2 validation cards are Done with this commit; QLC-002 remains in
 Validation pending independent access-denial checks.
+
+### Final network acceptance (QLC-002, passed)
+
+Following the other-device LAN access check, the operator confirmed the
+requested global IPv6 URL (`http://[2001:56a:742e:b000:15bd:c545:fda1:c5a6]:9999`)
+was denied while the standard IPv4 LAN URL (`http://192.168.1.89:9999`) still
+worked. This records an independent browser observation, alongside the
+service's verified IP allow/deny properties and local probes. The planned
+permitted/denied browser checks passed; this is not a comprehensive test of
+all network paths. QLC-002 is Done and commissioning acceptance is complete
+within the documented scope. Live output remains off; no service changes or
+additional hardware output were needed for this documentation update.

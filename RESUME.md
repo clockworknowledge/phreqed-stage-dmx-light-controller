@@ -45,10 +45,12 @@ QLC+ recovered sole ownership of both ports and HTTP 200; the runtime workspace
 still matches Git. The operator confirmed both fixtures stayed dark during
 this recovery, completing that check. The operator also confirmed the port
 9999 web UI opens on a phone and computer. No live controller was started.
-Independent denial checks from outside the allowed subnet remain untested;
-no SSH test host is configured. QLC-002 is now in Validation, pending that
-check. The service and commissioning evidence were reviewed and committed
-with this update; LIVE-001, RPI-002, DEPLOY-001, and P2-VAL-001 are Done.
+The operator subsequently confirmed the global IPv6 URL was denied from
+another device while the standard IPv4 LAN URL still worked, completing the
+planned independent permitted/denied browser checks. QLC-002 is Done.
+The service and commissioning evidence were committed in `7f6faee`;
+LIVE-001, RPI-002, DEPLOY-001, and P2-VAL-001 are also Done.
+Raspberry Pi commissioning is complete within the documented test scope.
 
 The following is the retained pre-reboot checkpoint; its pending-reboot
 statements are superseded by the verification above.
@@ -130,8 +132,8 @@ secret. Keep QLC+ password/authentication files outside Git.
 
 ## Not yet verified
 
-- QLC+ reboot verification passed, including operator-confirmed darkness.
-  Independent external-host checks of the service IP restriction remain pending.
+- The planned QLC+ reboot, recovery, and permitted/denied network browser
+  checks passed. Broader router/firewall coverage was not tested.
 - Tkinter drawing has not completed a sustained Raspberry Pi GUI soak test;
   the headless rendering soak below has passed.
 - Full per-pixel verification has not been performed; the controlled physical
@@ -244,9 +246,8 @@ QLC+, not sudo. No boot or firewall configuration was changed. The Pi is on
 addresses. IPv4 and IPv6 network isolation are not established. Inspect the
 firewall/router policy before boot enablement or acceptance for stage use.
 
-Remaining commissioning work concerns independent access-denial checks from
-outside the allowed subnet.
-Reboot/recovery darkness and other-device LAN web access have passed.
+Commissioning acceptance passed, including reboot/recovery darkness and
+other-device permitted IPv4 LAN access / denied global IPv6 browser access.
 See the deployment guide for
 the service installation and validation procedure.
 
@@ -272,14 +273,12 @@ the backup until the committed file and runtime configuration are verified.
 
 ## Next actions, in order
 
-1. Complete independent access-denial checks for QLC-002. An IPv6 URL check
-   from the operator's phone/computer has been requested; record the result
-   without treating a connection failure alone as proof of working filtering
-   if IPv6 reachability is unknown.
-2. Keep QLC-002 in Validation until its remaining network checks pass.
-3. Continue with the next Ready card after commissioning acceptance. Do not
-   repeat completed installation, soak, live, reboot, or recovery checks unless
-   a relevant code/configuration/environment change justifies them.
+1. Commissioning is complete. Continue with the next Ready card when requested
+   (PRESET-002: user preset persistence).
+2. Do not repeat completed installation, soak, live, reboot, or recovery checks
+   unless a relevant code/configuration/environment change justifies them.
+3. Update the service's allowed subnet and recheck network access before moving
+   the Pi to another network. Live output still requires explicit selection.
 
 ## Safety invariants
 

@@ -83,8 +83,9 @@ with exceptions for localhost (IPv4/IPv6) and `192.168.1.0/24`. Update the
 allowed subnet before moving to another network. The filter requires cgroup
 BPF support; check startup logs and permitted/denied requests after installation.
 It does not change SSH or the host-wide firewall. Localhost and LAN HTTP
-returned 200 on this Pi; its own global IPv6 HTTP probe timed out. External-host
-filter checks remain separate verification. Authentication can still be added
+returned 200 on this Pi; its own global IPv6 HTTP probe timed out. The operator
+also confirmed denied global IPv6 and permitted IPv4 LAN browser access from
+another device. Authentication can still be added
 outside Git. Only enable boot startup
 with `sudo systemctl enable qlcplus` after safe stop/restart and retained-output
 checks. Reboot and recovery tests remain separate acceptance checks; syntax
@@ -96,8 +97,9 @@ HOME, workspace, sole port ownership, and IP restrictions. Localhost and the
 Pi's LAN-address HTTP probes returned 200; its own global IPv6 probe timed out.
 No live controller was running. The operator confirmed both fixtures stayed
 dark through reboot and process-failure recovery, completing both checks, and
-confirmed web access from a phone and computer. Independent denial checks
-from outside the allowed subnet remain untested.
+confirmed web access from a phone and computer. The operator then confirmed
+the global IPv6 URL was denied from another device while the standard IPv4
+LAN URL still worked, completing the planned network browser checks.
 For future reboot verification:
 After reconnecting, compare `/proc/sys/kernel/random/boot_id` with the prior ID
 in `RESUME.md`, then check enabled/active state, one QLC+ process, allow/deny

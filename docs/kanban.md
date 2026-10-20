@@ -26,7 +26,7 @@ outcome, `P2` for important improvements, and `P3` for optional polish.
 
 ## In progress
 
-No active implementation; QLC-002 is in Validation.
+No active implementation.
 
 ## Ready
 
@@ -59,29 +59,7 @@ safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
 
-### QLC-002 — Manage headless QLC+ with systemd (`P0`, reliability)
-
-Installed and enabled `config/qlc/qlcplus.service` on 2026-10-19. Managed
-stop/start, automatic failure recovery, and reboot startup passed. The service
-runs as `mmorley` with the expected HOME and runtime workspace, which matches
-Git, and solely owns UDP 6454 and TCP 9999. Automatic live output remains off.
-
-The operator confirmed both fixtures stayed dark through reboot and the
-21:21 MDT process-failure recovery. Recovery took five seconds, changing PID
-1483 to 2207 with `NRestarts=1`; ports and HTTP 200 recovered. All 57 tests pass.
-The operator also confirmed the port 9999 web UI opens on a phone and computer.
-
-Systemd IP filtering permits localhost and `192.168.1.0/24`, denying other
-IPv4/IPv6 traffic. Local probes pass on permitted addresses and time out on the
-Pi's global IPv6 address. Independent access-denial verification from outside
-the allowed subnet remains untested; successful LAN access does not prove it.
-The service and evidence were reviewed and committed with this update;
-QLC-002 remains in Validation pending independent access-denial checks.
-
-Acceptance: a service running as `mmorley` loads
-`/home/mmorley/.qlcplus/autostart.qxw`, starts after reboot without a physical
-display, owns the expected ports, exposes its web UI only on the trusted stage
-LAN, and stops/restarts without unsafe retained output.
+No cards awaiting validation.
 
 ## Blocked
 
@@ -139,6 +117,31 @@ Generate representative simulator images for every effect and preset at fixed
 times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
+
+### QLC-002 — Manage headless QLC+ with systemd (`P0`, reliability)
+
+Installed and enabled `config/qlc/qlcplus.service` on 2026-10-19. Managed
+stop/start, automatic failure recovery, and reboot startup passed. The service
+runs as `mmorley` with the expected HOME and runtime workspace, which matches
+Git, and solely owns UDP 6454 and TCP 9999. Automatic live output remains off.
+
+The operator confirmed both fixtures stayed dark through reboot and the
+21:21 MDT process-failure recovery. Recovery took five seconds, changing PID
+1483 to 2207 with `NRestarts=1`; ports and HTTP 200 recovered. All 57 tests pass.
+The operator also confirmed the port 9999 web UI opens on a phone and computer.
+
+Systemd IP filtering permits localhost and `192.168.1.0/24`, denying other
+IPv4/IPv6 traffic. Local probes pass on permitted addresses and time out on the
+Pi's global IPv6 address. The operator confirmed the global IPv6 URL was
+denied from another device while the standard IPv4 LAN URL still worked.
+This completes the planned independent permitted/denied browser checks.
+The service and commissioning evidence were reviewed and committed in
+`7f6faee`; this update records final network acceptance.
+
+Acceptance: a service running as `mmorley` loads
+`/home/mmorley/.qlcplus/autostart.qxw`, starts after reboot without a physical
+display, owns the expected ports, exposes its web UI only on the trusted stage
+LAN, and stops/restarts without unsafe retained output.
 
 ### LIVE-001 — Controlled two-fixture live smoke test (`P0`, hardware)
 
