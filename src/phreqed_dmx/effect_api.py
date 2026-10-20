@@ -8,6 +8,7 @@ from types import MappingProxyType
 from typing import Mapping, Protocol
 
 from .color import NormalizedRGB, Palette
+from .audio_analysis import AudioAnalysis
 
 ParameterValue = float | int | str
 
@@ -132,6 +133,7 @@ class PerformanceContext:
     energy: float = 0.5
     event: str | None = None
     seed: int = 0
+    audio: AudioAnalysis | None = None
 
     def __post_init__(self) -> None:
         if not 20.0 <= self.tempo_bpm <= 300.0:
@@ -140,6 +142,8 @@ class PerformanceContext:
             raise ValueError("beat_phase must be between 0 and 1")
         if not 0.0 <= self.energy <= 1.0:
             raise ValueError("energy must be between 0 and 1")
+        if self.audio is not None and not isinstance(self.audio, AudioAnalysis):
+            raise TypeError("audio must be AudioAnalysis or None")
 
 
 class Effect(Protocol):

@@ -6,9 +6,11 @@ import argparse
 import math
 import sys
 import time
+from dataclasses import replace
 from pathlib import Path
 
 from .artnet import ArtNetSender
+from .audio_analysis import AudioAnalysisSource
 from .compositor import FrameSafetyLimiter, Scene
 from .config import DEFAULT_CONFIG_PATH, ControllerConfig, load_config
 from .effect_api import PerformanceContext
@@ -31,6 +33,7 @@ class Controller:
         *,
         speed: float = 1.0,
         safety_limiter: FrameSafetyLimiter | None = None,
+        audio_source: AudioAnalysisSource | None = None,
     ) -> None:
         if speed <= 0:
             raise ValueError("speed must be positive")
@@ -39,6 +42,7 @@ class Controller:
         self.show = ShowController(self.engine)
         self.speed = speed
         self.safety_limiter = safety_limiter or FrameSafetyLimiter()
+        self.audio_source = audio_source
         self._last_scene: Scene | None = None
         self._transition_from: Scene | None = None
         self._transition_started = 0.0
@@ -66,7 +70,10 @@ class Controller:
         context: PerformanceContext | None = None,
         apply_safety: bool = True,
     ) -> Scene:
-        context = self.show.context() if context is None else context
+        if context is None:
+            context = self.show.context()
+            if self.audio_source is not None:
+                context = replace(context, audio=self.audio_source.sample(elapsed))
         self.scenes.update(elapsed)
         if self.engine.blackout_enabled:
             self._transition_from = None

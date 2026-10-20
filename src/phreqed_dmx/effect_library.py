@@ -388,7 +388,23 @@ def _radial_pulse(
     tempo_scale = (context.tempo_bpm / 120.0) if context else 1.0
     phase = math.hypot(u, v) * frequency - t * tempo_scale
     intensity = ((math.sin(phase * TAU) + 1.0) / 2.0) ** sharpness
-    return _paint(phase * 0.18 + t * 0.02, intensity, parameters)
+    hue = phase * 0.18 + t * 0.02
+    if context and context.audio is not None:
+        audio = context.audio
+        measured_energy = (
+            audio.loudness * 0.5
+            + audio.bands.bass * 0.25
+            + audio.bands.mid * 0.15
+            + audio.bands.treble * 0.1
+        )
+        intensity = min(
+            1.0,
+            intensity
+            * (0.45 + measured_energy * 0.55)
+            * (1.0 + audio.onset * 0.25),
+        )
+        hue += (audio.bands.treble - audio.bands.bass) * 0.05
+    return _paint(hue, intensity, parameters)
 
 
 def _tunnel(

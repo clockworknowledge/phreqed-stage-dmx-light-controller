@@ -7,6 +7,7 @@ from collections import deque
 from dataclasses import replace
 from typing import Protocol
 
+from .audio_analysis import AudioAnalysis
 from .effect_api import ParameterValue, PerformanceContext
 from .engine import SceneEngine
 
@@ -16,6 +17,7 @@ class ShowCommands(Protocol):
     def update_parameter(self, fixture_name: str, key: str, value: ParameterValue) -> None: ...
     def activate_preset(self, preset_id: str) -> None: ...
     def trigger_event(self, event: str) -> None: ...
+    def update_audio_analysis(self, analysis: AudioAnalysis | None) -> None: ...
     def blackout(self, enabled: bool = True) -> None: ...
     def tap_tempo(self, timestamp: float | None = None) -> float: ...
     def next_scene(self) -> str: ...
@@ -44,6 +46,11 @@ class ShowController:
         if not event:
             raise ValueError("event name cannot be empty")
         self._context = replace(self._context, event=event)
+
+    def update_audio_analysis(self, analysis: AudioAnalysis | None) -> None:
+        if analysis is not None and not isinstance(analysis, AudioAnalysis):
+            raise TypeError("analysis must be AudioAnalysis or None")
+        self._context = replace(self._context, audio=analysis)
 
     def blackout(self, enabled: bool = True) -> None:
         self.engine.set_blackout(enabled)
