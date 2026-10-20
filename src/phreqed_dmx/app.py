@@ -113,6 +113,13 @@ def _positive(value: str) -> float:
     return parsed
 
 
+def _audio_sensitivity(value: str) -> float:
+    parsed = float(value)
+    if not 0.1 <= parsed <= 40.0:
+        raise argparse.ArgumentTypeError("audio sensitivity must be between 0.1 and 40.0")
+    return parsed
+
+
 def build_parser() -> argparse.ArgumentParser:
     effect_ids = tuple(metadata.effect_id for metadata in EFFECT_REGISTRY.metadata())
     parser = argparse.ArgumentParser(description=__doc__)
@@ -182,6 +189,16 @@ def build_parser() -> argparse.ArgumentParser:
         metavar="1-16",
         help="Ampero Control MIDI channel (default 1)",
     )
+    parser.add_argument(
+        "--audio-device",
+        help="explicit ALSA capture device, for example plughw:CARD=Snowball,DEV=0",
+    )
+    parser.add_argument(
+        "--audio-sensitivity",
+        type=_audio_sensitivity,
+        metavar="0.1-40",
+        help="microphone analysis gain (default 12.0; requires --audio-device)",
+    )
     return parser
 
 
@@ -239,10 +256,20 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--duration is not supported by browser control")
     if args.command == "simulate" and args.duration is not None:
         parser.error("--duration is available only in live mode")
+    if args.audio_sensitivity is not None and args.audio_device is None:
+        parser.error("--audio-sensitivity requires --audio-device")
 
     config = load_config(args.config)
     engine = _configure_engine(args, config)
-    controller = Controller(config, engine, speed=args.speed)
+    audio_source = None
+    if args.audio_device is not None:
+        # Keep OS capture code out of the default simulation/import path.
+        from .audio_capture import ArecordAudioSource
+
+        audio_source = ArecordAudioSource(
+            args.audio_device, sensitivity=args.audio_sensitivity or 12.0
+        )
+    controller = Controller(config, engine, speed=args.speed, audio_source=audio_source)
     browser_requested = args.command == "web" or args.web
     foot_controller = (
         RawMidiFootController(
@@ -255,6 +282,16 @@ def main(argv: list[str] | None = None) -> int:
     )
 
     try:
+        if audio_source is not None:
+            try:
+                audio_source.start()
+            except RuntimeError as exc:
+                print(f"AUDIO INPUT ERROR: {exc}", file=sys.stderr)
+                return 2
+            print(
+                f"AUDIO INPUT: {args.audio_device} at 44100 Hz mono",
+                file=sys.stderr,
+            )
         if foot_controller is not None:
             foot_controller.start()
             print(
@@ -285,6 +322,8 @@ def main(argv: list[str] | None = None) -> int:
     finally:
         if foot_controller is not None:
             foot_controller.close()
+        if audio_source is not None:
+            audio_source.close()
     return 0
 
 

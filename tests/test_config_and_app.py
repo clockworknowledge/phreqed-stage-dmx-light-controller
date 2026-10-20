@@ -24,6 +24,8 @@ class ConfigurationTests(unittest.TestCase):
     def test_command_line_defaults_to_simulation(self) -> None:
         args = build_parser().parse_args([])
         self.assertEqual(args.command, "simulate")
+        self.assertIsNone(args.audio_device)
+        self.assertIsNone(args.audio_sensitivity)
 
     def test_live_output_requires_explicit_command(self) -> None:
         args = build_parser().parse_args(["live", "--effect", "cross-cube"])
@@ -64,6 +66,38 @@ class ConfigurationTests(unittest.TestCase):
         foot.return_value.start.assert_called_once_with()
         foot.return_value.close.assert_called_once_with()
         simulator.return_value.run.assert_called_once_with()
+
+    def test_explicit_audio_device_starts_capture_without_enabling_artnet(self) -> None:
+        with (
+            patch("phreqed_dmx.app.ArtNetSender") as sender,
+            patch("phreqed_dmx.audio_capture.ArecordAudioSource") as capture,
+            patch("phreqed_dmx.simulator.TkSimulator") as simulator,
+        ):
+            self.assertEqual(
+                main(
+                    [
+                        "simulate",
+                        "--audio-device",
+                        "plughw:CARD=Snowball,DEV=0",
+                        "--audio-sensitivity",
+                        "9.5",
+                    ]
+                ),
+                0,
+            )
+
+        sender.assert_not_called()
+        capture.assert_called_once_with(
+            "plughw:CARD=Snowball,DEV=0", sensitivity=9.5
+        )
+        capture.return_value.start.assert_called_once_with()
+        capture.return_value.close.assert_called_once_with()
+        simulator.assert_called_once()
+        simulator.return_value.run.assert_called_once_with()
+
+    def test_audio_sensitivity_requires_explicit_device(self) -> None:
+        with self.assertRaises(SystemExit):
+            main(["simulate", "--audio-sensitivity", "8"])
 
     def test_controller_blackout_produces_complete_zero_dmx_frame(self) -> None:
         config = load_config()
