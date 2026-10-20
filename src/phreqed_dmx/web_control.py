@@ -53,7 +53,10 @@ class BrowserControl:
         self.engine.presets = self.library.all_presets
         self.engine.preset_order = tuple(self.engine.presets)
         self.controller.scenes.replace(self.library.cues)
-        self.engine.set_global_brightness(0.25)
+        # Never raise an explicit lower CLI limit when browser control starts.
+        self.engine.set_global_brightness(
+            min(0.25, self.engine.compositor.global_brightness)
+        )
         self.allow_live = allow_live
         self.sender: ArtNetSender | None = None
         self.lock = threading.RLock()

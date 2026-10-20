@@ -141,6 +141,16 @@ class BrowserControlTests(unittest.TestCase):
             control.command(dict(action='heartbeat'))
             self.assertIsNone(control.sender)
 
+    def test_browser_startup_preserves_lower_explicit_brightness(self):
+        controller = Controller(load_config())
+        controller.engine.set_global_brightness(0.15)
+        control = BrowserControl(controller, self.path, allow_live=True)
+        self.addCleanup(control.close)
+        self.assertEqual(control.engine.compositor.global_brightness, 0.15)
+        with patch('phreqed_dmx.web_control.ArtNetSender'):
+            control.command(dict(action='start_live'))
+        self.assertEqual(control.engine.compositor.global_brightness, 0.15)
+
     def test_live_frames_reserved_channels_and_blackout_override(self):
         control = BrowserControl(Controller(load_config()), self.path, allow_live=True)
         self.addCleanup(control.close)
