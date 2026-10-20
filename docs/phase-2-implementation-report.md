@@ -47,8 +47,9 @@
   normal shutdown blackout, and handled-interruption blackout passed below.
 - Raspberry Pi headless timing and thermal results are recorded below;
   sustained GUI and complete live-chain behavior remain unverified.
-- The recovered browser controller passes Windows tests but still needs a Pi
-  trusted-LAN simulation smoke test and a separately authorized guarded live
+- The recovered browser controller passes Windows and Pi tests, and its Pi
+  trusted-LAN simulation preview was operator-accepted. It still needs a
+  persistence/restart check and a separately authorized guarded browser-live
   test, including physical observation of its disconnect blackout.
 - The actual current Pi files still need comparison with the reconstructed
   conversation baseline.
@@ -60,6 +61,22 @@
   conversion step or an image library.
 - Foot-controller drivers and video-to-RGB mapping remain future work.
 - The eight unverified fixture channels remain zero and inaccessible.
+
+## Post-integration Pi verification — 2026-10-20
+
+The recovered Pi branch was reconciled with `main` in merge commit `67004ad`
+without changing the preserved baseline. `scripts/pi-update.sh` fast-forwarded
+the Pi, reinstalled the package, and passed all 82 hardware-free tests in
+0.299 seconds.
+
+The operator opened simulation-only browser control from the trusted LAN and
+confirmed the dual-fixture preview and controls looked correct. That command
+did not permit live activation. After stopping it, the operator ran the direct
+controller for ten seconds with plasma at speed 0.2 and brightness 0.15. Both
+cubes illuminated with visible animation and returned to darkness on normal
+shutdown. This confirms the pre-existing direct live path after integration;
+browser-controlled live start, stop, blackout, and heartbeat-loss behavior
+still require their own controlled physical validation.
 
 ## Raspberry Pi commissioning — 2026-10-19
 

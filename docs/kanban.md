@@ -48,10 +48,15 @@ scene sequencer are implemented and pass the complete 82-test Windows suite.
 Simulation and live capability remain separate CLI choices; live activation
 requires an additional confirmation and a five-second browser lease.
 
-Acceptance: the Pi passes all 82 tests; browser simulation is usable from a
-trusted LAN device without Art-Net transmission; looks and scenes survive a
-restart; guarded live start, explicit stop, blackout, and lost-browser timeout
-are observed safely on both fixtures.
+Pi update and automated validation passed on 2026-10-20: all 82 tests completed
+in 0.299 seconds. The operator accepted the trusted-LAN browser simulation, and
+a separate ten-second direct plasma test at brightness 0.15 lit and animated
+both cubes before normal-shutdown blackout. This confirms the existing direct
+live path, not browser-controlled live behavior.
+
+Remaining acceptance: confirm saved looks and scenes survive a restart, then
+separately observe guarded browser live start, explicit stop, blackout, and the
+lost-browser timeout safely on both fixtures.
 
 ### PRESET-002 — User preset persistence (`P1`, show control)
 

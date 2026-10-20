@@ -16,7 +16,7 @@ commissioning checks are complete within their documented scope.
 
 Do not start live Art-Net output merely to inspect the installation.
 
-## Latest checkpoint — recovered Pi development branch
+## Latest checkpoint — integrated Pi validation
 
 The Pi-only work was preserved on
 `pi-recovery-before-sync-20261020` and reviewed on Windows. It adds browser
@@ -24,8 +24,20 @@ preview/control, versioned atomic user-look and scene persistence, deterministic
 scene sequencing, Pi diagnostic scripts, the managed QLC+ unit, and complete
 commissioning evidence. The recovery branch passes all 82 automated tests under
 Python 3.12 with `PYTHONPATH=src`; simulation tests prove that browser actions
-cannot construct an Art-Net sender. The recovered work is integrated locally
-and awaits the guarded Pi update and browser validation described below.
+cannot construct an Art-Net sender.
+
+On 2026-10-20 the merged `main` at `67004ad` was deployed through
+`scripts/pi-update.sh`. Installation succeeded and all 82 hardware-free tests
+passed on the Pi in 0.299 seconds. The operator opened simulation-only browser
+control from the trusted LAN and confirmed that the previews and controls looked
+correct. Live activation was unavailable in this mode as designed.
+
+After stopping browser simulation, the operator ran a ten-second direct plasma
+test at speed 0.2 and brightness 0.15. They confirmed that both cubes lit, the
+animation was visible, and both cubes returned to darkness automatically at
+normal shutdown. This revalidates the established direct live path after the
+merge. Browser-controlled live activation and its lost-heartbeat blackout
+remain separate pending checks; do not infer them from the direct live test.
 
 ## Prior checkpoint — LAN restriction and boot enablement
 
