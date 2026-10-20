@@ -3,7 +3,8 @@
 A simulation-first Python 3.11+ visual engine for a Calgary rock band's two
 Betopper LF4808 RGB matrix fixtures. It provides deterministic procedural
 effects, normalized RGB layer compositing, presets, an interactive two-cube
-simulator, and explicit live 512-channel Art-Net output through QLC+.
+simulator, a dependency-free browser show controller, and explicit live
+512-channel Art-Net output through QLC+.
 
 To continue deployment or development in a fresh Codex session, start with the
 [current resume](RESUME.md), then read [`AGENTS.md`](AGENTS.md) and the
@@ -25,6 +26,8 @@ and [Pi comparison checklist](docs/pi-script-import.md).
 - conservative global brightness ceiling and frame-rise limiter
 - transport-independent blackout, preset, event, tap-tempo, and navigation APIs
 - interactive Tk simulator with live FPS, pause, step, parameters, and PPM export
+- versioned user looks and ordered scenes with atomic JSON persistence
+- browser previews and show control with an explicit live gate and disconnect blackout
 
 See the complete [effect catalog](docs/effects.md) and
 [Phase 2 implementation report](docs/phase-2-implementation-report.md). Feature
@@ -79,6 +82,28 @@ Changing a cube control switches the engine from its active preset to manual
 per-fixture mode. Simulation calls normalized scene rendering only and never
 constructs an Art-Net sender.
 
+## Run browser simulation
+
+Browser mode is also simulation-only by default:
+
+```powershell
+phreqed-dmx web
+```
+
+Open `http://127.0.0.1:8080`. The controller previews both fixtures, edits and
+persists user looks, builds timed scene lists, and exposes blackout and show
+transport controls. The default library is stored outside the repository at
+`~/.local/share/phreqed-dmx/library.json`.
+
+For trusted-LAN preview from the Pi, bind explicitly while remaining in the
+simulation-only `web` command:
+
+```bash
+.venv/bin/phreqed-dmx web --host 0.0.0.0 --allow-network 192.168.1.0/24
+```
+
+This opens only the browser HTTP server; it cannot enable Art-Net output.
+
 ## Run live on the Raspberry Pi
 
 The Pi deployment is terminal-only and does not require Codex or VS Code. After
@@ -101,6 +126,19 @@ Use `--effect` for manual mode, with `--mode mirror|complementary|independent`
 and `--second-effect` where needed. Run `phreqed-dmx --help` for the complete
 effect and preset lists. With no command, the CLI defaults to simulation;
 network output can only be selected with the literal `live` command.
+
+Browser-controlled lighting requires both the explicit live command and web
+option. It still starts with output stopped and requires confirmation in the
+page:
+
+```bash
+.venv/bin/phreqed-dmx live --web --host 0.0.0.0 \
+  --allow-network 192.168.1.0/24
+```
+
+Live browser output is capped at 25% when first enabled and stops with blackout
+if browser heartbeats are absent for five seconds. Keep QLC+ blackout available;
+the lease is an additional safeguard, not a substitute for physical controls.
 
 ## Test
 

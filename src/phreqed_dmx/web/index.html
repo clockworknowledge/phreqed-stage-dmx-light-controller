@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101413"><title>Phreqed · Stage control</title>
+<link rel="stylesheet" href="/style.css"><script src="/app.js" defer></script>
+</head>
+<body>
+<header class="top"><a class="brand" href="/" aria-label="Phreqed home"><span class="brandmark">p.</span><span>PHREQED<small>STAGE CONTROL</small></span></a><span id="connection" class="badge">Connecting…</span></header>
+<main>
+<div class="intro"><div><p class="eyebrow">YOUR LIGHT, IN MOTION</p><h1>Set the room.</h1></div><p class="intro-note">Two cubes. One stage.<br>Keep the music moving.</p></div>
+<nav class="tabs" aria-label="Controller sections"><button class="tab active" data-tab="perform" aria-selected="true">Perform</button><button class="tab" data-tab="looks" aria-selected="false">Looks</button><button class="tab" data-tab="scenes" aria-selected="false">Scene list</button></nav>
+<div id="message" role="status" aria-live="polite"></div>
+<section id="perform" class="panel">
+<div class="section-title"><h2>Stage monitor</h2><span id="output-label">Preview · no output</span></div>
+<div class="monitors"><figure><figcaption><span>01 <strong>Cube A</strong></span><span>Front view</span></figcaption><canvas id="cube-a" width="400" height="300" aria-label="Cube A top-left oriented pixel preview"></canvas></figure><figure><figcaption><span>02 <strong>Cube B</strong></span><span>Front view</span></figcaption><canvas id="cube-b" width="400" height="300" aria-label="Cube B top-left oriented pixel preview"></canvas></figure></div>
+<div class="performance-grid">
+<section class="card"><p class="eyebrow">ON STAGE</p><h3 id="current-look">Psychedelic Bloom</h3><label for="quick-preset">Choose a look</label><select id="quick-preset"></select><div class="slider-label"><label for="master">Master brightness</label><output id="master-value" for="master">25%</output></div><input id="master" type="range" min="0" max="0.65" step="0.01" value="0.25"><p class="hint">Output ceiling 65%. Starting live caps the level at 25%.</p></section>
+<section class="card"><p class="eyebrow">SCENE TRANSPORT</p><h3 id="current-scene">Manual control</h3><p id="sequence-status" class="hint">Select a scene or start the list.</p><div class="transport"><button id="prev" aria-label="Previous scene">← Prev</button><button id="next" class="primary">Next →</button></div><div class="row"><button id="play">Run list</button><button id="pause">Hold scene</button><button id="tap">Tap <span id="bpm">120</span> BPM</button></div><p class="hint">Run list follows each scene’s timing and holds on the last scene.</p></section>
+</div>
+<section class="output card"><div><h3>Fixture output</h3><p id="live-help" class="hint">Simulation only. No lighting data is transmitted.</p></div><div class="row"><button id="start-live" class="primary" disabled>Start live</button><button id="stop-live" disabled>Stop output</button></div></section>
+</section>
+<section id="looks" class="panel" hidden>
+<div class="section-title"><div><h2>Your looks</h2><p class="hint">Start with a built-in, make it yours, save it for the show.</p></div><button id="new-look" class="primary">+ New look</button></div><div id="preset-grid" class="preset-grid"></div>
+<section id="editor" class="card" hidden><div class="section-title"><h2>Look editor</h2><button id="close-editor" class="quiet">Close</button></div><div class="form-grid"><label>Look name<input id="look-name" maxlength="100" placeholder="Late-night current"></label><label>Output brightness<input id="look-level" type="number" min="0" max="0.65" step="0.01" value="0.25"></label></div><label>Description<input id="look-description" maxlength="500" placeholder="A note for the next show"></label><div class="section-title"><h3>Layers</h3><button id="add-layer">+ Add layer</button></div><p class="hint">Layers blend from top to bottom. Target both cubes or build independent looks.</p><div id="layers"></div><div class="row editor-actions"><button id="preview-look">Try look</button><button id="save-look" class="primary">Save look</button></div><p class="hint">Try look changes the running look, including live output when active. Built-ins are always saved as a user copy.</p></section>
+</section>
+<section id="scenes" class="panel" hidden>
+<div class="section-title"><div><h2>Build your set.</h2><p class="hint">A scene pairs a look with a hold time and an entry fade.</p></div></div>
+<div id="cue-list" class="cue-list"></div><p id="empty-cues" class="hint" hidden>No scenes yet. Add your opening look below.</p>
+<form id="add-cue" class="card"><h3 id="cue-heading">Add a scene</h3><div class="form-grid"><label>Scene name<input id="cue-name" maxlength="100" placeholder="Opening" required></label><label>Look<select id="cue-preset"></select></label><label>Hold, seconds<input id="cue-hold" type="number" min="1" max="3600" step="1" value="15" required></label><label>Fade in, seconds<input id="cue-fade" type="number" min="0" max="60" step="0.1" value="1" required></label></div><div class="row"><button id="save-cue" type="submit" class="primary">+ Add scene</button><button id="cancel-cue" type="button" hidden>Cancel edit</button></div><p class="hint">Hold includes the fade. Changes save on the Pi and stop timed playback.</p></form>
+</section>
+<footer>PHREQED <span>Made for the live moment.</span></footer>
+</main>
+<div class="safety-bar"><div><strong id="blackout-status">Ready when you are.</strong><small id="safety-detail">Blackout overrides every look and transition.</small></div><button id="release-blackout" hidden>Release blackout</button><button id="blackout" class="blackout">BLACKOUT</button></div>
+<dialog id="live-dialog"><h2>Send light to the stage?</h2><p>Confirm the fixtures are safely positioned, people nearby are warned, and QLC+ blackout is available. Output starts at 25% brightness or lower.</p><div class="row"><button id="cancel-live">Cancel</button><button id="confirm-live" class="primary">Start live output</button></div></dialog>
+</body></html>

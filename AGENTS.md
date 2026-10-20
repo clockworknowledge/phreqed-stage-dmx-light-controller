@@ -15,12 +15,16 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/compositor.py`: layers, blends, masks, transitions, and limits.
 - `src/phreqed_dmx/engine.py`: preset and per-fixture normalized scene rendering.
 - `src/phreqed_dmx/show_control.py`: transport-independent performance commands.
+- `src/phreqed_dmx/scenes.py`: deterministic ordered-cue playback and transitions.
+- `src/phreqed_dmx/library.py`: validated, atomic user presets and scene storage.
 - `src/phreqed_dmx/fixtures.py`: fixture geometry and logical-pixel-to-DMX mapping.
 - `src/phreqed_dmx/render.py`: composes logical grids into one DMX universe.
 - `src/phreqed_dmx/artnet.py`: ArtDMX packet construction and UDP transmission.
 - `src/phreqed_dmx/effects.py`: v2-compatible effects that operate only on grids.
 - `src/phreqed_dmx/sprites.py`: small bitmap sprites and grid drawing helpers.
 - `src/phreqed_dmx/simulator.py`: local Tkinter preview; never opens a UDP socket.
+- `src/phreqed_dmx/web_control.py`: dependency-free browser preview/control with
+  explicit live enablement and a disconnect watchdog.
 - `src/phreqed_dmx/app.py`: application controller, timing, and mode selection.
 - `config/fixtures.toml`: hardware and controller configuration.
 - `tests/`: hardware-free unit tests.
@@ -62,6 +66,11 @@ not effect code, converts those coordinates to physical zone order.
 - Live output should send a blackout on normal shutdown and on handled
   interruption. A process kill, power loss, or network failure cannot guarantee
   blackout, so QLC+ should also have an operator-accessible blackout control.
+- Browser simulation must never construct `ArtNetSender`. Browser live control
+  requires the literal `live --web` combination, an in-page confirmation, and
+  an active heartbeat lease; losing the lease must stop with blackout.
+- Bind browser control to loopback by default. LAN binding is permitted only on
+  a trusted private network with an explicit allow-network range.
 - Do not increase the initial 25 FPS output rate without testing the complete
   Raspberry Pi, QLC+, USB-DMX, and fixture chain.
 

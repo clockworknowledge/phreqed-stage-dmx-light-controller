@@ -5,6 +5,7 @@ The engine follows a one-way data flow:
 ```text
 effect samples -> normalized grids -> layers/masks/blends -> safety limiter
                                                         |-> Tk simulator
+                                                        |-> browser preview
                                                         `-> DMX quantizer
                                                             -> ArtDMX UDP
                                                             -> QLC+ -> USB-DMX
@@ -16,6 +17,18 @@ transport details. `FixtureConfig` owns physical ordering and one-based DMX
 start addresses. `compose_dmx` is the only layer that quantizes normalized RGB
 and writes logical colors into a universe. The simulator calls `render_scene()`;
 only the explicit live loop calls `render_dmx()` and constructs `ArtNetSender`.
+
+`UserLibrary` validates complete versioned JSON documents before atomically
+replacing the on-disk file. Built-in presets remain immutable. `SceneSequencer`
+uses caller-supplied elapsed time for deterministic cue selection, timed holds,
+and crossfades without importing GUI or transport code.
+
+`BrowserControl` serializes access to one controller from an HTTP server and a
+25 FPS render thread. The `web` command is simulation-only and cannot create an
+Art-Net sender. `live --web` merely makes live activation available; the user
+must confirm it in the page. A five-second heartbeat lease closes the sender
+with blackout if the browser disappears. The HTTP server binds to loopback by
+default and limits non-loopback clients to an explicit trusted IPv4 network.
 
 `VisualEngine` preserves the four formulas from the reconstructed v2 baseline:
 plasma, tunnel, pulse, and chase. It also treats both cubes as one logical 16x6

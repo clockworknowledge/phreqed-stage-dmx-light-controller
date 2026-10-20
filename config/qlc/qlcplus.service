@@ -1,0 +1,24 @@
+[Unit]
+Description=Phreqed headless QLC+
+Wants=network-online.target
+After=network-online.target
+ConditionPathExists=/home/mmorley/.qlcplus/autostart.qxw
+StartLimitIntervalSec=60
+StartLimitBurst=3
+
+[Service]
+Type=simple
+User=mmorley
+Environment=HOME=/home/mmorley
+WorkingDirectory=/home/mmorley
+ExecStart=/usr/bin/qlcplus -platform offscreen --nowm --web --operate --open /home/mmorley/.qlcplus/autostart.qxw
+Restart=on-failure
+RestartSec=5
+TimeoutStopSec=20
+# This Pi's current trusted IPv4 LAN; update before moving to another subnet.
+IPAddressDeny=any
+IPAddressAllow=localhost
+IPAddressAllow=192.168.1.0/24
+
+[Install]
+WantedBy=multi-user.target

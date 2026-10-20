@@ -17,3 +17,6 @@ phreqed-dmx = "phreqed_dmx.app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
+
+[tool.setuptools.package-data]
+phreqed_dmx = ["web/*.html", "web/*.css", "web/*.js"]
