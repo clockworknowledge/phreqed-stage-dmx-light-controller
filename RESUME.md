@@ -33,6 +33,17 @@ with no socket creation. After deployment, acceptance requires a low-brightness
 physical marker test of that row transition on both fixtures. Channels 145-152
 and 297-304 remain zero.
 
+Each LF4808 also has two central white strobe/blinder elements. They are not
+part of the 12-by-4 RGB grid. The operator reports that original Pi scripts
+successfully controlled them, but no such script or channel assignment exists
+in this reviewed checkout or its Git history. Import and characterize that
+source before adding white-strobe controls; do not rediscover it by sweeping
+live channels.
+
+The browser fixture preview now places two disabled grey white-strobe lines
+between the upper and lower pairs of RGB rows. These are display-only; browser
+state and DMX frames still contain only the 48 RGB values per fixture.
+
 ## Prior checkpoint — integrated Pi validation
 
 The Pi-only work was preserved on

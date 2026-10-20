@@ -59,6 +59,18 @@ was not distinguishable by its zone-48/top-left and zone-1/bottom-right test;
 both candidate geometries share those endpoints. Row-boundary markers are
 therefore required for physical geometry validation.
 
+The diagram covers only the 48 RGB zones. Two central white strobe/blinder
+elements are physically present on each fixture but are intentionally absent
+from the logical grid. Prior physical testing reportedly controlled them using
+original scripts, but those files and exact assignments are not in this
+checkout. No channel assignment may be inferred until that evidence is
+imported and characterized.
+
+The browser canvas represents the two white elements as disabled grey center
+lines between the upper and lower RGB row pairs. This is a physical-layout cue,
+not a renderable channel: the serialized scene remains exactly four rows of
+twelve RGB values.
+
 Every zone maps to R, G, then B. Cube A's RGB data occupies DMX 1-144 and Cube
 B's occupies DMX 153-296. Addresses 145-152 and 297-304 are deliberately zero.
 Their functions must be verified from reliable fixture documentation and tested

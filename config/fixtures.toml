@@ -4,6 +4,10 @@ artnet_port = 6454
 universe = 0
 fps = 25
 
+# Only the 48 RGB zones are mapped here. Original Pi scripts reportedly
+# controlled the two central white strobe elements, but those assignments have
+# not been imported into this checkout; the remaining eight channels stay zero.
+
 [[fixtures]]
 name = "Cube A"
 start_address = 1

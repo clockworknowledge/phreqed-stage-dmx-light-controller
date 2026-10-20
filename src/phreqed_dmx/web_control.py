@@ -272,11 +272,14 @@ class ControlHandler(BaseHTTPRequestHandler):
                 self.reply(200, json.dumps(self.server.control.catalog()).encode())
         elif path == '/api/session':
             self.reply(200, json.dumps({'token': self.server.token}).encode())
-        elif path in ('/', '/app.js', '/style.css'):
+        elif path in ('/', '/app.js', '/style.css', '/fixture.css'):
             name = 'index.html' if path == '/' else path[1:]
             content_type = {'index.html': 'text/html; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8',
-                            'style.css': 'text/css; charset=utf-8'}[name]
+                            'style.css': 'text/css; charset=utf-8',
+                            'fixture.css': 'text/css; charset=utf-8'}[name]
             self.reply(200, (ASSETS / name).read_bytes(), content_type)
+        elif path == '/favicon.ico':
+            self.reply(204, b'', 'image/x-icon')
         else:
             self.reply(404, b'{"error":"not found"}')
 

@@ -14,6 +14,8 @@ Collect:
 - QLC+ workspace/input/output configuration or screenshots;
 - fixture mode and address photos or notes;
 - the command used to start each working demonstration;
+- the original white-strobe test/effect, its exact channel assignments, value
+  ranges, and which of the two central white elements responded;
 - sample output or short videos when behavior is hard to infer from code.
 
 Do not collect credentials, unrelated home-directory content, or generated

@@ -46,7 +46,12 @@ mode; the 12-by-4 front-view orientation comes from physical fixture testing.
 - 48 RGB zones per cube in a 12-column by 4-row front-view grid; zone 1 is
   bottom-right
 - zones advance right-to-left, then bottom-to-top
-- the last eight channels on each cube are unverified and always remain zero
+- two central white strobe/blinder elements are physically present but are not
+  part of the RGB grid; prior original scripts reportedly controlled them
+- the exact white-strobe assignment is not present in this checkout, so the
+  last eight channels on each cube remain zero until those scripts are imported
+- the browser preview shows both center strobe lines as disabled grey physical
+  references; they are not connected to output values
 
 The committed settings are in [`config/fixtures.toml`](config/fixtures.toml).
 

@@ -101,6 +101,15 @@ per fixture remain zero and are not involved in this correction. All 82 Windows
 tests, JavaScript syntax checking, Python compilation, and the socket-free
 eight-frame diagnostic pass on the correction branch.
 
+Each physical fixture also has two central white strobe/blinder elements. They
+are not included in the 12-by-4 RGB frame data. The browser canvas depicts them
+as two disabled grey lines between the upper and lower RGB row pairs so its
+physical layout matches the fixture; the Tk preview remains RGB-only. Their DMX
+mapping was reportedly exercised successfully by original Pi scripts, but
+those files and exact assignments are absent from this checkout and its Git
+history. The controller continues to transmit zero for all eight currently
+undocumented channels until the original evidence is imported and tested.
+
 ## Raspberry Pi commissioning — 2026-10-19
 
 Verified directly on `raspberrypi`, a Raspberry Pi 5 Model B Rev 1.1 running

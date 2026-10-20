@@ -48,7 +48,10 @@ class TkSimulator:
         self._build_fixture_controls()
         tk.Label(
             self._root,
-            text="SIMULATION - Art-Net transmission is disabled",
+            text=(
+                "SIMULATION - Art-Net disabled - RGB zones only; "
+                "white strobes unavailable in this build"
+            ),
             foreground="#eeeeee",
             background="#202020",
             padx=8,

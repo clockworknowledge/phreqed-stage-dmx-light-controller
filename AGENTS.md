@@ -45,6 +45,11 @@ the 12-by-4 geometry are based on controlled physical fixture testing.
 - Each fixture exposes 48 confirmed RGB zones, three channels per zone (R, G, B).
 - The front view is 12 columns by 4 rows. This geometry supersedes the 8-by-6
   assumption retained in the immutable reconstructed baseline.
+- Each fixture also has two central white strobe/blinder elements. Prior Pi
+  testing reportedly controlled them from original scripts, but those scripts
+  and their exact channel assignments are not present in this checkout. They
+  are not RGB-grid pixels and remain disabled in the package until that source
+  is imported and characterized.
 - Zone 1 is bottom-right. Zones advance right-to-left across a row, then
   bottom-to-top through the rows.
 - Only the first 144 fixture channels are mapped. The last eight channels of
@@ -60,8 +65,9 @@ not effect code, converts those coordinates to physical zone order.
 
 - Simulation is the default. Live transmission always requires the explicit
   `live` command.
-- Never activate, probe, sweep, or infer the eight unverified channels on either
-  fixture. They may include strobe or other high-output functions.
+- Never activate, probe, sweep, or infer the eight currently undocumented
+  channels on either fixture. Recover the known-working white-strobe assignment
+  from original source and physical test notes before adding it to this package.
 - Keep the default global brightness at or below 0.65 and retain the frame safety
   limiter unless a documented hardware test justifies a change.
 - New default effects must avoid rapid high-intensity full-frame flashes.

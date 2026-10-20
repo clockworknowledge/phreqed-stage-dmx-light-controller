@@ -51,9 +51,10 @@ corner-only check could not distinguish the two geometries because zones 1 and
 48 have the same locations under both layouts.
 
 Acceptance: the Windows and Pi test suites pass, browser and Tk previews show
-12 x 4 cells, and a low-brightness physical test confirms the zone 12-to-13
-row transition independently on both fixtures. Do not probe the eight
-unverified channels.
+12 x 4 RGB cells, the browser adds two disabled center strobe reference lines,
+and a low-brightness physical test confirms the zone 12-to-13 row transition
+independently on both fixtures. Do not probe the eight currently undocumented
+channels or attempt to rediscover the white-strobe mapping by sweeping them.
 
 ### WEB-001 — Validate browser show control on the Pi (`P0`, show control)
 
@@ -105,14 +106,17 @@ Blocked on receiving a copy of the actual Raspberry Pi source tree. When it is
 available, follow `docs/pi-script-import.md`: copy it into a new dated directory,
 hash it, and compare it without changing either preserved baseline.
 
-### HW-001 — Identify LF4808 channels 145–152 (`P0`, safety)
+### HW-001 — Recover LF4808 white-strobe mapping (`P0`, safety)
 
-Blocked on authoritative fixture documentation or a separately approved,
-controlled hardware investigation. These channels may include strobe or other
-high-output functions and must remain zero throughout normal development.
+The operator reports that original Pi scripts successfully controlled the two
+central white strobe elements. Those scripts and exact assignments are absent
+from this checkout and its Git history. Recover and import the source through
+RPI-001 before considering a new controlled hardware investigation. The eight
+currently undocumented channels remain zero throughout normal development.
 
-Acceptance: each function is confirmed from trustworthy evidence and any live
-test has an explicit low-risk procedure before configuration or code changes.
+Acceptance: source and test provenance are recorded, each assignment is covered
+by hardware-free tests, and any repeat live validation has an explicit low-risk
+procedure before package configuration or effect changes.
 
 ## Backlog
 

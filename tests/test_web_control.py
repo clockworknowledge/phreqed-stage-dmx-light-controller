@@ -1,4 +1,5 @@
 from email.message import Message
+from importlib.resources import files
 import io
 import json
 from pathlib import Path
@@ -48,6 +49,13 @@ class BrowserControlTests(unittest.TestCase):
         for frame in frames.values():
             self.assertEqual(len(frame), 4)
             self.assertTrue(all(len(row) == 12 for row in frame))
+
+    def test_browser_preview_documents_disabled_center_strobes(self):
+        html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
+        script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
+        self.assertIn('12 by 4 RGB grid and two disabled center white strobe lines', html)
+        self.assertIn('display-only', html)
+        self.assertIn("ctx.fillStyle = '#59615c'", script)
 
     def test_preset_and_scene_storage_survives_new_controller_without_autoplay(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))

@@ -40,9 +40,21 @@ function draw(canvas, rows) {
   const ctx = canvas.getContext('2d'); ctx.fillStyle = '#0c100d'; ctx.fillRect(0,0,canvas.width,canvas.height);
   const height = rows.length, width = rows[0]?.length || 0;
   if (!width || rows.some(row => row.length !== width)) return;
-  const cell = Math.min(canvas.width/width,canvas.height/height), pad = Math.max(1,cell*0.12);
-  const left = (canvas.width-width*cell)/2, top = (canvas.height-height*cell)/2;
-  rows.forEach((row,y) => row.forEach((rgb,x) => { ctx.fillStyle = `rgb(${rgb.join(',')})`; ctx.fillRect(left+x*cell+pad,top+y*cell+pad,cell-pad*2,cell-pad*2); }));
+  const centerGap = height === 4 ? canvas.height*0.16 : 0;
+  const cell = Math.min(canvas.width/width,(canvas.height-centerGap)/height), pad = Math.max(1,cell*0.12);
+  const left = (canvas.width-width*cell)/2, top = (canvas.height-(height*cell+centerGap))/2;
+  rows.forEach((row,y) => row.forEach((rgb,x) => {
+    const rowTop = top+y*cell+(centerGap && y>=height/2 ? centerGap : 0);
+    ctx.fillStyle = `rgb(${rgb.join(',')})`;
+    ctx.fillRect(left+x*cell+pad,rowTop+pad,cell-pad*2,cell-pad*2);
+  }));
+  if (centerGap) {
+    const lineHeight = Math.max(3,centerGap*0.22), lineGap = centerGap*0.12;
+    const lineTop = top+(height/2)*cell+(centerGap-(lineHeight*2+lineGap))/2;
+    ctx.fillStyle = '#59615c';
+    ctx.fillRect(left+pad,lineTop,width*cell-pad*2,lineHeight);
+    ctx.fillRect(left+pad,lineTop+lineHeight+lineGap,width*cell-pad*2,lineHeight);
+  }
 }
 function renderState(s) {
   state = s; connected = true;
