@@ -190,17 +190,38 @@ From the repository root after installation:
 .venv/bin/python scripts/pi-soak.py --output /tmp/phreqed-pi-soak.json
 ```
 
-The default run takes about 11.5 minutes: 30 seconds each for all 19 effects
-and four presets at the configured 25 FPS. `--seconds-per-look` changes the
+The default run takes about 15.5 minutes: 30 seconds each for all 19 effects
+and twelve presets at the configured 25 FPS. `--seconds-per-look` changes the
 duration. Each look renders both fixtures through the safety limiter and
 serializes a 512-channel payload in memory. Python sockets and the application's
 Art-Net sender constructor are blocked throughout the run; QLC+ is not needed.
 The harness checks unmapped channels and an in-memory blackout for every look.
 
+For an integrated bench pass with the confirmed Snowball and Ampero devices,
+use this shorter initial run:
+
+```bash
+.venv/bin/python scripts/pi-soak.py \
+  --seconds-per-look 5 \
+  --audio-device plughw:CARD=Snowball,DEV=0 \
+  --foot-midi-device /dev/snd/midiC3D0 \
+  --require-foot-actions \
+  --output /tmp/phreqed-full-bench.json
+```
+
+While it runs, press FS1 once, FS2 once, FS3 at least twice, and toggle FS4 on
+and off. The pedal is only probed in this harness: its events are counted but
+cannot change the rendered scene, remove blackout, or start output. The report
+fails if capture stops, an expected pedal action is missing, a MIDI read error
+occurs, or a rendering/safety check fails. Raw `/dev/snd/midiC*D*` numbers can
+change after a reboot, so confirm the current path with `amidi -l` first.
+
 The JSON report records achieved FPS, missed schedule slots, render time,
-process CPU use relative to one core, Linux resident memory, and CPU temperature
-when available. Each result is saved as it completes. A complete successful
-report includes `completed_utc` and `passed: true`; timing failures exit nonzero.
+process CPU use relative to one core, Linux resident memory, CPU temperature,
+audio capture health and peaks, and observed pedal actions when enabled. Each
+result is saved as it completes. A complete successful report includes
+`completed_utc`, three true values under `checks`, and `passed: true`; failures
+exit nonzero.
 This is a rendering soak test, excluding Tkinter drawing, Art-Net, QLC+ output,
 USB-DMX, and physical shutdown blackout. It does not replace the controlled
 hardware smoke test.

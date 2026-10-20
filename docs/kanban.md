@@ -57,6 +57,10 @@ Acceptance remaining: document sustained CPU use, analysis latency, and missed
 25 FPS frames, then tune sensitivity under rehearsal-level sound. Automatic
 scene switching and hard onset flashes remain out of scope.
 
+An integrated, socket-blocked bench mode is now available in `scripts/pi-soak.py`.
+It records capture continuity and signal peaks for every effect and preset; its
+first Raspberry Pi report remains pending.
+
 ### AUDIO-001 — Audio-analysis input contract (`P1`, music)
 
 Normalized loudness, onset, bass, mid, and treble values now enter effects only
@@ -91,6 +95,10 @@ operation was subsequently reported working correctly.
 Acceptance: create a stable udev link and pass a rehearsal-length USB soak.
 Bluetooth MIDI remains a separate follow-up until Pi pairing and reconnect
 behavior are characterized.
+
+The integrated soak can now require every mapped action while using a probe
+that cannot alter scenes or enable output. Its first Raspberry Pi report remains
+pending; the raw device path must still be replaced with a stable udev link.
 
 ### MAP-002 — Correct LF4808 geometry to 12 x 4 (`P0`, mapping)
 

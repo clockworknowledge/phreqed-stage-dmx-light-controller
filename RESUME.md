@@ -31,6 +31,13 @@ audio-reactive visual changed with the room input. This did not enable Art-Net
 or exercise physical light output. Functional Pi acceptance has passed; only a
 sustained CPU, latency, and missed-frame measurement remains for AUDIO-002.
 
+`scripts/pi-soak.py` now supports an integrated simulation-only bench run with
+explicit Snowball capture and Ampero raw-MIDI input. It blocks all sockets and
+the Art-Net sender, renders every effect and preset, checks the 512-byte DMX
+frame and final blackout, records audio continuity/peaks, and can require all
+five mapped pedal actions. The Windows suite passes 112 tests; the first Pi
+report is the next validation step.
+
 Projector output is now scoped in the backlog as PROJ-001, PROJ-002, and
 SHOW-002. The intended design uses a separate HDMI player/compositor process
 and unified light/projection cues. The current Ampero can control those cues, so
