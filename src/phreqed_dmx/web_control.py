@@ -16,11 +16,32 @@ from .artnet import ArtNetSender
 from .app import Controller
 from .compositor import black_scene
 from .effect_library import EFFECT_REGISTRY
+from .foot_control import RawMidiFootController
 from .library import UserLibrary, number, object_fields, parse_preset, preset_data
 from .presets import PRESETS
 from .render import compose_dmx
 
 ASSETS = Path(__file__).with_name('web')
+
+
+class BrowserFootCommands:
+    """Route pedal events through the browser controller's serialized commands."""
+
+    def __init__(self, control: BrowserControl) -> None:
+        self.control = control
+
+    def previous_scene(self) -> None:
+        self.control.command({'action': 'previous_scene'})
+
+    def next_scene(self) -> None:
+        self.control.command({'action': 'next_scene'})
+
+    def tap_tempo(self, timestamp: float | None = None) -> float:
+        self.control.command({'action': 'tap'})
+        return self.control.controller.show.context().tempo_bpm
+
+    def blackout(self, enabled: bool = True) -> None:
+        self.control.command({'action': 'blackout' if enabled else 'resume'})
 
 
 class BrowserControl:
@@ -308,12 +329,22 @@ class ControlHandler(BaseHTTPRequestHandler):
 
 
 def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1', port: int = 8080,
-          allow_network: str = '192.168.1.0/24', allow_live: bool = False) -> None:
+          allow_network: str = '192.168.1.0/24', allow_live: bool = False,
+          foot_midi_device: Path | None = None, foot_midi_channel: int = 1) -> None:
     if not 1 <= port <= 65535:
         raise ValueError('browser port must be between 1 and 65535')
     if controller.config.fps > 25:
         raise ValueError('browser control requires an output rate at or below 25 FPS')
     control = BrowserControl(controller, library_path, allow_live=allow_live)
+    foot_controller = (
+        RawMidiFootController(
+            foot_midi_device,
+            BrowserFootCommands(control),
+            channel=foot_midi_channel,
+        )
+        if foot_midi_device is not None
+        else None
+    )
     server = ControlServer((host, port), control, allow_network)
     previous_term = signal.getsignal(signal.SIGTERM)
     def interrupted(signum: int, frame: object) -> None:
@@ -322,8 +353,16 @@ def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1'
     print(f'Phreqed browser: http://{host}:{port} — simulation active; output stopped', flush=True)
     control.start()
     try:
+        if foot_controller is not None:
+            foot_controller.start()
+            print(
+                f'FOOT CONTROL: {foot_midi_device} on MIDI channel {foot_midi_channel}',
+                flush=True,
+            )
         server.serve_forever(poll_interval=0.2)
     finally:
+        if foot_controller is not None:
+            foot_controller.close()
         control.close()
         server.server_close()
         signal.signal(signal.SIGTERM, previous_term)

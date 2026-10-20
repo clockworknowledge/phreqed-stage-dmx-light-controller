@@ -12,7 +12,7 @@ from phreqed_dmx.app import Controller, main
 from phreqed_dmx.config import load_config
 from phreqed_dmx.library import preset_data
 from phreqed_dmx.presets import PRESETS
-from phreqed_dmx.web_control import BrowserControl, ControlHandler
+from phreqed_dmx.web_control import BrowserControl, BrowserFootCommands, ControlHandler
 
 
 class BrowserControlTests(unittest.TestCase):
@@ -143,6 +143,40 @@ class BrowserControlTests(unittest.TestCase):
             self.assertTrue(serve.call_args.kwargs['allow_live'])
         with self.assertRaises(SystemExit):
             main(['simulate', '--web'])
+
+    def test_browser_foot_commands_use_serialized_browser_actions(self):
+        control = Mock()
+        control.controller.show.context.return_value.tempo_bpm = 123.0
+        commands = BrowserFootCommands(control)
+        commands.previous_scene()
+        commands.next_scene()
+        self.assertEqual(commands.tap_tempo(), 123.0)
+        commands.blackout(True)
+        commands.blackout(False)
+        self.assertEqual(
+            [call.args[0] for call in control.command.call_args_list],
+            [
+                {'action': 'previous_scene'},
+                {'action': 'next_scene'},
+                {'action': 'tap'},
+                {'action': 'blackout'},
+                {'action': 'resume'},
+            ],
+        )
+
+    def test_cli_passes_explicit_foot_device_to_browser_server(self):
+        with (
+            patch('phreqed_dmx.web_control.serve') as serve,
+            patch('phreqed_dmx.app.RawMidiFootController') as raw_midi,
+        ):
+            self.assertEqual(
+                main(['web', '--foot-midi-device', '/dev/snd/midiC2D0']), 0
+            )
+        raw_midi.assert_not_called()
+        self.assertEqual(
+            serve.call_args.kwargs['foot_midi_device'], Path('/dev/snd/midiC2D0')
+        )
+        self.assertEqual(serve.call_args.kwargs['foot_midi_channel'], 1)
 
 
 class HttpBoundaryTests(unittest.TestCase):

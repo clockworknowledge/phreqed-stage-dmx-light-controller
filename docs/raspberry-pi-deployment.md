@@ -168,6 +168,20 @@ CPU temperature and QLC+ input stability. Start with `--brightness 0.25` during
 fixture validation. Phase 2 defaults retain a hard 0.65 software ceiling, but
 that limit is not a substitute for safe fixture placement or QLC+ blackout.
 
+## Optional Ampero foot control
+
+The Hotone Ampero Control adapter is disabled by default. Follow
+[`ampero-control.md`](ampero-control.md) to program its MIDI bank and discover
+the Pi's raw-MIDI path. Add the explicit device only after the pedal-only
+simulation test passes:
+
+```bash
+phreqed-dmx web --foot-midi-device /dev/snd/midiC1D0
+```
+
+USB is the initial supported stage transport. Bluetooth MIDI is not yet part of
+the unattended deployment configuration.
+
 ## Headless simulation-only soak test
 
 From the repository root after installation:

@@ -25,6 +25,8 @@ and [Pi comparison checklist](docs/pi-script-import.md).
 - four example multi-layer presets
 - conservative global brightness ceiling and frame-rise limiter
 - transport-independent blackout, preset, event, tap-tempo, and navigation APIs
+- optional Hotone Ampero Control input over an explicitly selected ALSA
+  raw-MIDI device; foot input never enables Art-Net output
 - interactive Tk simulator with live FPS, pause, step, parameters, and PPM export
 - versioned user looks and ordered scenes with atomic JSON persistence
 - browser previews and show control with an explicit live gate and disconnect blackout
@@ -113,6 +115,19 @@ simulation-only `web` command:
 ```
 
 This opens only the browser HTTP server; it cannot enable Art-Net output.
+
+## Hotone Ampero Control
+
+The [Hotone Ampero Control](https://www.hotone.com/products/controlers/Ampero%20Control)
+is a four-switch programmable MIDI controller. The initial Phreqed bank maps
+switches 1–3 to previous scene, next scene,
+and tap tempo. Switch 4 sends explicit blackout-on/off values. USB MIDI is the
+recommended first-stage transport because it also powers the controller and
+avoids Bluetooth pairing failures.
+
+Foot input is disabled unless `--foot-midi-device` is supplied. For setup,
+message assignments, Pi device discovery, and safe testing, see
+[`docs/ampero-control.md`](docs/ampero-control.md).
 
 ## Run live on the Raspberry Pi
 

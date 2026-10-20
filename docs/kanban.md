@@ -130,10 +130,17 @@ inputs in the performance context before selecting an audio capture library.
 Add opt-in audio capture and analysis after AUDIO-001. Effects must continue to
 render deterministically when supplied recorded analysis frames.
 
-### CONTROL-001 — Foot-controller adapter (`P1`, performance control)
+### CONTROL-001 — Hotone Ampero foot-controller adapter (`P1`, performance control)
 
-Map future hardware events onto the existing show-command interface. Hardware
-drivers must not be imported by the visual engine or simulator.
+In progress on `feat/ampero-control`. The dependency-free USB MIDI parser and
+Ampero message mapper are implemented behind an explicit device option. The
+visual engine and Art-Net transport do not import the adapter, and simulation
+remains the default.
+
+Acceptance: configure the documented four-switch bank, identify a stable Pi
+device path, confirm all five explicit actions in browser simulation, and pass
+a rehearsal-length USB soak test. Bluetooth MIDI remains a follow-up until its
+pairing and reconnect behavior is characterized on the Pi.
 
 ### VIDEO-001 — Video-to-grid sampler (`P2`, visuals)
 

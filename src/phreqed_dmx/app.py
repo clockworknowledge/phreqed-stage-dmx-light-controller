@@ -14,6 +14,7 @@ from .config import DEFAULT_CONFIG_PATH, ControllerConfig, load_config
 from .effect_api import PerformanceContext
 from .effect_library import EFFECT_REGISTRY
 from .engine import SceneEngine
+from .foot_control import RawMidiFootController
 from .presets import PRESETS
 from .render import compose_dmx
 from .show_control import ShowController
@@ -161,6 +162,19 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--allow-network", default="192.168.1.0/24", help="trusted IPv4 browser network")
     parser.add_argument("--library", type=Path, default=Path.home() / ".local/share/phreqed-dmx/library.json",
                         help="user preset and scene JSON file")
+    parser.add_argument(
+        "--foot-midi-device",
+        type=Path,
+        help="explicit ALSA raw-MIDI device for Ampero Control (disabled by default)",
+    )
+    parser.add_argument(
+        "--foot-midi-channel",
+        type=int,
+        choices=range(1, 17),
+        default=1,
+        metavar="1-16",
+        help="Ampero Control MIDI channel (default 1)",
+    )
     return parser
 
 
@@ -222,13 +236,32 @@ def main(argv: list[str] | None = None) -> int:
     config = load_config(args.config)
     engine = _configure_engine(args, config)
     controller = Controller(config, engine, speed=args.speed)
+    browser_requested = args.command == "web" or args.web
+    foot_controller = (
+        RawMidiFootController(
+            args.foot_midi_device,
+            controller.show,
+            channel=args.foot_midi_channel,
+        )
+        if args.foot_midi_device is not None and not browser_requested
+        else None
+    )
 
     try:
-        if args.command == "web" or args.web:
+        if foot_controller is not None:
+            foot_controller.start()
+            print(
+                f"FOOT CONTROL: {args.foot_midi_device} on MIDI channel "
+                f"{args.foot_midi_channel}",
+                file=sys.stderr,
+            )
+        if browser_requested:
             from .web_control import serve
 
             serve(controller, args.library, host=args.host, port=args.port,
-                  allow_network=args.allow_network, allow_live=args.command == "live")
+                  allow_network=args.allow_network, allow_live=args.command == "live",
+                  foot_midi_device=args.foot_midi_device,
+                  foot_midi_channel=args.foot_midi_channel)
         elif args.command == "live":
             _run_live(controller, args.duration)
         else:
@@ -242,6 +275,9 @@ def main(argv: list[str] | None = None) -> int:
             else "Simulation interrupted; no network output was active."
         )
         print(message, file=sys.stderr)
+    finally:
+        if foot_controller is not None:
+            foot_controller.close()
     return 0
 
 

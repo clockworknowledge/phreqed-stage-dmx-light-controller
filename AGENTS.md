@@ -15,6 +15,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/compositor.py`: layers, blends, masks, transitions, and limits.
 - `src/phreqed_dmx/engine.py`: preset and per-fixture normalized scene rendering.
 - `src/phreqed_dmx/show_control.py`: transport-independent performance commands.
+- `src/phreqed_dmx/foot_control.py`: dependency-free MIDI parsing and explicit
+  Ampero Control input; it maps pedal messages only to show commands.
 - `src/phreqed_dmx/scenes.py`: deterministic ordered-cue playback and transitions.
 - `src/phreqed_dmx/library.py`: validated, atomic user presets and scene storage.
 - `src/phreqed_dmx/fixtures.py`: fixture geometry and logical-pixel-to-DMX mapping.
@@ -81,6 +83,8 @@ not effect code, converts those coordinates to physical zone order.
 - Browser simulation must never construct `ArtNetSender`. Browser live control
   requires the literal `live --web` combination, an in-page confirmation, and
   an active heartbeat lease; losing the lease must stop with blackout.
+- Foot control is disabled unless an explicit raw-MIDI device path is supplied.
+  MIDI input must not enable live output or bypass the browser live gate.
 - Bind browser control to loopback by default. LAN binding is permitted only on
   a trusted private network with an explicit allow-network range.
 - Do not increase the initial 25 FPS output rate without testing the complete

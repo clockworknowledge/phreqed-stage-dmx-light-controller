@@ -48,6 +48,23 @@ class ConfigurationTests(unittest.TestCase):
         simulator.assert_called_once()
         simulator.return_value.run.assert_called_once_with()
 
+    def test_explicit_foot_device_does_not_enable_artnet(self) -> None:
+        with (
+            patch("phreqed_dmx.app.ArtNetSender") as sender,
+            patch("phreqed_dmx.app.RawMidiFootController") as foot,
+            patch("phreqed_dmx.simulator.TkSimulator") as simulator,
+        ):
+            self.assertEqual(
+                main(["simulate", "--foot-midi-device", "/dev/snd/midiC1D0"]),
+                0,
+            )
+
+        sender.assert_not_called()
+        foot.assert_called_once()
+        foot.return_value.start.assert_called_once_with()
+        foot.return_value.close.assert_called_once_with()
+        simulator.return_value.run.assert_called_once_with()
+
     def test_controller_blackout_produces_complete_zero_dmx_frame(self) -> None:
         config = load_config()
         engine = SceneEngine(config.fixtures)

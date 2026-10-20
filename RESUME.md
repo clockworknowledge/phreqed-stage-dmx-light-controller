@@ -7,6 +7,20 @@ This is the short operational handoff for a new Codex session. Read
 design remains in `docs/architecture.md`, `docs/effects.md`, and
 `docs/raspberry-pi-deployment.md`.
 
+## Hotone Ampero Control branch
+
+`feat/ampero-control` is stacked on the 12-by-4 correction branch. It adds a
+dependency-free standard MIDI parser, explicit ALSA raw-MIDI activation, and a
+documented Ampero bank: FS1 previous scene, FS2 next scene, FS3 tap tempo, and
+FS4 explicit blackout on/off. Browser-mode pedal events use the browser's
+serialized cue and blackout commands. USB is the initial supported transport;
+Bluetooth MIDI remains pending Pi pairing and reconnect characterization.
+
+The adapter is disabled unless `--foot-midi-device` is supplied and cannot
+enable Art-Net. Hardware-free tests pass on Windows. Pi acceptance still needs
+the pedal's actual raw-MIDI path, browser-simulation validation, a stable udev
+link, and a rehearsal-length USB soak test. See `docs/ampero-control.md`.
+
 ## Objective in progress
 
 Correct the LF4808 logical layout from the reconstructed baseline's 8-by-6

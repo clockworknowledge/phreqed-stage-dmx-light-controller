@@ -42,6 +42,13 @@ blending, masks, global brightness limiting, and crossfades. `ShowController`
 provides effect, parameter, preset, event, blackout, tap-tempo, and scene
 navigation commands without importing Art-Net.
 
+`foot_control.py` parses standard MIDI channel messages without a third-party
+runtime dependency and maps an explicitly selected Hotone Ampero Control input
+onto that command boundary. It does not import Art-Net or fixture mapping and
+cannot enable live output. Browser-mode pedal actions are routed through the
+browser controller's existing serialized command path so cue navigation,
+blackout, and safety state remain consistent.
+
 ## Coordinates and physical zones
 
 Logical `(0, 0)` is top-left when looking at a cube from the front. For the
