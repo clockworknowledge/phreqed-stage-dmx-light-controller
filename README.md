@@ -5,6 +5,10 @@ Betopper LF4808 RGB matrix fixtures. It provides deterministic procedural
 effects, normalized RGB layer compositing, presets, an interactive two-cube
 simulator, and explicit live 512-channel Art-Net output through QLC+.
 
+To continue deployment or development in a fresh Codex session, start with the
+[current resume](RESUME.md), then read [`AGENTS.md`](AGENTS.md) and the
+[project Kanban](docs/kanban.md).
+
 The reconstructed conversation baseline is preserved unchanged under
 `phreqed-stage-dmx-baseline/`. The package retains its plasma, tunnel, pulse,
 chase, and cross-cube chase while adding fifteen advanced effects. These

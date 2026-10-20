@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-10-19
+Last reviewed: 2026-10-20
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -26,7 +26,26 @@ outcome, `P2` for important improvements, and `P3` for optional polish.
 
 ## In progress
 
-No cards currently in progress.
+### DEPLOY-001 — Complete independent Pi installation (`P0`, deployment)
+
+The repository is cloned on the Raspberry Pi and SSH access is working. Run the
+checked-in installer and capture its Python version, package installation, and
+test result before any live-output work.
+
+Acceptance: `bash scripts/pi-install.sh` completes on the Pi, all 57 tests pass,
+the CLI help loads from `.venv`, and the evidence is added to `RESUME.md` or the
+Phase 2 implementation report.
+
+### QLC-002 — Manage headless QLC+ with systemd (`P0`, reliability)
+
+QLC+ is currently proven to run offscreen with web access, its runtime
+workspace, TCP 9999, and Art-Net UDP 6454. No `qlcplus.service` unit existed
+when inspected.
+
+Acceptance: a service running as `mmorley` loads
+`/home/mmorley/.qlcplus/autostart.qxw`, starts after reboot without a physical
+display, owns the expected ports, exposes its web UI only on the trusted stage
+LAN, and stops/restarts without unsafe retained output.
 
 ## Ready
 
@@ -143,6 +162,11 @@ times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
 
+- **QLC-001 (`P0`)** — Captured and reviewed the known-good QLC+ 4.14.1
+  workspace with universe 0 Art-Net input, passthrough, and the FT232R USB-DMX
+  output; no credentials or private paths are embedded.
+- **OPS-001 (`P1`)** — Added independent Raspberry Pi install and guarded update
+  scripts that require no Codex, VS Code, or Windows host after deployment.
 - **FOUND-001 (`P0`)** — Python 3.11+ package, simulation-first CLI, fixture
   configuration, ArtDMX transport, and hardware-free test environment.
 - **MAP-001 (`P0`)** — Independent A001/A153 fixture mapping with verified 8 x 6
