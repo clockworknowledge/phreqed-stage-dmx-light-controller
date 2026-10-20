@@ -11,7 +11,8 @@ from pathlib import Path
 
 from .artnet import ArtNetSender
 from .audio_analysis import AudioAnalysisSource
-from .compositor import FrameSafetyLimiter, Scene
+from .audio_reactivity import AudioReactiveClock
+from .compositor import Compositor, FrameSafetyLimiter, Scene
 from .config import DEFAULT_CONFIG_PATH, ControllerConfig, load_config
 from .effect_api import PerformanceContext
 from .effect_library import EFFECT_REGISTRY
@@ -41,8 +42,13 @@ class Controller:
         self.engine = engine or SceneEngine(config.fixtures)
         self.show = ShowController(self.engine)
         self.speed = speed
-        self.safety_limiter = safety_limiter or FrameSafetyLimiter()
+        self.safety_limiter = safety_limiter or FrameSafetyLimiter(
+            maximum_brightness=self.engine.compositor.maximum_brightness
+        )
         self.audio_source = audio_source
+        self.audio_clock = AudioReactiveClock()
+        self.audio_motion_multiplier = 1.0
+        self.audio_brightness_multiplier = 1.0
         self._last_scene: Scene | None = None
         self._transition_from: Scene | None = None
         self._transition_started = 0.0
@@ -77,7 +83,15 @@ class Controller:
         self.scenes.update(elapsed)
         if self.engine.blackout_enabled:
             self._transition_from = None
-        scene = self.engine.render(elapsed * self.speed, context)
+        reactive = self.audio_clock.advance(
+            elapsed,
+            tempo_bpm=context.tempo_bpm,
+            speed=self.speed,
+            audio=context.audio,
+        )
+        self.audio_motion_multiplier = reactive.motion_multiplier
+        self.audio_brightness_multiplier = reactive.brightness_multiplier
+        scene = self.engine.render(reactive.animation_time, context)
         if self._transition_from is not None:
             progress = (elapsed - self._transition_started) / self._transition_duration
             if progress >= 1.0:
@@ -86,6 +100,13 @@ class Controller:
                 scene = self.engine.compositor.transition(
                     self._transition_from, scene, max(0.0, progress)
                 )
+        if reactive.brightness_multiplier < 1.0:
+            for grid in scene.values():
+                for y in range(grid.height):
+                    for x in range(grid.width):
+                        grid[x, y] = grid[x, y].scaled(
+                            reactive.brightness_multiplier
+                        )
         result = self.safety_limiter.apply(scene, elapsed) if apply_safety else scene
         self._last_scene = {name: grid.copy() for name, grid in result.items()}
         return result
@@ -101,8 +122,15 @@ class Controller:
 
 def _brightness(value: str) -> float:
     parsed = float(value)
-    if not 0.0 <= parsed <= 0.65:
-        raise argparse.ArgumentTypeError("brightness must be between 0.0 and 0.65")
+    if not 0.0 <= parsed <= 1.0:
+        raise argparse.ArgumentTypeError("brightness must be between 0.0 and 1.0")
+    return parsed
+
+
+def _ceiling(value: str) -> float:
+    parsed = _brightness(value)
+    if parsed == 0.0:
+        raise argparse.ArgumentTypeError("RGB ceiling must be greater than 0.0")
     return parsed
 
 
@@ -162,10 +190,25 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--brightness",
         type=_brightness,
-        help="optional global output level from 0.0 to the safety ceiling of 0.65",
+        help="optional peak/master output level; it may not exceed --rgb-ceiling",
     )
     parser.add_argument(
-        "--speed", type=_positive, default=1.0, help="global animation speed multiplier"
+        "--rgb-ceiling",
+        type=_ceiling,
+        default=0.65,
+        metavar="0.0-1.0",
+        help="hard RGB output ceiling (default 0.65; values above 0.65 are live-only)",
+    )
+    parser.add_argument(
+        "--acknowledge-high-output",
+        action="store_true",
+        help="required with live mode when --rgb-ceiling is above the safe default",
+    )
+    parser.add_argument(
+        "--speed",
+        type=_positive,
+        default=1.0,
+        help="operator animation trim applied to the tempo and audio-driven clock",
     )
     parser.add_argument(
         "--duration", type=_positive, help="optional live-mode run time in seconds"
@@ -203,10 +246,15 @@ def build_parser() -> argparse.ArgumentParser:
 
 
 def _configure_engine(args: argparse.Namespace, config: ControllerConfig) -> SceneEngine:
-    engine = SceneEngine(config.fixtures)
+    engine = SceneEngine(
+        config.fixtures,
+        compositor=Compositor(maximum_brightness=args.rgb_ceiling),
+    )
     engine.activate_preset(args.preset)
     if args.brightness is not None:
         engine.set_global_brightness(args.brightness)
+    elif engine.compositor.global_brightness > args.rgb_ceiling:
+        engine.set_global_brightness(args.rgb_ceiling)
     if args.effect is None:
         return engine
 
@@ -258,6 +306,15 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--duration is available only in live mode")
     if args.audio_sensitivity is not None and args.audio_device is None:
         parser.error("--audio-sensitivity requires --audio-device")
+    if args.rgb_ceiling > 0.65:
+        if args.command != "live":
+            parser.error("--rgb-ceiling above 0.65 is available only in explicit live mode")
+        if not args.acknowledge_high_output:
+            parser.error(
+                "--rgb-ceiling above 0.65 requires --acknowledge-high-output"
+            )
+    if args.brightness is not None and args.brightness > args.rgb_ceiling:
+        parser.error("--brightness may not exceed --rgb-ceiling")
 
     config = load_config(args.config)
     engine = _configure_engine(args, config)

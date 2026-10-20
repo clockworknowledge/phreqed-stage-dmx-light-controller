@@ -41,6 +41,33 @@ safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
 
+### SAFE-002 — Explicit show-time RGB ceiling (`P0`, safety)
+
+The default 0.65 RGB ceiling remains unchanged. A higher process-local ceiling
+now requires the literal `live` command and `--acknowledge-high-output`; both
+the compositor and frame limiter receive the selected value. Browser live still
+starts at 0.25 or lower, displays the elevated ceiling and warning, and rejects
+master levels above it. Saved presets remain capped at 0.65, luminance-rise and
+flash-interval safeguards remain active, and the white commissioning tool keeps
+its independent 10% ceiling.
+
+Acceptance remaining: pull to the Pi, verify default and elevated browser
+slider bounds without fixtures, then perform a deliberate stepped live check on
+the physically secured show rig with QLC+ blackout immediately available.
+
+### AUDIO-003 — Shared tempo and dynamics clock (`P1`, music)
+
+All registered effects now use a shared continuous animation clock. Tap tempo
+sets the baseline rate, `--speed` remains an operator trim, and smoothed music
+dynamics provide a bounded 1.0x-2.0x motion multiplier. Audio also modulates
+output from 55%-100% of the manual master without raising the RGB ceiling.
+The browser exposes both live multipliers, and silence preserves tempo-driven
+motion. No new runtime dependency was added.
+
+Acceptance remaining: visually validate every preset with rehearsal-level
+Snowball input, tune the response curves, and confirm 25 FPS timing in the Pi
+soak before calling the dynamics model performance-ready.
+
 ### AUDIO-002 — Real-time audio synchronization (`P1`, music)
 
 Explicit `arecord` mono capture, deterministic PCM analysis, adaptive ambient

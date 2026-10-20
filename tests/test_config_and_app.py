@@ -26,6 +26,8 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(args.command, "simulate")
         self.assertIsNone(args.audio_device)
         self.assertIsNone(args.audio_sensitivity)
+        self.assertEqual(args.rgb_ceiling, 0.65)
+        self.assertFalse(args.acknowledge_high_output)
 
     def test_live_output_requires_explicit_command(self) -> None:
         args = build_parser().parse_args(["live", "--effect", "cross-cube"])
@@ -98,6 +100,32 @@ class ConfigurationTests(unittest.TestCase):
     def test_audio_sensitivity_requires_explicit_device(self) -> None:
         with self.assertRaises(SystemExit):
             main(["simulate", "--audio-sensitivity", "8"])
+
+    def test_high_output_ceiling_is_explicit_live_only(self) -> None:
+        for arguments in (
+            ["live", "--rgb-ceiling", "0.8"],
+            ["simulate", "--rgb-ceiling", "0.8", "--acknowledge-high-output"],
+            ["web", "--rgb-ceiling", "0.8", "--acknowledge-high-output"],
+            ["live", "--rgb-ceiling", "0.7", "--brightness", "0.8",
+             "--acknowledge-high-output"],
+        ):
+            with self.subTest(arguments=arguments), self.assertRaises(SystemExit):
+                main(arguments)
+
+    def test_acknowledged_live_ceiling_configures_both_limiters(self) -> None:
+        with patch("phreqed_dmx.app._run_live") as run_live:
+            self.assertEqual(
+                main([
+                    "live", "--rgb-ceiling", "0.9", "--brightness", "0.8",
+                    "--acknowledge-high-output",
+                ]),
+                0,
+            )
+
+        controller = run_live.call_args.args[0]
+        self.assertEqual(controller.engine.compositor.maximum_brightness, 0.9)
+        self.assertEqual(controller.engine.compositor.global_brightness, 0.8)
+        self.assertEqual(controller.safety_limiter.maximum_brightness, 0.9)
 
     def test_controller_blackout_produces_complete_zero_dmx_frame(self) -> None:
         config = load_config()

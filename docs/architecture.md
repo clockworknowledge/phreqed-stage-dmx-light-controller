@@ -43,6 +43,20 @@ blending, masks, global brightness limiting, and crossfades. `ShowController`
 provides effect, parameter, preset, event, blackout, tap-tempo, and scene
 navigation commands without importing Art-Net.
 
+The compositor and final frame limiter share the same RGB ceiling. It defaults
+to 0.65; a higher process-local ceiling can be constructed only by the CLI's
+explicit live acknowledgement path. Browser state publishes that ceiling so
+the master control cannot request a value above it. Saved preset brightness is
+still limited to 0.65. The manual master is a peak level; audio may only scale
+the rendered scene below it and cannot alter the ceiling.
+
+`AudioReactiveClock` integrates a continuous animation time shared by every
+effect. Tempo establishes the baseline rate, `--speed` is the operator trim,
+and smoothed audio energy provides a bounded 1.0x-2.0x motion multiplier.
+Audio also supplies a bounded 55%-100% brightness multiplier below the manual
+master. With no audio source, both multipliers remain exactly 1.0, preserving
+the deterministic non-audio path.
+
 `audio_analysis.py` defines normalized loudness, onset, and three-band values
 plus a small `AudioAnalysisSource` boundary. Manual and recorded sources are
 dependency-free and deterministic. `audio_capture.py` optionally runs explicit

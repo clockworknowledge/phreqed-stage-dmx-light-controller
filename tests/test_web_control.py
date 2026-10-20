@@ -10,7 +10,9 @@ from unittest.mock import Mock, patch
 
 from phreqed_dmx.app import Controller, main
 from phreqed_dmx.audio_analysis import AudioAnalysis, FrequencyBands, ManualAudioAnalysisSource
+from phreqed_dmx.compositor import Compositor
 from phreqed_dmx.config import load_config
+from phreqed_dmx.engine import SceneEngine
 from phreqed_dmx.library import preset_data
 from phreqed_dmx.presets import PRESETS
 from phreqed_dmx.web_control import BrowserControl, BrowserFootCommands, ControlHandler
@@ -77,10 +79,16 @@ class BrowserControlTests(unittest.TestCase):
             (audio['loudness'], audio['onset'], audio['bass'], audio['mid'], audio['treble']),
             (0.6, 0.3, 0.8, 0.4, 0.2),
         )
+        enabled.step(enabled.started + 0.5)
+        reactive = enabled.state()['audio']
+        self.assertGreater(reactive['motion_multiplier'], 1.0)
+        self.assertLessEqual(reactive['brightness_multiplier'], 1.0)
 
         html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
         for meter in ('audio-loudness', 'audio-onset', 'audio-bass', 'audio-mid', 'audio-treble'):
             self.assertIn(f'id="{meter}"', html)
+        self.assertIn('id="audio-motion"', html)
+        self.assertIn('id="audio-brightness"', html)
 
     def test_preset_and_scene_storage_survives_new_controller_without_autoplay(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
@@ -123,6 +131,26 @@ class BrowserControlTests(unittest.TestCase):
                 self.control.command(command)
         self.assertEqual(self.control.engine.active_preset_id, before)
         self.assertEqual(self.control.engine.compositor.global_brightness, 0.25)
+
+    def test_browser_brightness_uses_explicit_controller_ceiling(self):
+        config = load_config()
+        engine = SceneEngine(
+            config.fixtures, compositor=Compositor(maximum_brightness=0.9)
+        )
+        control = BrowserControl(Controller(config, engine), self.path)
+        self.addCleanup(control.close)
+
+        self.assertEqual(control.state()['brightness_ceiling'], 0.9)
+        control.command(dict(action='brightness', value=0.8))
+        self.assertEqual(control.engine.compositor.global_brightness, 0.8)
+        with self.assertRaises(ValueError):
+            control.command(dict(action='brightness', value=0.91))
+
+        html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
+        script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
+        self.assertIn('id="brightness-ceiling"', html)
+        self.assertIn("$('master').max = s.brightness_ceiling", script)
+        self.assertIn('HIGH-OUTPUT MODE', script)
 
     def test_live_requires_two_steps_and_watchdog_closes_with_blackout(self):
         control = BrowserControl(Controller(load_config()), self.path, allow_live=True)

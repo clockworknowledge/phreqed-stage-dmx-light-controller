@@ -16,6 +16,11 @@
   activation, events, blackout, tap tempo, and scene navigation.
 - A normalized audio-analysis contract with deterministic manual and recorded
   sources plus explicit, dependency-free ALSA capture and browser meters.
+- A shared audio-reactive clock: tempo sets every effect's baseline motion,
+  smoothed dynamics provide bounded motion and brightness multipliers, and the
+  browser exposes both values.
+- An explicit show-time RGB ceiling override that requires live mode and a
+  high-output acknowledgement while retaining frame-rise safeguards.
 - An interactive two-cube Tk simulator with dynamic parameters, independent
   cube effects, speed and brightness, FPS display, pause/resume, stepping,
   blackout, and dependency-free PPM screenshot export.
@@ -30,9 +35,10 @@
 
 ## Verification
 
-- 110 automated tests pass on Python 3.12 after browser control, persistent user
-  looks, foot control, the show scene pack, and opt-in audio capture were
-  integrated.
+- 124 automated tests pass on Python 3.12 after browser control, persistent user
+  looks, foot control, the show scene pack, opt-in audio capture, shared audio
+  dynamics, white-channel commissioning, and the explicit RGB ceiling gate
+  were integrated.
 - A real Tk smoke run constructed two 48-cell grids and both parameter panels.
 - The deadline scheduler measured 25.0 FPS over a 2.2-second local GUI run.
 - On the Windows development machine, the slowest single-effect two-cube frame
@@ -102,11 +108,14 @@ sources implement a capture-independent boundary, including deterministic
 previous-sample replay. `Controller` can consume any conforming source, while an
 explicitly supplied render context continues to take precedence.
 
-Radial Pulse is the first bounded audio consumer. Analysis scales existing ring
-energy and slightly shifts colour; it does not add a new full-frame onset flash.
-The global brightness ceiling, frame-rise limiter, blackout behavior, and DMX
+Radial Pulse was the first bounded effect-local audio consumer. Analysis scales
+its existing ring energy and slightly shifts colour; it does not add a new
+full-frame onset flash. The shared `AudioReactiveClock` now supplies every
+effect with continuous tempo-based time, a bounded 1.0x-2.0x dynamics motion
+multiplier, and a 55%-100% brightness multiplier below the manual master. The
+global brightness ceiling, frame-rise limiter, blackout behavior, and DMX
 reserved-channel rules remain downstream and unchanged. With no audio source,
-the established rendering path is unchanged and no capture module is imported.
+both shared multipliers are exactly 1.0 and no capture module is imported.
 
 The complete Python 3.12 suite passes 101 tests. Coverage includes invalid and
 non-finite values, manual updates, deterministic recorded replay, controller

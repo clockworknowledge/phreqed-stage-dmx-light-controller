@@ -165,8 +165,23 @@ The default command remains safe simulation mode:
 
 Before a performance, run a sustained 25 FPS soak test on the Pi while watching
 CPU temperature and QLC+ input stability. Start with `--brightness 0.25` during
-fixture validation. Phase 2 defaults retain a hard 0.65 software ceiling, but
-that limit is not a substitute for safe fixture placement or QLC+ blackout.
+fixture validation. The default RGB software ceiling is 0.65, but that limit is
+not a substitute for safe fixture placement or QLC+ blackout.
+
+After the exact show rig has passed a low-level fixture check, an operator may
+make a higher RGB ceiling available for that live process only:
+
+```bash
+.venv/bin/phreqed-dmx live --web --host 0.0.0.0 \
+  --allow-network 192.168.1.0/24 \
+  --rgb-ceiling 0.85 --acknowledge-high-output
+```
+
+Values above 0.65 are rejected in simulation-only `web` and `simulate` modes,
+and are rejected from `live` without the acknowledgement. The browser displays
+the active ceiling but still starts live output at 0.25 or lower. Frame-rise
+and flash-interval limiting remain active. The override applies only to the RGB
+matrix; `scripts/white-zone-check.py` retains its independent hard 10% ceiling.
 
 ## Optional Ampero foot control
 

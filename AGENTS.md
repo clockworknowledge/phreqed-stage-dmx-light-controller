@@ -74,8 +74,12 @@ not effect code, converts those coordinates to physical zone order.
   low-level procedure in `docs/lf4808-white-commissioning.md` records their
   front-view order on both fixtures. Commission with one steady part at a time,
   never a flashing sweep.
-- Keep the default global brightness at or below 0.65 and retain the frame safety
-  limiter unless a documented hardware test justifies a change.
+- Keep the default RGB ceiling at 0.65. A higher ceiling is a temporary
+  show-time override only: require explicit `live` mode plus
+  `--acknowledge-high-output`, display the selected ceiling to the operator,
+  and retain the luminance-rise and flash-interval limiter. Saved presets stay
+  at or below 0.65. The override must never affect the separate white-channel
+  commissioning ceiling.
 - New default effects must avoid rapid high-intensity full-frame flashes.
 - New configuration must be rejected if a fixture falls outside the 512-channel
   universe or overlaps another fixture.
@@ -107,6 +111,9 @@ not effect code, converts those coordinates to physical zone order.
 - Keep effect output deterministic for a supplied elapsed time when practical.
 - Keep audio-reactive rendering deterministic for supplied analysis frames;
   isolate real-time capture behind `AudioAnalysisSource`.
+- Route tempo and audio dynamics through the shared bounded animation clock so
+  every effect receives the same continuous time base. Audio brightness is a
+  multiplier below the manual master and must never raise an output ceiling.
 - Effects implement the standardized per-pixel interface, declare complete
   metadata, and use normalized RGB. Quantize only in `compose_dmx`.
 - Every effect exposes speed, effect level, palette, and at least two validated

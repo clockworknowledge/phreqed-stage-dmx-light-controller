@@ -62,6 +62,11 @@ function renderState(s) {
   $('connection').className = `badge ${s.live ? 'live' : 'connected'}`;
   $('output-label').textContent = s.blackout ? 'Blackout active' : s.live ? 'Live · 25 FPS' : 'Preview · no output';
   $('current-look').textContent = s.active_name || 'Custom look';
+  $('master').max = s.brightness_ceiling;
+  $('brightness-ceiling').textContent = `${Math.round(s.brightness_ceiling*100)}%`;
+  $('live-warning').textContent = s.brightness_ceiling > 0.65
+    ? `HIGH-OUTPUT MODE: the RGB ceiling is ${Math.round(s.brightness_ceiling*100)}%. Confirm the fixtures are safely positioned, people nearby are warned, and QLC+ blackout is available. Output still starts at 25% brightness or lower.`
+    : 'Confirm the fixtures are safely positioned, people nearby are warned, and QLC+ blackout is available. Output starts at 25% brightness or lower.';
   if (document.activeElement !== $('master')) { $('master').value = s.brightness; $('master-value').textContent = `${Math.round(s.brightness*100)}%`; }
   if (document.activeElement !== $('quick-preset')) $('quick-preset').value = s.preset_id;
   $('bpm').textContent = Math.round(s.tempo);
@@ -78,6 +83,8 @@ function renderState(s) {
   $('audio-status').textContent = !audio.enabled ? 'Disabled' : audio.healthy ? 'Microphone active' : 'Input unavailable';
   $('audio-detail').textContent = audio.message;
   for (const key of ['loudness','onset','bass','mid','treble']) $(`audio-${key}`).value = audio[key] || 0;
+  $('audio-motion').textContent = `${(audio.motion_multiplier || 1).toFixed(2)}x`;
+  $('audio-brightness').textContent = `${Math.round((audio.brightness_multiplier || 1)*100)}%`;
   document.querySelectorAll('[data-cue]').forEach(e => e.classList.toggle('active', Number(e.dataset.cue) === s.scene_index));
   document.querySelectorAll('[data-preset]').forEach(e => e.classList.toggle('active', e.dataset.preset === s.preset_id));
   const frames = Object.values(s.frames); if (frames[0]) draw($('cube-a'),frames[0]); if (frames[1]) draw($('cube-b'),frames[1]);

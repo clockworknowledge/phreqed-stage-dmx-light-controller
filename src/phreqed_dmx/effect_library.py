@@ -385,8 +385,7 @@ def _radial_pulse(
     t = _time(animation_time, parameters)
     frequency = parameters.number("frequency")
     sharpness = parameters.number("sharpness")
-    tempo_scale = (context.tempo_bpm / 120.0) if context else 1.0
-    phase = math.hypot(u, v) * frequency - t * tempo_scale
+    phase = math.hypot(u, v) * frequency - t
     intensity = ((math.sin(phase * TAU) + 1.0) / 2.0) ** sharpness
     hue = phase * 0.18 + t * 0.02
     if context and context.audio is not None:

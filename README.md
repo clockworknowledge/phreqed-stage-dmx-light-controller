@@ -137,7 +137,10 @@ The verified Blue Snowball ALSA name is stable across USB card-number changes:
 This command is still browser simulation and cannot transmit Art-Net. The page
 shows loudness, onset, bass, mid, and treble meters. If response is too weak or
 too sensitive, add `--audio-sensitivity 8` (valid range `0.1..40`, default
-`12`). Input loss clears the analysis to silence without stopping controls.
+`12`). Tempo establishes the base animation rate for every effect. Smoothed
+music dynamics then vary motion from 1.0x to 2.0x and brightness from 55% to
+100% of the manual master; they never raise the RGB ceiling. Input loss clears
+the analysis to silence without stopping controls or tempo-driven movement.
 See [Audio synchronization](docs/audio-synchronization.md) for limitations and
 the remaining Raspberry Pi timing gate.
 
@@ -171,11 +174,24 @@ Do this only after checking QLC+, fixture modes, addresses, physical safety, and
 the operator blackout control. On handled shutdown, the app sends a best-effort
 blackout. See [Raspberry Pi deployment](docs/raspberry-pi-deployment.md).
 
-Both commands accept `--brightness` up to the 0.65 safety ceiling and `--speed`.
-Use `--effect` for manual mode, with `--mode mirror|complementary|independent`
-and `--second-effect` where needed. Run `phreqed-dmx --help` for the complete
-effect and preset lists. With no command, the CLI defaults to simulation;
-network output can only be selected with the literal `live` command.
+Commands accept `--brightness` and `--speed`. The RGB ceiling defaults to 0.65.
+For a physically checked show rig, a higher temporary ceiling requires all of
+the following explicit live options:
+
+```bash
+.venv/bin/phreqed-dmx live --web --host 0.0.0.0 \
+  --allow-network 192.168.1.0/24 \
+  --rgb-ceiling 0.85 --acknowledge-high-output
+```
+
+Browser live still starts at 0.25 or lower; its master slider then shows and
+respects the selected ceiling. The luminance-rise and flash-interval limiter
+remain active. Saved presets remain capped at 0.65, and this RGB override does
+not raise the separate 10% white-channel commissioning limit. Use `--effect`
+for manual mode, with `--mode mirror|complementary|independent` and
+`--second-effect` where needed. Run `phreqed-dmx --help` for the complete effect
+and preset lists. With no command, the CLI defaults to simulation; network
+output can only be selected with the literal `live` command.
 
 Browser-controlled lighting requires both the explicit live command and web
 option. It still starts with output stopped and requires confirmation in the

@@ -8,6 +8,32 @@ design remains in `docs/architecture.md`, `docs/effects.md`, and
 `docs/raspberry-pi-deployment.md`. The future projector architecture is in
 `docs/projector-output.md`.
 
+## Latest checkpoint — show ceiling and shared audio dynamics
+
+The safe RGB ceiling still defaults to 0.65. A higher temporary ceiling now
+requires the literal `live` command, `--rgb-ceiling`, and
+`--acknowledge-high-output`. The same selected value configures both the
+compositor and final frame limiter. Browser live continues to start at 0.25 or
+lower, exposes the active ceiling in its master slider, and presents a
+high-output warning. Saved look brightness stays capped at 0.65; luminance-rise
+and flash-interval controls remain active; the white commissioning tool retains
+its independent hard 10% ceiling.
+
+`AudioReactiveClock` now drives the continuous animation time used by every
+effect. Tempo is the baseline rate, `--speed` is the manual trim, and smoothed
+audio dynamics apply a 1.0x-2.0x motion multiplier plus a 55%-100% brightness
+multiplier below the manual master. The browser displays both values. With no
+audio source, both remain 1.0; silent input keeps steady tempo-driven motion.
+Radial Pulse retains its additional local ring and colour response.
+
+The complete Windows Python 3.12 suite passes 124 tests, and the browser
+JavaScript passes `node --check`.
+
+Pi acceptance remains: verify the elevated slider bounds with output stopped,
+then validate the response curves across every preset at rehearsal level and
+perform a gradual live brightness check on the secured rig with QLC+ blackout
+available.
+
 ## Latest checkpoint — LF4808 white-zone commissioning ready
 
 The recovered LF4808 152-channel manual maps fixture channels 145-152 as eight
@@ -32,8 +58,10 @@ adaptive noise-floor handling, capture health, and browser meters. Loudness,
 onset, bass, mid, and treble remain normalized behind `AudioAnalysisSource`.
 
 Capture is disabled unless `--audio-device` is supplied, never selects live
-mode, and degrades to silent analysis if the input ends. Radial Pulse is the
-first bounded consumer. No runtime dependency was added. Windows automated
+mode, and degrades to silent analysis if the input ends. Radial Pulse remains
+the first effect-local consumer, while the newer shared dynamics clock applies
+bounded motion and intensity to all effects. No runtime dependency was added.
+Windows automated
 tests cover PCM bands, normalization, lifecycle, start failure, explicit CLI
 gating, browser meters, simulation isolation, and the original contract. A Pi
 application-level 25 FPS/latency run remains before performance acceptance.

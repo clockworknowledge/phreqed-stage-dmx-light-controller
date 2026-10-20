@@ -55,7 +55,11 @@ class BrowserControl:
         self.controller.scenes.replace(self.library.cues)
         # Never raise an explicit lower CLI limit when browser control starts.
         self.engine.set_global_brightness(
-            min(0.25, self.engine.compositor.global_brightness)
+            min(
+                0.25,
+                self.engine.compositor.global_brightness,
+                self.engine.compositor.maximum_brightness,
+            )
         )
         self.allow_live = allow_live
         self.sender: ArtNetSender | None = None
@@ -101,12 +105,21 @@ class BrowserControl:
                     mid=analysis.bands.mid,
                     treble=analysis.bands.treble,
                 )
+            audio['motion_multiplier'] = self.controller.audio_motion_multiplier
+            audio['brightness_multiplier'] = (
+                self.controller.audio_brightness_multiplier
+            )
             return dict(live_allowed=self.allow_live, live=self.sender is not None,
                         blackout=self.engine.blackout_enabled, error=self.error, notice=self.notice,
                         preset_id=self.engine.active_preset_id, playing=scenes.playing,
                         active_name=self.engine.presets[self.engine.active_preset_id].name,
                         scene_index=scenes.index, tempo=self.controller.show.context().tempo_bpm,
-                        brightness=self.engine.compositor.global_brightness, audio=audio,
+                        brightness=min(
+                            self.engine.compositor.global_brightness,
+                            self.engine.compositor.maximum_brightness,
+                        ),
+                        brightness_ceiling=self.engine.compositor.maximum_brightness,
+                        audio=audio,
                         frames={name: [[[round(c.red * 255), round(c.green * 255), round(c.blue * 255)]
                                         for c in row] for row in grid.rows()]
                                 for name, grid in self.frames.items()})
@@ -150,7 +163,11 @@ class BrowserControl:
                 if self.error:
                     raise ValueError('restart the controller after a rendering failure')
                 if self.sender is None:
-                    self.engine.set_global_brightness(min(0.25, self.engine.compositor.global_brightness))
+                    self.engine.set_global_brightness(min(
+                        0.25,
+                        self.engine.compositor.global_brightness,
+                        self.engine.compositor.maximum_brightness,
+                    ))
                     config = self.controller.config
                     self.sender = ArtNetSender(config.artnet_host, config.artnet_port, config.universe)
                     self.lease_deadline = time.monotonic() + 5
@@ -160,7 +177,10 @@ class BrowserControl:
                 scenes.playing = False
                 self._stop_live()
             elif action == 'brightness':
-                self.engine.set_global_brightness(number(data.get('value'), 'brightness', 0, 0.65))
+                self.engine.set_global_brightness(number(
+                    data.get('value'), 'brightness', 0,
+                    self.engine.compositor.maximum_brightness,
+                ))
             elif action == 'preset':
                 preset_id = data.get('value')
                 if not isinstance(preset_id, str) or preset_id not in self.engine.presets:

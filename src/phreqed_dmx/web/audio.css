@@ -21,6 +21,11 @@
   accent-color: var(--accent);
 }
 
+.audio-response {
+  margin: 14px 0 7px;
+  color: var(--text);
+}
+
 @media (max-width: 760px) {
   .audio-meters {
     grid-template-columns: repeat(2, 1fr);

@@ -22,11 +22,17 @@ optional, so existing effects and shows retain their exact non-audio behavior
 when no source is configured. The older `energy` field remains a manual
 performance control and is not treated as measured loudness.
 
-The radial-pulse effect is the first consumer. Audio can scale an existing ring
-and shift its colour slightly, but it cannot illuminate a pixel that the ring
-left dark. Onset gain is deliberately limited, final normalized output remains
-clamped, and the existing frame-rise limiter and global brightness ceiling
-still apply.
+`AudioReactiveClock` is the shared consumer for every effect. Tap tempo/BPM sets
+the baseline clock rate (120 BPM is 1.0x), and the manual `--speed` value is an
+additional operator trim. Smoothed loudness, onset, and band energy raise the
+motion multiplier from 1.0x to at most 2.0x. Silence therefore retains steady
+tempo-driven motion instead of freezing the stage.
+
+The operator's master brightness remains the peak level. With an audio source,
+smoothed dynamics modulate visual output between 55% and 100% of that master;
+they can never raise it or the RGB ceiling. Radial Pulse also retains its
+effect-local ring and colour response. All normalized output remains clamped,
+and the frame-rise limiter still applies after modulation.
 
 ## Real-time capture sprint — AUDIO-002
 
@@ -70,9 +76,11 @@ Safe microphone preview on the Pi:
 ```
 
 This uses the simulation-only `web` command. The default sensitivity is `12`;
-override it with `--audio-sensitivity` in the range `0.1..40`. Radial Pulse is
-currently the only effect that consumes audio, including when it appears as a
-layer in a preset.
+override it with `--audio-sensitivity` in the range `0.1..40`. The browser shows
+the resulting shared motion and brightness multipliers below the five analysis
+meters. Tempo supplies the base motion rate for every effect; audio dynamics
+modulate that rate and scale brightness below the manual master. Microphone
+analysis cannot raise a configured show-time ceiling.
 
 ## Acceptance gates
 
