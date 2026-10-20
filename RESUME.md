@@ -9,18 +9,19 @@ design remains in `docs/architecture.md`, `docs/effects.md`, and
 
 ## Latest checkpoint — audio-analysis contract
 
-`feat/audio-context` is stacked on the show scene pack. It introduces normalized
-loudness, onset, bass, mid, and treble values, plus dependency-free manual and
-recorded sources behind `AudioAnalysisSource`. The controller can accept a
-source without knowing its capture backend. Radial Pulse is the first bounded
-consumer; when no source is configured, existing rendering remains unchanged.
+`feat/audio-context` now includes the first AUDIO-002 capture slice. The Blue
+Snowball was detected on the Pi as `plughw:CARD=Snowball,DEV=0`, and direct
+ALSA format and level-meter checks passed. The controller now has an explicitly
+started, standard-library `arecord` worker, deterministic mono PCM analysis,
+adaptive noise-floor handling, capture health, and browser meters. Loudness,
+onset, bass, mid, and treble remain normalized behind `AudioAnalysisSource`.
 
-No microphone or operating-system capture API is opened, no runtime dependency
-was added, and no CLI audio option exists yet. Real-time capture is scoped as
-AUDIO-002 in `docs/audio-synchronization.md` and remains explicit opt-in work.
-The complete Windows Python 3.12 suite passes 101 tests, including deterministic
-replay, invalid-value rejection, explicit-context precedence, normalized effect
-output, and reserved-channel safety.
+Capture is disabled unless `--audio-device` is supplied, never selects live
+mode, and degrades to silent analysis if the input ends. Radial Pulse is the
+first bounded consumer. No runtime dependency was added. Windows automated
+tests cover PCM bands, normalization, lifecycle, start failure, explicit CLI
+gating, browser meters, simulation isolation, and the original contract. A Pi
+application-level 25 FPS/latency run remains before performance acceptance.
 
 ## Hotone Ampero Control branch
 

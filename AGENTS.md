@@ -13,6 +13,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/effect_api.py`: effect contract, metadata, context, and parameters.
 - `src/phreqed_dmx/audio_analysis.py`: normalized audio-analysis contract and
   deterministic/manual sources; it never opens a capture device.
+- `src/phreqed_dmx/audio_capture.py`: explicit ALSA `arecord` worker and
+  dependency-free mono PCM analysis; importing it never opens a device.
 - `src/phreqed_dmx/effect_library.py`: deterministic procedural effect catalog.
 - `src/phreqed_dmx/compositor.py`: layers, blends, masks, transitions, and limits.
 - `src/phreqed_dmx/engine.py`: preset and per-fixture normalized scene rendering.

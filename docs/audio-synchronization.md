@@ -30,31 +30,53 @@ still apply.
 
 ## Real-time capture sprint — AUDIO-002
 
-The next implementation slice will:
+The first capture implementation is complete and awaiting Pi application-level
+timing validation. `audio_capture.py` provides:
 
-1. inventory Pi and Windows input devices without opening one automatically;
-2. select a small optional capture backend after measuring Pi support;
-3. require an explicit `--audio-device` option before capture starts;
-4. capture mono PCM in a worker isolated from the 25 FPS render deadline;
-5. calculate smoothed loudness, onset confidence, and three configurable bands;
-6. feed only normalized `AudioAnalysis` values across the source boundary;
-7. expose input health and meters in simulation/browser control;
-8. degrade to non-audio animation if capture stops or overruns;
-9. replay recorded PCM or analysis fixtures in automated tests; and
-10. complete a Pi timing test before any performance use.
+1. an explicitly started `ArecordAudioSource`; construction and import do not
+   enumerate or open devices;
+2. 44.1 kHz, signed 16-bit, mono PCM capture in a worker outside the 25 FPS
+   render loop;
+3. a deterministic, standard-library analyzer with smoothed loudness, bounded
+   onset, and lightweight bass/mid/treble crossover filters;
+4. adaptive ambient-noise-floor tracking and adjustable input sensitivity;
+5. capture health plus five analysis meters in browser control; and
+6. silence-on-EOF/error behavior, leaving render, blackout, and browser control
+   running if the microphone disappears.
+
+The Pi detected the Blue Snowball as USB ID `0d8c:0005` and ALSA capture device
+`hw:CARD=Snowball,DEV=0`. A direct `arecord` hardware-format and level-meter
+check passed. The application uses `plughw:CARD=Snowball,DEV=0` so ALSA may
+perform safe format conversion without relying on the unstable numeric card
+index. PipeWire/PulseAudio and `pactl` are not required.
 
 Capture will remain optional and disabled by default. Starting capture will not
 select live mode, start Art-Net, change scenes, or bypass browser confirmation.
 Initial audio response will modulate continuous visual parameters only; automatic
 scene changes and aggressive full-frame onset flashes are outside this sprint.
 
+Safe microphone preview on the Pi:
+
+```bash
+.venv/bin/phreqed-dmx web --host 0.0.0.0 \
+  --allow-network 192.168.1.0/24 \
+  --preset phase-collider \
+  --audio-device plughw:CARD=Snowball,DEV=0
+```
+
+This uses the simulation-only `web` command. The default sensitivity is `12`;
+override it with `--audio-sensitivity` in the range `0.1..40`. Radial Pulse is
+currently the only effect that consumes audio, including when it appears as a
+layer in a preset.
+
 ## Acceptance gates
 
-- With no explicit audio device, no capture API or third-party audio module is
-  imported and rendered output matches the current deterministic baseline.
-- Recorded analysis produces identical frames for identical timestamps.
+- With no explicit audio device, the capture module is not imported and
+  rendered output matches the current deterministic baseline.
+- Generated and recorded input produces deterministic normalized analysis.
 - Invalid, NaN, infinite, and out-of-range analysis values are rejected.
 - Audio loss cannot stop blackout handling or the 25 FPS control loop.
 - Simulator mode remains incapable of sending Art-Net.
 - Reserved LF4808 channels remain zero for every audio-driven frame.
-- Raspberry Pi CPU, latency, and missed-frame measurements are documented.
+- Raspberry Pi CPU, analysis latency, and missed-frame measurements are
+  documented before performance acceptance. This final gate remains open.

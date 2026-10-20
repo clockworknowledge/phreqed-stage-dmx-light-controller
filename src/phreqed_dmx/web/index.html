@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
 <meta name="theme-color" content="#101413"><title>Phreqed · Stage control</title>
-<link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/fixture.css"><script src="/app.js" defer></script>
+<link rel="stylesheet" href="/style.css"><link rel="stylesheet" href="/fixture.css"><link rel="stylesheet" href="/audio.css"><script src="/app.js" defer></script>
 </head>
 <body>
 <header class="top"><a class="brand" href="/" aria-label="Phreqed home"><span class="brandmark">p.</span><span>PHREQED<small>STAGE CONTROL</small></span></a><span id="connection" class="badge">Connecting…</span></header>
@@ -19,6 +19,7 @@
 <section class="card"><p class="eyebrow">ON STAGE</p><h3 id="current-look">Psychedelic Bloom</h3><label for="quick-preset">Choose a look</label><select id="quick-preset"></select><div class="slider-label"><label for="master">Master brightness</label><output id="master-value" for="master">25%</output></div><input id="master" type="range" min="0" max="0.65" step="0.01" value="0.25"><p class="hint">Output ceiling 65%. Starting live caps the level at 25%.</p></section>
 <section class="card"><p class="eyebrow">SCENE TRANSPORT</p><h3 id="current-scene">Manual control</h3><p id="sequence-status" class="hint">Select a scene or start the list.</p><div class="transport"><button id="prev" aria-label="Previous scene">← Prev</button><button id="next" class="primary">Next →</button></div><div class="row"><button id="play">Run list</button><button id="pause">Hold scene</button><button id="tap">Tap <span id="bpm">120</span> BPM</button></div><p class="hint">Run list follows each scene’s timing and holds on the last scene.</p></section>
 </div>
+<section class="card audio-card"><div class="section-title"><div><p class="eyebrow">AUDIO INPUT</p><h3 id="audio-status">Disabled</h3></div><span id="audio-detail">Start with an explicit microphone device.</span></div><div class="audio-meters"><label>Loudness<meter id="audio-loudness" min="0" max="1" value="0"></meter></label><label>Onset<meter id="audio-onset" min="0" max="1" value="0"></meter></label><label>Bass<meter id="audio-bass" min="0" max="1" value="0"></meter></label><label>Mid<meter id="audio-mid" min="0" max="1" value="0"></meter></label><label>Treble<meter id="audio-treble" min="0" max="1" value="0"></meter></label></div><p class="hint">Meters are analysis only. Audio input cannot enable live output or bypass blackout.</p></section>
 <section class="output card"><div><h3>Fixture output</h3><p id="live-help" class="hint">Simulation only. No lighting data is transmitted.</p></div><div class="row"><button id="start-live" class="primary" disabled>Start live</button><button id="stop-live" disabled>Stop output</button></div></section>
 </section>
 <section id="looks" class="panel" hidden>

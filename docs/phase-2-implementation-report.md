@@ -15,7 +15,7 @@
 - Transport-independent show commands for effect and parameter changes, preset
   activation, events, blackout, tap tempo, and scene navigation.
 - A normalized audio-analysis contract with deterministic manual and recorded
-  sources; real-time device capture remains disabled and unimplemented.
+  sources plus explicit, dependency-free ALSA capture and browser meters.
 - An interactive two-cube Tk simulator with dynamic parameters, independent
   cube effects, speed and brightness, FPS display, pause/resume, stepping,
   blackout, and dependency-free PPM screenshot export.
@@ -30,8 +30,8 @@
 
 ## Verification
 
-- 101 automated tests pass on Python 3.12 after browser control, persistent user
-  looks, foot control, the show scene pack, and the audio-analysis contract were
+- 110 automated tests pass on Python 3.12 after browser control, persistent user
+  looks, foot control, the show scene pack, and opt-in audio capture were
   integrated.
 - A real Tk smoke run constructed two 48-cell grids and both parameter panels.
 - The deadline scheduler measured 25.0 FPS over a 2.2-second local GUI run.
@@ -61,8 +61,9 @@
   conversation baseline.
 - Preset, effect, and palette changes crossfade over 0.45 seconds in the
   simulator. Parameter sliders remain immediate for responsive tuning.
-- Tap tempo, event context, and normalized audio-analysis inputs are defined and
-  tested; real-time capture and automatic scene selection remain out of scope.
+- Tap tempo, event context, normalized audio inputs, and explicit ALSA capture
+  are implemented; automatic scene selection remains out of scope. Capture
+  still requires Raspberry Pi timing and latency acceptance.
 - PPM export avoids dependencies; PNG export would require either a platform
   conversion step or an image library.
 - USB foot control is implemented and has passed an initial browser-simulation
@@ -111,6 +112,21 @@ The complete Python 3.12 suite passes 101 tests. Coverage includes invalid and
 non-finite values, manual updates, deterministic recorded replay, controller
 source injection, explicit-context precedence, repeatable audio-reactive output,
 normalized RGB bounds, and zero output on both fixtures' reserved channels.
+
+## Explicit ALSA capture — 2026-10-20
+
+The Pi detected the ambient Blue Snowball as `plughw:CARD=Snowball,DEV=0` and
+passed direct `arecord` format and input-level checks. `ArecordAudioSource` now
+starts only when `--audio-device` is present, requests 44.1 kHz signed 16-bit
+mono PCM, and performs analysis on a dedicated worker. The analyzer uses two
+lightweight crossover filters, adaptive ambient-noise tracking, attack/release
+smoothing, and bounded onset detection without NumPy or an audio dependency.
+
+The browser reports capture health and five meters. EOF or capture error clears
+analysis to silence while leaving rendering and blackout available. Automated
+tests use generated PCM and fake processes; no test opens a microphone or
+network socket. Application-level Pi CPU, latency, and missed-frame measurements
+remain the final AUDIO-002 acceptance gate.
 
 ## Post-integration Pi verification — 2026-10-20
 

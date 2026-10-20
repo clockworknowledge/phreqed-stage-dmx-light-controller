@@ -76,12 +76,34 @@ class BrowserControl:
     def state(self) -> dict:
         with self.lock:
             scenes = self.controller.scenes
+            source = self.controller.audio_source
+            if source is None:
+                audio = dict(
+                    enabled=False, running=False, healthy=False,
+                    message='Audio input disabled', loudness=0.0, onset=0.0,
+                    bass=0.0, mid=0.0, treble=0.0,
+                )
+            else:
+                analysis = source.sample(self.elapsed())
+                status_method = getattr(source, 'status', None)
+                status = status_method() if callable(status_method) else None
+                audio = dict(
+                    enabled=True,
+                    running=getattr(status, 'running', True),
+                    healthy=getattr(status, 'healthy', True),
+                    message=getattr(status, 'message', 'Analysis source active'),
+                    loudness=analysis.loudness,
+                    onset=analysis.onset,
+                    bass=analysis.bands.bass,
+                    mid=analysis.bands.mid,
+                    treble=analysis.bands.treble,
+                )
             return dict(live_allowed=self.allow_live, live=self.sender is not None,
                         blackout=self.engine.blackout_enabled, error=self.error, notice=self.notice,
                         preset_id=self.engine.active_preset_id, playing=scenes.playing,
                         active_name=self.engine.presets[self.engine.active_preset_id].name,
                         scene_index=scenes.index, tempo=self.controller.show.context().tempo_bpm,
-                        brightness=self.engine.compositor.global_brightness,
+                        brightness=self.engine.compositor.global_brightness, audio=audio,
                         frames={name: [[[round(c.red * 255), round(c.green * 255), round(c.blue * 255)]
                                         for c in row] for row in grid.rows()]
                                 for name, grid in self.frames.items()})
@@ -293,11 +315,12 @@ class ControlHandler(BaseHTTPRequestHandler):
                 self.reply(200, json.dumps(self.server.control.catalog()).encode())
         elif path == '/api/session':
             self.reply(200, json.dumps({'token': self.server.token}).encode())
-        elif path in ('/', '/app.js', '/style.css', '/fixture.css'):
+        elif path in ('/', '/app.js', '/style.css', '/fixture.css', '/audio.css'):
             name = 'index.html' if path == '/' else path[1:]
             content_type = {'index.html': 'text/html; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8',
                             'style.css': 'text/css; charset=utf-8',
-                            'fixture.css': 'text/css; charset=utf-8'}[name]
+                            'fixture.css': 'text/css; charset=utf-8',
+                            'audio.css': 'text/css; charset=utf-8'}[name]
             self.reply(200, (ASSETS / name).read_bytes(), content_type)
         elif path == '/favicon.ico':
             self.reply(204, b'', 'image/x-icon')

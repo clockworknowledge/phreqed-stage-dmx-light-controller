@@ -30,21 +30,6 @@ No active implementation.
 
 ## Ready
 
-### AUDIO-002 — Real-time audio synchronization (`P1`, music)
-
-Add opt-in mono capture behind the new `AudioAnalysisSource` boundary. Device
-inventory must not open a stream, capture requires an explicit device, analysis
-runs outside the render deadline, and loss of audio degrades to non-audio
-animation without affecting blackout or live-output gating. Backend selection
-must be justified by measurements on the Raspberry Pi rather than convenience
-on Windows.
-
-Acceptance: recorded-input tests cover loudness, onset, and frequency bands;
-browser simulation exposes input health and meters; no-device mode imports no
-capture dependency; a Pi timing run sustains 25 FPS with documented latency and
-missed-frame results. Automatic scene switching and hard onset flashes are out
-of scope.
-
 ### SPRITE-001 — Production sprite renderer (`P2`, visuals)
 
 Promote experimental sprite helpers into the normalized rendering pipeline with
@@ -55,6 +40,19 @@ Acceptance: sprite rendering is address-independent and deterministic, clips
 safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
+
+### AUDIO-002 — Real-time audio synchronization (`P1`, music)
+
+Explicit `arecord` mono capture, deterministic PCM analysis, adaptive ambient
+noise handling, capture health, browser meters, and silence-on-input-loss are
+implemented without a new dependency. The Blue Snowball hardware name and raw
+input levels have been verified on the Pi. Capture remains off unless an ALSA
+device is explicitly supplied and cannot select or enable Art-Net output.
+
+Acceptance remaining: run the controller with the Snowball on the Pi, tune the
+initial sensitivity in a room test, and document CPU use, analysis latency, and
+missed 25 FPS frames. Automatic scene switching and hard onset flashes remain
+out of scope.
 
 ### AUDIO-001 — Audio-analysis input contract (`P1`, music)
 

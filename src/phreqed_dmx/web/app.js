@@ -74,6 +74,10 @@ function renderState(s) {
   $('sequence-status').textContent = s.playing ? 'Running timed scene list.' : cue ? 'Holding this scene.' : 'Select a scene or start the list.';
   $('play').disabled = !cues.length || s.playing || s.blackout; $('pause').disabled = !s.playing;
   $('next').disabled = $('prev').disabled = !cues.length;
+  const audio = s.audio || {enabled:false,running:false,healthy:false,message:'Audio input disabled',loudness:0,onset:0,bass:0,mid:0,treble:0};
+  $('audio-status').textContent = !audio.enabled ? 'Disabled' : audio.healthy ? 'Microphone active' : 'Input unavailable';
+  $('audio-detail').textContent = audio.message;
+  for (const key of ['loudness','onset','bass','mid','treble']) $(`audio-${key}`).value = audio[key] || 0;
   document.querySelectorAll('[data-cue]').forEach(e => e.classList.toggle('active', Number(e.dataset.cue) === s.scene_index));
   document.querySelectorAll('[data-preset]').forEach(e => e.classList.toggle('active', e.dataset.preset === s.preset_id));
   const frames = Object.values(s.frames); if (frames[0]) draw($('cube-a'),frames[0]); if (frames[1]) draw($('cube-b'),frames[1]);

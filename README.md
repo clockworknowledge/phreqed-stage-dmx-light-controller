@@ -25,7 +25,8 @@ and [Pi comparison checklist](docs/pi-script-import.md).
 - twelve built-in multi-layer presets, including independent and cross-cube show looks
 - conservative global brightness ceiling and frame-rise limiter
 - transport-independent blackout, preset, event, tap-tempo, and navigation APIs
-- normalized, replayable audio-analysis inputs with capture disabled by default
+- normalized, replayable audio analysis with explicit opt-in Blue Snowball/ALSA
+  capture, browser meters, and silence-on-input-loss behavior
 - optional Hotone Ampero Control input over an explicitly selected ALSA
   raw-MIDI device; foot input never enables Art-Net output
 - interactive Tk simulator with live FPS, pause, step, parameters, and PPM export
@@ -121,6 +122,25 @@ simulation-only `web` command:
 
 This opens only the browser HTTP server; it cannot enable Art-Net output.
 
+### Preview microphone response
+
+On the Pi, microphone capture remains off unless a device is named explicitly.
+The verified Blue Snowball ALSA name is stable across USB card-number changes:
+
+```bash
+.venv/bin/phreqed-dmx web --host 0.0.0.0 \
+  --allow-network 192.168.1.0/24 \
+  --preset phase-collider \
+  --audio-device plughw:CARD=Snowball,DEV=0
+```
+
+This command is still browser simulation and cannot transmit Art-Net. The page
+shows loudness, onset, bass, mid, and treble meters. If response is too weak or
+too sensitive, add `--audio-sensitivity 8` (valid range `0.1..40`, default
+`12`). Input loss clears the analysis to silence without stopping controls.
+See [Audio synchronization](docs/audio-synchronization.md) for limitations and
+the remaining Raspberry Pi timing gate.
+
 ## Hotone Ampero Control
 
 The [Hotone Ampero Control](https://www.hotone.com/products/controlers/Ampero%20Control)
@@ -163,7 +183,8 @@ page:
 
 ```bash
 .venv/bin/phreqed-dmx live --web --host 0.0.0.0 \
-  --allow-network 192.168.1.0/24
+  --allow-network 192.168.1.0/24 \
+  --audio-device plughw:CARD=Snowball,DEV=0
 ```
 
 Live browser output is capped at 25% when first enabled and stops with blackout

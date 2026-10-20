@@ -9,6 +9,7 @@ import unittest
 from unittest.mock import Mock, patch
 
 from phreqed_dmx.app import Controller, main
+from phreqed_dmx.audio_analysis import AudioAnalysis, FrequencyBands, ManualAudioAnalysisSource
 from phreqed_dmx.config import load_config
 from phreqed_dmx.library import preset_data
 from phreqed_dmx.presets import PRESETS
@@ -56,6 +57,30 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn('12 by 4 RGB grid and two disabled center white strobe lines', html)
         self.assertIn('display-only', html)
         self.assertIn("ctx.fillStyle = '#59615c'", script)
+
+    def test_browser_reports_disabled_and_active_audio_analysis(self):
+        disabled = self.control.state()['audio']
+        self.assertFalse(disabled['enabled'])
+        self.assertEqual(disabled['loudness'], 0.0)
+
+        source = ManualAudioAnalysisSource(
+            AudioAnalysis(0.6, 0.3, FrequencyBands(0.8, 0.4, 0.2))
+        )
+        enabled = BrowserControl(
+            Controller(load_config(), audio_source=source), self.path
+        )
+        self.addCleanup(enabled.close)
+        audio = enabled.state()['audio']
+        self.assertTrue(audio['enabled'])
+        self.assertTrue(audio['healthy'])
+        self.assertEqual(
+            (audio['loudness'], audio['onset'], audio['bass'], audio['mid'], audio['treble']),
+            (0.6, 0.3, 0.8, 0.4, 0.2),
+        )
+
+        html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
+        for meter in ('audio-loudness', 'audio-onset', 'audio-bass', 'audio-mid', 'audio-treble'):
+            self.assertIn(f'id="{meter}"', html)
 
     def test_preset_and_scene_storage_survives_new_controller_without_autoplay(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
