@@ -30,6 +30,21 @@ No active implementation.
 
 ## Ready
 
+### AUDIO-002 — Real-time audio synchronization (`P1`, music)
+
+Add opt-in mono capture behind the new `AudioAnalysisSource` boundary. Device
+inventory must not open a stream, capture requires an explicit device, analysis
+runs outside the render deadline, and loss of audio degrades to non-audio
+animation without affecting blackout or live-output gating. Backend selection
+must be justified by measurements on the Raspberry Pi rather than convenience
+on Windows.
+
+Acceptance: recorded-input tests cover loudness, onset, and frequency bands;
+browser simulation exposes input health and meters; no-device mode imports no
+capture dependency; a Pi timing run sustains 25 FPS with documented latency and
+missed-frame results. Automatic scene switching and hard onset flashes are out
+of scope.
+
 ### SPRITE-001 — Production sprite renderer (`P2`, visuals)
 
 Promote experimental sprite helpers into the normalized rendering pipeline with
@@ -40,6 +55,18 @@ Acceptance: sprite rendering is address-independent and deterministic, clips
 safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
+
+### AUDIO-001 — Audio-analysis input contract (`P1`, music)
+
+Normalized loudness, onset, bass, mid, and treble values now enter effects only
+through `PerformanceContext.audio`. Dependency-free manual and recorded sources
+support deterministic injection and previous-sample replay. The controller can
+accept a source without knowing its capture implementation, and radial pulse is
+the first bounded consumer. An absent source preserves non-audio behavior.
+
+Acceptance: complete automated validation of ranges, deterministic replay,
+controller injection, bounded effect output, simulation isolation, and reserved
+DMX channels before merging. Real-time device capture belongs to AUDIO-002.
 
 ### SHOWPACK-001 — First performance scene pack (`P1`, visuals)
 
@@ -142,16 +169,6 @@ by hardware-free tests, and any repeat live validation has an explicit low-risk
 procedure before package configuration or effect changes.
 
 ## Backlog
-
-### AUDIO-001 — Manual audio-analysis input contract (`P1`, music)
-
-Define transport-independent tempo, beat, onset, loudness, and frequency-band
-inputs in the performance context before selecting an audio capture library.
-
-### AUDIO-002 — Real-time audio synchronization (`P1`, music)
-
-Add opt-in audio capture and analysis after AUDIO-001. Effects must continue to
-render deterministically when supplied recorded analysis frames.
 
 ### VIDEO-001 — Video-to-grid sampler (`P2`, visuals)
 
@@ -278,7 +295,7 @@ measured results and any resulting operating limits.
   blackout, tap-tempo, and scene-navigation commands.
 - **PRESET-001 (`P1`)** — Psychedelic Bloom, Molten Motion, Digital Storm, and
   Energy Bridge example presets. SHOWPACK-001 adds the next eight looks.
-- **TEST-001 (`P0`)** — Ninety-five Windows-compatible tests covering effects,
+- **TEST-001 (`P0`)** — One hundred one Windows-compatible tests covering effects,
   composition, fixtures, scenes, persistence, browser safety, blackout, ArtDMX
   integrity, and simulation network isolation.
 - **DOC-001 (`P1`)** — Architecture, effect catalog, installation, operation,

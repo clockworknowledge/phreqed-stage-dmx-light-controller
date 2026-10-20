@@ -38,6 +38,11 @@ ceiling of 0.65.
 | `chase` | Legacy Chase | legacy | `rate` 1-24, `trail` 2-16 |
 | `cross-cube` | Legacy Cross-Cube Chase | legacy | `rate` 1-30, `trail` 2-24 |
 
+`radial-pulse` is the first effect that can consume an optional normalized
+audio-analysis frame. Loudness and band energy scale the existing ring, onset
+adds a limited accent, and bass/treble balance supplies a small hue offset. With
+no audio frame, its established tempo-aware rendering remains unchanged.
+
 ## Included presets
 
 - `psychedelic-bloom`: neon plasma plus additive concentric rings.

@@ -25,6 +25,7 @@ and [Pi comparison checklist](docs/pi-script-import.md).
 - twelve built-in multi-layer presets, including independent and cross-cube show looks
 - conservative global brightness ceiling and frame-rise limiter
 - transport-independent blackout, preset, event, tap-tempo, and navigation APIs
+- normalized, replayable audio-analysis inputs with capture disabled by default
 - optional Hotone Ampero Control input over an explicitly selected ALSA
   raw-MIDI device; foot input never enables Art-Net output
 - interactive Tk simulator with live FPS, pause, step, parameters, and PPM export
@@ -34,6 +35,8 @@ and [Pi comparison checklist](docs/pi-script-import.md).
 See the complete [effect catalog](docs/effects.md) and
 [Phase 2 implementation report](docs/phase-2-implementation-report.md). Feature
 status and upcoming work are tracked on the [project Kanban](docs/kanban.md).
+The staged audio plan is documented in
+[Audio synchronization](docs/audio-synchronization.md).
 
 ## Hardware configuration
 

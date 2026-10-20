@@ -11,6 +11,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/frame.py`: address-independent RGB values and pixel grids.
 - `src/phreqed_dmx/color.py`: normalized RGB values, palettes, and grids.
 - `src/phreqed_dmx/effect_api.py`: effect contract, metadata, context, and parameters.
+- `src/phreqed_dmx/audio_analysis.py`: normalized audio-analysis contract and
+  deterministic/manual sources; it never opens a capture device.
 - `src/phreqed_dmx/effect_library.py`: deterministic procedural effect catalog.
 - `src/phreqed_dmx/compositor.py`: layers, blends, masks, transitions, and limits.
 - `src/phreqed_dmx/engine.py`: preset and per-fixture normalized scene rendering.
@@ -85,6 +87,9 @@ not effect code, converts those coordinates to physical zone order.
   an active heartbeat lease; losing the lease must stop with blackout.
 - Foot control is disabled unless an explicit raw-MIDI device path is supplied.
   MIDI input must not enable live output or bypass the browser live gate.
+- Audio capture must remain disabled unless an explicit device is supplied.
+  Audio analysis may modulate bounded effect parameters but must not enable live
+  output, bypass blackout, or introduce unrestricted full-frame flashes.
 - Bind browser control to loopback by default. LAN binding is permitted only on
   a trusted private network with an explicit allow-network range.
 - Do not increase the initial 25 FPS output rate without testing the complete
@@ -98,6 +103,8 @@ not effect code, converts those coordinates to physical zone order.
 - Treat DMX addresses in configuration as one-based; use zero-based offsets only
   internally and name them accordingly.
 - Keep effect output deterministic for a supplied elapsed time when practical.
+- Keep audio-reactive rendering deterministic for supplied analysis frames;
+  isolate real-time capture behind `AudioAnalysisSource`.
 - Effects implement the standardized per-pixel interface, declare complete
   metadata, and use normalized RGB. Quantize only in `compose_dmx`.
 - Every effect exposes speed, effect level, palette, and at least two validated

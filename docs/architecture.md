@@ -3,7 +3,8 @@
 The engine follows a one-way data flow:
 
 ```text
-effect samples -> normalized grids -> layers/masks/blends -> safety limiter
+audio analysis -> performance context -> effect samples
+                                      -> normalized grids -> layers/masks/blends -> safety limiter
                                                         |-> Tk simulator
                                                         |-> browser preview
                                                         `-> DMX quantizer
@@ -41,6 +42,12 @@ engine. `SceneEngine` renders registry effects into `NormalizedGrid` instances.
 blending, masks, global brightness limiting, and crossfades. `ShowController`
 provides effect, parameter, preset, event, blackout, tap-tempo, and scene
 navigation commands without importing Art-Net.
+
+`audio_analysis.py` defines normalized loudness, onset, and three-band values
+plus a small `AudioAnalysisSource` boundary. Manual and recorded sources are
+dependency-free and deterministic. Future microphone capture remains an
+optional adapter outside effects and DMX transport; with no source configured,
+rendering follows the existing non-audio path unchanged.
 
 `foot_control.py` parses standard MIDI channel messages without a third-party
 runtime dependency and maps an explicitly selected Hotone Ampero Control input

@@ -1,4 +1,4 @@
-# Codex Resume: Ampero Control and Show Scene Pack
+# Codex Resume: Audio Contract, Ampero Control, and Show Scene Pack
 
 Last updated: 2026-10-20
 
@@ -6,6 +6,21 @@ This is the short operational handoff for a new Codex session. Read
 `AGENTS.md`, this file, and `docs/kanban.md` before taking action. The detailed
 design remains in `docs/architecture.md`, `docs/effects.md`, and
 `docs/raspberry-pi-deployment.md`.
+
+## Latest checkpoint — audio-analysis contract
+
+`feat/audio-context` is stacked on the show scene pack. It introduces normalized
+loudness, onset, bass, mid, and treble values, plus dependency-free manual and
+recorded sources behind `AudioAnalysisSource`. The controller can accept a
+source without knowing its capture backend. Radial Pulse is the first bounded
+consumer; when no source is configured, existing rendering remains unchanged.
+
+No microphone or operating-system capture API is opened, no runtime dependency
+was added, and no CLI audio option exists yet. Real-time capture is scoped as
+AUDIO-002 in `docs/audio-synchronization.md` and remains explicit opt-in work.
+The complete Windows Python 3.12 suite passes 101 tests, including deterministic
+replay, invalid-value rejection, explicit-context precedence, normalized effect
+output, and reserved-channel safety.
 
 ## Hotone Ampero Control branch
 
