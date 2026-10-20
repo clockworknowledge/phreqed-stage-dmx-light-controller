@@ -43,14 +43,16 @@
 
 ## Remaining risks and follow-up
 
-- Physical plasma response, independent addressing, diagonal corner orientation,
-  normal shutdown blackout, and handled-interruption blackout passed below.
+- Physical plasma response, independent addressing, diagonal endpoint
+  orientation, normal shutdown blackout, and handled-interruption blackout
+  passed below. The old endpoint test did not establish row width; the corrected
+  12-by-4 geometry still needs a physical row-transition check.
 - Raspberry Pi headless timing and thermal results are recorded below;
   sustained GUI and complete live-chain behavior remain unverified.
 - The recovered browser controller passes Windows and Pi tests, and its Pi
-  trusted-LAN simulation preview was operator-accepted. It still needs a
-  persistence/restart check and a separately authorized guarded browser-live
-  test, including physical observation of its disconnect blackout.
+  trusted-LAN simulation preview was operator-accepted. A basic guarded
+  browser-live check was also reported working, but persistence/restart and
+  physical observation of its disconnect blackout remain pending.
 - The actual current Pi files still need comparison with the reconstructed
   conversation baseline.
 - Preset, effect, and palette changes crossfade over 0.45 seconds in the
@@ -75,8 +77,29 @@ did not permit live activation. After stopping it, the operator ran the direct
 controller for ten seconds with plasma at speed 0.2 and brightness 0.15. Both
 cubes illuminated with visible animation and returned to darkness on normal
 shutdown. This confirms the pre-existing direct live path after integration;
-browser-controlled live start, stop, blackout, and heartbeat-loss behavior
+formal browser-controlled explicit-stop, blackout, and heartbeat-loss behavior
 still require their own controlled physical validation.
+
+The operator subsequently reported that the basic guarded browser controller
+worked against the fixtures. That check exposed the incorrect 8-by-6 visual
+geometry. It does not by itself complete the persistence/restart or lost-
+heartbeat blackout acceptance checks.
+
+## LF4808 geometry correction — 2026-10-20
+
+The operator identified the physical RGB zone layout as 12 columns by 4 rows,
+not the 8-by-6 layout assumed by the reconstructed baseline. Both layouts place
+zone 48 at top-left and zone 1 at bottom-right, so the earlier two-corner test
+could verify endpoints, RGB order, fixture isolation, and blackout without
+distinguishing the row width. The package and previews now model a 12-by-4
+front view while preserving the original baseline files unchanged.
+
+Automated mapping coverage includes every row transition. Physical acceptance
+remains pending until a low-brightness check observes a marker crossing from
+zone 12 to zone 13 independently on Cube A and Cube B. The final eight channels
+per fixture remain zero and are not involved in this correction. All 82 Windows
+tests, JavaScript syntax checking, Python compilation, and the socket-free
+eight-frame diagnostic pass on the correction branch.
 
 ## Raspberry Pi commissioning — 2026-10-19
 
@@ -195,8 +218,9 @@ All 57 automated tests also passed before the live run.
 The live process exited 0. The operator confirmed all marker positions,
 colours, fixture isolation, and final darkness were correct. Combined with
 the timed plasma check, LIVE-001's physical response, independent A001/A153
-control, corner orientation, and normal shutdown blackout checks have passed.
-This checks the two diagonal corners, not every pixel individually. Automatic
+control, endpoint orientation, and normal shutdown blackout checks have passed.
+This checks the two diagonal endpoints, not the 12-column row transitions or
+every pixel individually. Automatic
 live startup remains disabled, and baseline files remain untouched.
 
 ### Handled-interruption blackout (passed)

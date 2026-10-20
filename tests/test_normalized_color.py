@@ -11,12 +11,12 @@ class NormalizedColorTests(unittest.TestCase):
             NormalizedRGB(float("nan"), 0.0, 0.0)
 
     def test_grid_geometry_and_copy_are_independent(self) -> None:
-        grid = NormalizedGrid(8, 6)
+        grid = NormalizedGrid(12, 4)
         copied = grid.copy()
         copied[0, 0] = NormalizedRGB(1.0, 0.5, 0.0)
 
-        self.assertEqual(len(grid.rows()), 6)
-        self.assertTrue(all(len(row) == 8 for row in grid.rows()))
+        self.assertEqual(len(grid.rows()), 4)
+        self.assertTrue(all(len(row) == 12 for row in grid.rows()))
         self.assertEqual(grid[0, 0], BLACK_NORMALIZED)
         self.assertNotEqual(copied[0, 0], grid[0, 0])
 

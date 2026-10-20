@@ -1,4 +1,4 @@
-# Codex Resume: Browser Control Validation
+# Codex Resume: LF4808 12-by-4 Mapping Validation
 
 Last updated: 2026-10-20
 
@@ -9,14 +9,31 @@ design remains in `docs/architecture.md`, `docs/effects.md`, and
 
 ## Objective in progress
 
-Integrate and validate the recovered browser show controller, persistent user
-look library, and timed scene sequencer without making live output automatic.
-The underlying Phase 2 Raspberry Pi, QLC+, soak, and controlled fixture
-commissioning checks are complete within their documented scope.
+Correct the LF4808 logical layout from the reconstructed baseline's 8-by-6
+assumption to the operator-confirmed 12 columns by 4 rows, then validate the
+row transitions on the Raspberry Pi without making live output automatic.
+Browser show-control validation remains open behind this P0 mapping correction.
 
 Do not start live Art-Net output merely to inspect the installation.
 
-## Latest checkpoint — integrated Pi validation
+## Latest checkpoint — 12-by-4 geometry correction
+
+The official LF4808 product listing confirms individual zone/pixel mapping and
+152-channel mode. The operator identified the physical RGB zone layout as a
+12-column by 4-row front view. The previous test lit only zone 48 at top-left
+and zone 1 at bottom-right; those endpoints are identical in both 8-by-6 and
+12-by-4 row-major layouts, so it did not prove the old row width.
+
+Work is isolated on `fix/lf4808-12x4`. Configuration, mapping defaults,
+simulators, browser previews, diagnostics, tests, and current documentation now
+use 12 by 4 without modifying the immutable reconstructed baseline. All 82
+Windows tests pass, JavaScript syntax and Python compilation pass, and the
+offline eight-frame diagnostic validates both fixtures' zone 12/13 boundary
+with no socket creation. After deployment, acceptance requires a low-brightness
+physical marker test of that row transition on both fixtures. Channels 145-152
+and 297-304 remain zero.
+
+## Prior checkpoint — integrated Pi validation
 
 The Pi-only work was preserved on
 `pi-recovery-before-sync-20261020` and reviewed on Windows. It adds browser
@@ -189,9 +206,10 @@ until persistent logs capture any natural recurrence.
   the headless rendering soak below has passed.
 - Full per-pixel verification has not been performed; the controlled physical
   smoke test, normal shutdown blackout, and Ctrl+C blackout passed below.
-- The new Phreqed browser controller, persistent user-look library, and timed
-  scene sequencer pass 82 automated tests on Windows but have not yet completed
-  a browser smoke test or guarded live test on the Pi.
+- The operator accepted the browser simulation and reported that a basic
+  browser-controlled live check worked. Persistence across restart and the
+  five-second lost-browser blackout still need explicit observation; the live
+  check also exposed the superseded 8-by-6 preview geometry.
 - The original source files from the Raspberry Pi have not been imported and
   compared with the preserved reconstructed baseline.
 - The eight unverified channels on each fixture remain intentionally unmapped.
@@ -327,24 +345,27 @@ the backup until the committed file and runtime configuration are verified.
 
 ## Next actions, in order
 
-1. Merge and push the reviewed `pi-recovery-before-sync-20261020` work, then
-   update the Pi only through the guarded deployment workflow.
-2. Confirm the runtime workspace still matches the committed master:
+1. Finish and review `fix/lf4808-12x4`; run the complete Windows suite and
+   verify both local previews contain four rows of twelve cells.
+2. Merge the reviewed mapping correction, push `main`, and update the Pi only
+   through `bash scripts/pi-update.sh`.
+3. Confirm the runtime workspace still matches the committed master:
 
    ```bash
    cmp /home/mmorley/phreqed-stage-dmx-light-controller/config/qlc/phreqed_qlc_workspace.qxw \
      /home/mmorley/.qlcplus/autostart.qxw
    ```
 
-3. Run the complete 82-test suite on the Pi after updating the package.
-4. Start browser simulation only, verify both previews and persistence from a
-   trusted LAN device, and confirm that no Art-Net sender is created.
-5. Validate browser-controlled live output separately, only with QLC+ blackout
+4. Run the complete test suite on the Pi after updating the package, then check
+   that browser simulation renders two 12-by-4 previews.
+5. With separate operator authorization and QLC+ blackout available, run only
+   the low-brightness zone 12/13 row-boundary diagnostic on each fixture.
+6. Validate browser-controlled live output separately, only with QLC+ blackout
    available and the fixtures safely positioned; confirm the five-second lost-
    browser lease blackouts the output.
-6. Do not repeat completed installation, soak, live, reboot, or recovery checks
+7. Do not repeat completed installation, soak, reboot, or recovery checks
    unless a relevant code, configuration, or environment change justifies it.
-7. Update the service's allowed subnet and recheck network access before moving
+8. Update the service's allowed subnet and recheck network access before moving
    the Pi to another network. Live output still requires explicit selection.
 
 ## Safety invariants
@@ -364,10 +385,10 @@ the backup until the committed file and runtime configuration are verified.
 ## Suggested prompt for a new Codex session
 
 ```text
-Read AGENTS.md, RESUME.md, and docs/kanban.md completely. Verify git status,
-hostname, the active QLC+ process, ports 6454 and 9999, and the Python test
-environment before changing anything. Continue the Raspberry Pi commissioning
-work from the first incomplete item in RESUME.md. Do not start live Art-Net or
-modify the baseline. The workspace is already tracked; the older Git handoff
-section is retained only for checkouts predating its first commit.
+Read AGENTS.md, RESUME.md, and docs/kanban.md completely. Verify git status and
+the Python test environment before changing anything. Continue MAP-002 from
+the first incomplete item in RESUME.md. The LF4808 front view is 12 columns by
+4 rows; the preserved reconstructed baseline's 8-by-6 assumption is obsolete.
+Do not start live Art-Net or modify the baseline. A physical zone 12/13 test
+requires explicit operator authorization and immediate QLC+ blackout access.
 ```

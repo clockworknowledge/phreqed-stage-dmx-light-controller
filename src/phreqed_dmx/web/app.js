@@ -38,8 +38,11 @@ function renderCatalog() {
 }
 function draw(canvas, rows) {
   const ctx = canvas.getContext('2d'); ctx.fillStyle = '#0c100d'; ctx.fillRect(0,0,canvas.width,canvas.height);
-  const cell = Math.min(canvas.width/8,canvas.height/6), pad = 6;
-  rows.forEach((row,y) => row.forEach((rgb,x) => { ctx.fillStyle = `rgb(${rgb.join(',')})`; ctx.fillRect(x*cell+pad,y*cell+pad,cell-pad*2,cell-pad*2); }));
+  const height = rows.length, width = rows[0]?.length || 0;
+  if (!width || rows.some(row => row.length !== width)) return;
+  const cell = Math.min(canvas.width/width,canvas.height/height), pad = Math.max(1,cell*0.12);
+  const left = (canvas.width-width*cell)/2, top = (canvas.height-height*cell)/2;
+  rows.forEach((row,y) => row.forEach((rgb,x) => { ctx.fillStyle = `rgb(${rgb.join(',')})`; ctx.fillRect(left+x*cell+pad,top+y*cell+pad,cell-pad*2,cell-pad*2); }));
 }
 function renderState(s) {
   state = s; connected = true;

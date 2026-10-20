@@ -43,6 +43,12 @@ class BrowserControlTests(unittest.TestCase):
                 self.control.command(dict(action='start_live'))
             sender.assert_not_called()
 
+        frames = self.control.state()['frames']
+        self.assertEqual(set(frames), {'Cube A', 'Cube B'})
+        for frame in frames.values():
+            self.assertEqual(len(frame), 4)
+            self.assertTrue(all(len(row) == 12 for row in frame))
+
     def test_preset_and_scene_storage_survives_new_controller_without_autoplay(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
         cues = [dict(name='Night', preset_id='user-test', hold_seconds=7, fade_seconds=1)]

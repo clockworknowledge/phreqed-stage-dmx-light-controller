@@ -33,13 +33,27 @@ No active implementation.
 ### SPRITE-001 — Production sprite renderer (`P2`, visuals)
 
 Promote experimental sprite helpers into the normalized rendering pipeline with
-front-view placement, clipping, palette tinting, scaling suitable for an 8 x 6
+front-view placement, clipping, palette tinting, scaling suitable for a 12 x 4
 grid, and optional cross-cube layouts.
 
 Acceptance: sprite rendering is address-independent and deterministic, clips
 safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
+
+### MAP-002 — Correct LF4808 geometry to 12 x 4 (`P0`, mapping)
+
+The package configuration, fixture defaults, simulators, browser previews,
+legacy compatibility engine, diagnostics, documentation, and automated tests
+now use the operator-confirmed 12-column by 4-row front view. The immutable
+reconstructed baseline retains its historical 8-by-6 assumption. The prior
+corner-only check could not distinguish the two geometries because zones 1 and
+48 have the same locations under both layouts.
+
+Acceptance: the Windows and Pi test suites pass, browser and Tk previews show
+12 x 4 cells, and a low-brightness physical test confirms the zone 12-to-13
+row transition independently on both fixtures. Do not probe the eight
+unverified channels.
 
 ### WEB-001 — Validate browser show control on the Pi (`P0`, show control)
 
@@ -52,11 +66,13 @@ Pi update and automated validation passed on 2026-10-20: all 82 tests completed
 in 0.299 seconds. The operator accepted the trusted-LAN browser simulation, and
 a separate ten-second direct plasma test at brightness 0.15 lit and animated
 both cubes before normal-shutdown blackout. This confirms the existing direct
-live path, not browser-controlled live behavior.
+live path. The operator subsequently reported that a basic guarded browser-live
+check worked; that check exposed the preview's obsolete 8-by-6 geometry, now
+tracked by MAP-002.
 
-Remaining acceptance: confirm saved looks and scenes survive a restart, then
-separately observe guarded browser live start, explicit stop, blackout, and the
-lost-browser timeout safely on both fixtures.
+Remaining acceptance: complete MAP-002, confirm saved looks and scenes survive
+a restart, and separately observe the lost-browser timeout safely on both
+fixtures.
 
 ### PRESET-002 — User preset persistence (`P1`, show control)
 
@@ -117,7 +133,7 @@ drivers must not be imported by the visual engine or simulator.
 
 ### VIDEO-001 — Video-to-grid sampler (`P2`, visuals)
 
-Sample video into two normalized 8 x 6 frames with configurable crop, fit,
+Sample video into two normalized 12 x 4 frames with configurable crop, fit,
 gamma, brightness, and fixture assignment. Quantization remains at the DMX
 boundary.
 
@@ -221,8 +237,9 @@ measured results and any resulting operating limits.
   crashes and previous-boot kernel/service events remain diagnosable.
 - **FOUND-001 (`P0`)** — Python 3.11+ package, simulation-first CLI, fixture
   configuration, ArtDMX transport, and hardware-free test environment.
-- **MAP-001 (`P0`)** — Independent A001/A153 fixture mapping with verified 8 x 6
-  front-view orientation and zero output on the unverified channels.
+- **MAP-001 (`P0`)** — Independent A001/A153 start-address mapping, RGB channel
+  order, endpoint orientation, and zero output on unverified channels. Its
+  historical 8-by-6 geometry claim is superseded by MAP-002.
 - **SAFE-001 (`P0`)** — Explicit-only live mode, brightness ceiling, frame-rise
   limiting, clamping, and best-effort shutdown blackout.
 - **EFFECT-001 (`P1`)** — Standard typed, metadata-rich, address-independent,

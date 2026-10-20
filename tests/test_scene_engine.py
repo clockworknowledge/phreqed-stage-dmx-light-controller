@@ -65,8 +65,8 @@ class SceneEngineTests(unittest.TestCase):
         scene = self.engine.transition_presets(
             "psychedelic-bloom", "molten-motion", 0.8, 0.5
         )
-        self.assertEqual(len(scene["Cube A"].rows()), 6)
-        self.assertTrue(all(len(row) == 8 for row in scene["Cube B"].rows()))
+        self.assertEqual(len(scene["Cube A"].rows()), 4)
+        self.assertTrue(all(len(row) == 12 for row in scene["Cube B"].rows()))
 
     def test_every_effect_keeps_unverified_fixture_channels_zero(self) -> None:
         for metadata in EFFECT_REGISTRY.metadata():

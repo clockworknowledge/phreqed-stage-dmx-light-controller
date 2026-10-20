@@ -128,7 +128,7 @@ QLC+ as the final safety layer.
 
 ## Browser show control
 
-Start with browser simulation. This command serves both 8 x 6 previews to the
+Start with browser simulation. This command serves both 12 x 4 previews to the
 trusted stage LAN but has no path that can construct an Art-Net sender:
 
 ```bash

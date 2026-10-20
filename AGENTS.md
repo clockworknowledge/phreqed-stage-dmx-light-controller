@@ -34,11 +34,17 @@ contain DMX addresses, Art-Net details, or socket operations.
 
 ## Confirmed hardware mapping
 
+The canonical model reference is the
+[official Betopper LF4808 page](https://betopperdj.com/products/betopper-lf4808-260w-matrix-strobe-effect-light).
+It confirms pixel/zone mapping and 152-channel mode. Coordinate orientation and
+the 12-by-4 geometry are based on controlled physical fixture testing.
+
 - QLC+ listens for Art-Net on `127.0.0.1:6454`, universe 0, with passthrough.
 - Two Betopper LF4808 fixtures use 152-channel mode.
 - Cube A starts at one-based DMX address 1; Cube B starts at address 153.
 - Each fixture exposes 48 confirmed RGB zones, three channels per zone (R, G, B).
-- The front view is 8 columns by 6 rows.
+- The front view is 12 columns by 4 rows. This geometry supersedes the 8-by-6
+  assumption retained in the immutable reconstructed baseline.
 - Zone 1 is bottom-right. Zones advance right-to-left across a row, then
   bottom-to-top through the rows.
 - Only the first 144 fixture channels are mapped. The last eight channels of
@@ -95,7 +101,8 @@ not effect code, converts those coordinates to physical zone order.
 1. Run `git status --short` and preserve unrelated user changes.
 2. Run `python -m unittest discover -s tests -v` before and after changes.
 3. Develop in simulation mode and visually check both cube previews.
-4. Add mapping/protocol tests for every boundary or orientation change.
+4. Add mapping/protocol tests for every boundary or orientation change. A
+   geometry check must exercise row transitions, not only zones 1 and 48.
 5. Review a diff before committing.
 6. Test live output on the Raspberry Pi only with fixtures safely positioned,
    people warned, and QLC+ blackout immediately available.

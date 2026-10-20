@@ -35,11 +35,16 @@ status and upcoming work are tracked on the [project Kanban](docs/kanban.md).
 
 ## Hardware configuration
 
+Fixture reference: [Betopper LF4808 official product page](https://betopperdj.com/products/betopper-lf4808-260w-matrix-strobe-effect-light).
+The manufacturer page confirms individual pixel/zone mapping and 152-channel
+mode; the 12-by-4 front-view orientation comes from physical fixture testing.
+
 - Art-Net target: `127.0.0.1:6454`, universe 0
 - QLC+ passthrough to an FTDI FT232R USB-DMX adapter
 - Cube A: 152-channel mode, starts at DMX 1
 - Cube B: 152-channel mode, starts at DMX 153
-- 48 RGB zones per cube; front-view zone 1 is bottom-right
+- 48 RGB zones per cube in a 12-column by 4-row front-view grid; zone 1 is
+  bottom-right
 - zones advance right-to-left, then bottom-to-top
 - the last eight channels on each cube are unverified and always remain zero
 

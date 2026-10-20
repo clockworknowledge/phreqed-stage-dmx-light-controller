@@ -31,7 +31,7 @@ with blackout if the browser disappears. The HTTP server binds to loopback by
 default and limits non-loopback clients to an explicit trusted IPv4 network.
 
 `VisualEngine` preserves the four formulas from the reconstructed v2 baseline:
-plasma, tunnel, pulse, and chase. It also treats both cubes as one logical 16x6
+plasma, tunnel, pulse, and chase. It also treats both cubes as one logical 24x4
 surface for cross-cube chase. Mirror, complementary, and independent modes are
 resolved entirely in logical-grid space before DMX composition.
 
@@ -48,13 +48,16 @@ Logical `(0, 0)` is top-left when looking at a cube from the front. For the
 confirmed LF4808 orientation:
 
 ```text
-48 47 46 45 44 43 42 41
-40 39 38 37 36 35 34 33
-32 31 30 29 28 27 26 25
-24 23 22 21 20 19 18 17
-16 15 14 13 12 11 10  9
- 8  7  6  5  4  3  2  1
+48 47 46 45 44 43 42 41 40 39 38 37
+36 35 34 33 32 31 30 29 28 27 26 25
+24 23 22 21 20 19 18 17 16 15 14 13
+12 11 10  9  8  7  6  5  4  3  2  1
 ```
+
+The physical grid is 12 columns by 4 rows. The earlier 8-by-6 reconstruction
+was not distinguishable by its zone-48/top-left and zone-1/bottom-right test;
+both candidate geometries share those endpoints. Row-boundary markers are
+therefore required for physical geometry validation.
 
 Every zone maps to R, G, then B. Cube A's RGB data occupies DMX 1-144 and Cube
 B's occupies DMX 153-296. Addresses 145-152 and 297-304 are deliberately zero.

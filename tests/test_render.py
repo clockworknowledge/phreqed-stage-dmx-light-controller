@@ -10,11 +10,11 @@ class RenderTests(unittest.TestCase):
     def test_composes_known_pixels_and_leaves_unverified_channels_black(self) -> None:
         fixture_a = FixtureConfig(name="Cube A", start_address=1)
         fixture_b = FixtureConfig(name="Cube B", start_address=153)
-        grid_a = PixelGrid(8, 6)
-        grid_b = PixelGrid(8, 6)
-        grid_a[7, 5] = RGB(1, 2, 3)
+        grid_a = PixelGrid(12, 4)
+        grid_b = PixelGrid(12, 4)
+        grid_a[11, 3] = RGB(1, 2, 3)
         grid_a[0, 0] = RGB(4, 5, 6)
-        grid_b[7, 5] = RGB(7, 8, 9)
+        grid_b[11, 3] = RGB(7, 8, 9)
 
         dmx = compose_dmx(
             (fixture_a, fixture_b), {"Cube A": grid_a, "Cube B": grid_b}
@@ -35,8 +35,8 @@ class RenderTests(unittest.TestCase):
     def test_fixture_frames_are_independent(self) -> None:
         fixture_a = FixtureConfig(name="Cube A", start_address=1)
         fixture_b = FixtureConfig(name="Cube B", start_address=153)
-        grid_a = PixelGrid(8, 6, RGB(25, 50, 75))
-        grid_b = PixelGrid(8, 6)
+        grid_a = PixelGrid(12, 4, RGB(25, 50, 75))
+        grid_b = PixelGrid(12, 4)
 
         dmx = compose_dmx(
             (fixture_a, fixture_b), {"Cube A": grid_a, "Cube B": grid_b}
@@ -47,8 +47,8 @@ class RenderTests(unittest.TestCase):
 
     def test_normalized_rgb_is_quantized_at_output_boundary(self) -> None:
         fixture = FixtureConfig(name="Cube A", start_address=1)
-        grid = NormalizedGrid(8, 6)
-        grid[7, 5] = NormalizedRGB(0.5, 0.25, 1.0)
+        grid = NormalizedGrid(12, 4)
+        grid[11, 3] = NormalizedRGB(0.5, 0.25, 1.0)
 
         dmx = compose_dmx((fixture,), {"Cube A": grid})
 

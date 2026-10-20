@@ -14,8 +14,8 @@ class FixtureConfig:
     name: str
     start_address: int
     channel_count: int = 152
-    width: int = 8
-    height: int = 6
+    width: int = 12
+    height: int = 4
     channels_per_pixel: int = 3
     horizontal_order: str = "right_to_left"
     vertical_order: str = "bottom_to_top"

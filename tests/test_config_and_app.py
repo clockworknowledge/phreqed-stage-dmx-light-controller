@@ -14,8 +14,11 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(config.universe, 0)
         self.assertEqual(config.fps, 25)
         self.assertEqual(
-            [(fixture.name, fixture.start_address) for fixture in config.fixtures],
-            [("Cube A", 1), ("Cube B", 153)],
+            [
+                (fixture.name, fixture.start_address, fixture.width, fixture.height)
+                for fixture in config.fixtures
+            ],
+            [("Cube A", 1, 12, 4), ("Cube B", 153, 12, 4)],
         )
 
     def test_command_line_defaults_to_simulation(self) -> None:

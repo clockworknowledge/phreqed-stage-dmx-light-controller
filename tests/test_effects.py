@@ -5,14 +5,14 @@ from phreqed_dmx.frame import PixelGrid, RGB
 
 
 def two_grids() -> tuple[PixelGrid, PixelGrid]:
-    return PixelGrid(8, 6), PixelGrid(8, 6)
+    return PixelGrid(12, 4), PixelGrid(12, 4)
 
 
 class VisualEngineTests(unittest.TestCase):
     def test_all_baseline_effects_render(self) -> None:
         expected_samples = {
             "plasma": RGB(0, 35, 89),
-            "tunnel": RGB(82, 49, 0),
+            "tunnel": RGB(0, 60, 12),
             "pulse": RGB(62, 9, 0),
             "chase": RGB(0, 0, 0),
         }
@@ -35,10 +35,10 @@ class VisualEngineTests(unittest.TestCase):
 
     def test_cross_cube_chase_is_continuous_across_cube_boundary(self) -> None:
         first, second = two_grids()
-        VisualEngine("cross-cube", brightness=1.0).render(8 / 15, (first, second))
+        VisualEngine("cross-cube", brightness=1.0).render(12 / 15, (first, second))
 
-        self.assertEqual(second[0, 0], RGB(255, 176, 0))
-        self.assertEqual(first[7, 0], RGB(206, 130, 0))
+        self.assertEqual(second[0, 0], RGB(245, 255, 0))
+        self.assertEqual(first[11, 0], RGB(206, 201, 0))
         self.assertNotEqual(first.rows(), second.rows())
 
     def test_independent_mode_uses_distinct_effects(self) -> None:
