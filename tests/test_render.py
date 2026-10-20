@@ -7,7 +7,7 @@ from phreqed_dmx.render import compose_dmx
 
 
 class RenderTests(unittest.TestCase):
-    def test_composes_known_pixels_and_leaves_unverified_channels_black(self) -> None:
+    def test_composes_known_pixels_and_leaves_optional_white_channels_black(self) -> None:
         fixture_a = FixtureConfig(name="Cube A", start_address=1)
         fixture_b = FixtureConfig(name="Cube B", start_address=153)
         grid_a = PixelGrid(12, 4)
@@ -53,6 +53,31 @@ class RenderTests(unittest.TestCase):
         dmx = compose_dmx((fixture,), {"Cube A": grid})
 
         self.assertEqual(dmx[0:3], bytes((128, 64, 255)))
+
+    def test_normalized_white_zones_are_quantized_and_fixture_independent(self) -> None:
+        fixture_a = FixtureConfig(name="Cube A", start_address=1)
+        fixture_b = FixtureConfig(name="Cube B", start_address=153)
+        grids = {"Cube A": NormalizedGrid(12, 4), "Cube B": NormalizedGrid(12, 4)}
+
+        dmx = compose_dmx(
+            (fixture_a, fixture_b),
+            grids,
+            white_zones={"Cube A": (0.1, 0, 0, 0, 0, 0, 0, 0)},
+        )
+
+        self.assertEqual(dmx[144:152], bytes((26, 0, 0, 0, 0, 0, 0, 0)))
+        self.assertEqual(dmx[296:304], bytes(8))
+        self.assertEqual(dmx[:144], bytes(144))
+
+    def test_white_zone_shape_range_and_fixture_names_are_validated(self) -> None:
+        fixture = FixtureConfig(name="Cube A", start_address=1)
+        grid = {"Cube A": NormalizedGrid(12, 4)}
+        for levels in ((0.0,), (0, 0, 0, 0, 0, 0, 0, 1.01),
+                       (0, 0, 0, 0, 0, 0, 0, float("nan"))):
+            with self.subTest(levels=levels), self.assertRaises(ValueError):
+                compose_dmx((fixture,), grid, white_zones={"Cube A": levels})
+        with self.assertRaisesRegex(ValueError, "unknown fixture"):
+            compose_dmx((fixture,), grid, white_zones={"Other": (0,) * 8})
 
 
 if __name__ == "__main__":

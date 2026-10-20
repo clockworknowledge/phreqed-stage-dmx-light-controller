@@ -91,22 +91,22 @@ was not distinguishable by its zone-48/top-left and zone-1/bottom-right test;
 both candidate geometries share those endpoints. Row-boundary markers are
 therefore required for physical geometry validation.
 
-The diagram covers only the 48 RGB zones. Two central white strobe/blinder
-elements are physically present on each fixture but are intentionally absent
-from the logical grid. Prior physical testing reportedly controlled them using
-original scripts, but those files and exact assignments are not in this
-checkout. No channel assignment may be inferred until that evidence is
-imported and characterized.
+The diagram covers only the 48 RGB zones. Two central rows of white
+strobe/blinder LEDs are physically present and remain separate from the RGB
+grid. The LF4808 152-channel table defines eight linearly dimmed white parts on
+fixture channels 145-152. Their physical front-view order is commissioned
+separately rather than inferred from RGB orientation.
 
-The browser canvas represents the two white elements as disabled grey center
+The browser canvas represents the two white rows as disabled grey center
 lines between the upper and lower RGB row pairs. This is a physical-layout cue,
-not a renderable channel: the serialized scene remains exactly four rows of
-twelve RGB values.
+not yet a normal show layer: the RGB scene remains exactly four rows of twelve
+values and the white levels default to zero.
 
-Every zone maps to R, G, then B. Cube A's RGB data occupies DMX 1-144 and Cube
-B's occupies DMX 153-296. Addresses 145-152 and 297-304 are deliberately zero.
-Their functions must be verified from reliable fixture documentation and tested
-safely before any mapping is added.
+Every RGB zone maps to R, G, then B. Cube A's RGB data occupies DMX 1-144 and
+its white parts occupy 145-152. Cube B's RGB data occupies 153-296 and its white
+parts occupy 297-304. `compose_dmx` accepts optional normalized white levels;
+omitting them produces zeros. Physical commissioning is limited to the capped,
+steady procedure in `lf4808-white-commissioning.md`.
 
 ## Extension points
 

@@ -30,6 +30,20 @@ class FixtureMappingTests(unittest.TestCase):
         fixture = FixtureConfig(name="Cube B", start_address=153)
         self.assertEqual(fixture.rgb_offsets(11, 3), (152, 153, 154))
 
+    def test_white_parts_follow_rgb_channels_without_address_overlap(self) -> None:
+        self.assertEqual(
+            tuple(self.fixture.white_offset(zone) for zone in range(1, 9)),
+            tuple(range(144, 152)),
+        )
+        fixture_b = FixtureConfig(name="Cube B", start_address=153)
+        self.assertEqual(fixture_b.white_offset(1), 296)
+        self.assertEqual(fixture_b.white_offset(8), 303)
+        for bad in (0, 9):
+            with self.assertRaises(IndexError):
+                self.fixture.white_offset(bad)
+        with self.assertRaises(TypeError):
+            self.fixture.white_offset(True)
+
     def test_rejects_fixture_outside_universe(self) -> None:
         with self.assertRaises(ValueError):
             FixtureConfig(name="Overflow", start_address=400)

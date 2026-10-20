@@ -2,7 +2,8 @@
 
 from __future__ import annotations
 
-from collections.abc import Mapping
+from collections.abc import Mapping, Sequence
+import math
 
 from .color import NormalizedGrid
 from .fixtures import FixtureConfig, UNIVERSE_CHANNELS, validate_fixture_set
@@ -16,9 +17,15 @@ def create_grids(fixtures: tuple[FixtureConfig, ...]) -> dict[str, PixelGrid]:
 def compose_dmx(
     fixtures: tuple[FixtureConfig, ...],
     grids: Mapping[str, PixelGrid | NormalizedGrid],
+    white_zones: Mapping[str, Sequence[float]] | None = None,
 ) -> bytes:
-    """Quantize at the output boundary and leave every unmapped channel at zero."""
+    """Quantize RGB and optional white zones at the output boundary."""
     validate_fixture_set(fixtures)
+    known_names = {fixture.name for fixture in fixtures}
+    if white_zones is not None:
+        unknown = set(white_zones).difference(known_names)
+        if unknown:
+            raise ValueError(f"white zones supplied for unknown fixture {min(unknown)}")
     universe = bytearray(UNIVERSE_CHANNELS)
     for fixture in fixtures:
         try:
@@ -39,4 +46,20 @@ def compose_dmx(
                     universe[red_offset] = color.red
                     universe[green_offset] = color.green
                     universe[blue_offset] = color.blue
+        if white_zones is None or fixture.name not in white_zones:
+            continue
+        levels = white_zones[fixture.name]
+        if len(levels) != fixture.white_zone_count:
+            raise ValueError(
+                f"white zone count does not match fixture {fixture.name}"
+            )
+        for zone_number, level in enumerate(levels, start=1):
+            if (
+                isinstance(level, bool)
+                or not isinstance(level, (int, float))
+                or not math.isfinite(level)
+                or not 0.0 <= level <= 1.0
+            ):
+                raise ValueError("white zone levels must be finite values from 0.0 to 1.0")
+            universe[fixture.white_offset(zone_number)] = round(level * 255)
     return bytes(universe)

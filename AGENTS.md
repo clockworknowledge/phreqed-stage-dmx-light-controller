@@ -51,15 +51,14 @@ the 12-by-4 geometry are based on controlled physical fixture testing.
 - Each fixture exposes 48 confirmed RGB zones, three channels per zone (R, G, B).
 - The front view is 12 columns by 4 rows. This geometry supersedes the 8-by-6
   assumption retained in the immutable reconstructed baseline.
-- Each fixture also has two central white strobe/blinder elements. Prior Pi
-  testing reportedly controlled them from original scripts, but those scripts
-  and their exact channel assignments are not present in this checkout. They
-  are not RGB-grid pixels and remain disabled in the package until that source
-  is imported and characterized.
+- Each fixture also has two central rows of white strobe/blinder LEDs. The
+  recovered LF4808 152-channel table maps them as eight linearly dimmed white
+  parts on fixture channels 145-152. Their front-view order still requires
+  controlled physical commissioning.
 - Zone 1 is bottom-right. Zones advance right-to-left across a row, then
   bottom-to-top through the rows.
-- Only the first 144 fixture channels are mapped. The last eight channels of
-  each fixture are unverified and must remain zero.
+- RGB uses the first 144 fixture channels. The final eight white channels are
+  mapped but remain zero during normal show rendering until commissioning.
 - Each Art-Net transmission carries a complete 512-channel DMX payload.
 - QLC+ must be the only process bound to UDP 6454. The baseline notes record a
   prior conflict with OLA's `olad`; keep that service disabled while QLC+ is in use.
@@ -71,9 +70,10 @@ not effect code, converts those coordinates to physical zone order.
 
 - Simulation is the default. Live transmission always requires the explicit
   `live` command.
-- Never activate, probe, sweep, or infer the eight currently undocumented
-  channels on either fixture. Recover the known-working white-strobe assignment
-  from original source and physical test notes before adding it to this package.
+- Keep fixture channels 145-152 zero in normal rendering until the steady,
+  low-level procedure in `docs/lf4808-white-commissioning.md` records their
+  front-view order on both fixtures. Commission with one steady part at a time,
+  never a flashing sweep.
 - Keep the default global brightness at or below 0.65 and retain the frame safety
   limiter unless a documented hardware test justifies a change.
 - New default effects must avoid rapid high-intensity full-frame flashes.

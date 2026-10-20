@@ -17,6 +17,7 @@ class FixtureConfig:
     width: int = 12
     height: int = 4
     channels_per_pixel: int = 3
+    white_zone_count: int = 8
     horizontal_order: str = "right_to_left"
     vertical_order: str = "bottom_to_top"
 
@@ -31,6 +32,14 @@ class FixtureConfig:
             raise ValueError("only RGB fixtures with three channels per pixel are supported")
         if self.channel_count < self.pixel_channel_count:
             raise ValueError("fixture channel_count is smaller than its RGB pixel footprint")
+        if (
+            isinstance(self.white_zone_count, bool)
+            or not isinstance(self.white_zone_count, int)
+            or self.white_zone_count < 0
+        ):
+            raise ValueError("white_zone_count must be a nonnegative integer")
+        if self.pixel_channel_count + self.white_zone_count > self.channel_count:
+            raise ValueError("fixture channel_count is smaller than its RGB and white footprint")
         if self.end_address > UNIVERSE_CHANNELS:
             raise ValueError("fixture extends beyond the 512-channel DMX universe")
         if self.horizontal_order not in HORIZONTAL_ORDERS:
@@ -62,6 +71,21 @@ class FixtureConfig:
         """Return zero-based universe offsets for the pixel's R, G, and B channels."""
         first = (self.start_address - 1) + (self.zone_number(x, y) - 1) * 3
         return first, first + 1, first + 2
+
+    def white_offset(self, zone_number: int) -> int:
+        """Return the zero-based universe offset for white zone 1 through 8.
+
+        The LF4808 manual calls these white ``Part 1`` through ``Part 8``.
+        This method deliberately preserves that numbering until the physical
+        front-view order has been recorded on both fixtures.
+        """
+        if isinstance(zone_number, bool) or not isinstance(zone_number, int):
+            raise TypeError("white zone number must be an integer")
+        if not 1 <= zone_number <= self.white_zone_count:
+            raise IndexError(
+                f"white zone {zone_number} is outside 1 through {self.white_zone_count}"
+            )
+        return self.start_address - 1 + self.pixel_channel_count + zone_number - 1
 
 
 def validate_fixture_set(fixtures: tuple[FixtureConfig, ...]) -> None:

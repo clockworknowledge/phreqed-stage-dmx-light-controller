@@ -8,6 +8,20 @@ design remains in `docs/architecture.md`, `docs/effects.md`, and
 `docs/raspberry-pi-deployment.md`. The future projector architecture is in
 `docs/projector-output.md`.
 
+## Latest checkpoint — LF4808 white-zone commissioning ready
+
+The recovered LF4808 152-channel manual maps fixture channels 145-152 as eight
+independently, linearly dimmed white parts. Cube A therefore uses universe DMX
+145-152 and Cube B uses 297-304. Normal scenes still leave them zero. The new
+`scripts/white-zone-check.py` validates all sixteen addresses offline and offers
+only an explicit live sequence: one steady part at 5%, at least 0.75 seconds of
+blackout between parts, a hard 10% ceiling, and final shutdown blackout.
+
+The Windows suite passes 118 tests. Next run the offline and live commissioning
+steps in `docs/lf4808-white-commissioning.md`, recording Part 1-8 physical order
+and whether both visible white rows respond together. Do not build flashing or
+audio-triggered white effects until those observations agree on both fixtures.
+
 ## Latest checkpoint — Pi audio capture accepted functionally
 
 `feat/audio-context` now includes the first AUDIO-002 capture slice. The Blue
