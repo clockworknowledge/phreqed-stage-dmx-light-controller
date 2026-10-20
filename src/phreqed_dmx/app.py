@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import argparse
+import math
 import sys
 import time
 from pathlib import Path
@@ -16,6 +17,7 @@ from .engine import SceneEngine
 from .presets import PRESETS
 from .render import compose_dmx
 from .show_control import ShowController
+from .scenes import SceneSequencer
 
 
 class Controller:
@@ -40,10 +42,14 @@ class Controller:
         self._transition_from: Scene | None = None
         self._transition_started = 0.0
         self._transition_duration = 0.0
+        self.scenes = SceneSequencer(self.engine, self.begin_transition)
 
     def begin_transition(self, elapsed: float, *, duration: float = 0.45) -> None:
-        if duration <= 0.0:
-            raise ValueError("transition duration must be positive")
+        if not math.isfinite(duration) or duration < 0.0:
+            raise ValueError("transition duration must be finite and nonnegative")
+        if duration == 0.0:
+            self._transition_from = None
+            return
         if self._last_scene is None:
             return
         self._transition_from = {
@@ -60,6 +66,9 @@ class Controller:
         apply_safety: bool = True,
     ) -> Scene:
         context = self.show.context() if context is None else context
+        self.scenes.update(elapsed)
+        if self.engine.blackout_enabled:
+            self._transition_from = None
         scene = self.engine.render(elapsed * self.speed, context)
         if self._transition_from is not None:
             progress = (elapsed - self._transition_started) / self._transition_duration
@@ -102,7 +111,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "command",
         nargs="?",
-        choices=("simulate", "live"),
+        choices=("simulate", "live", "web"),
         default="simulate",
         help="output mode; defaults to safe local simulation",
     )
@@ -146,6 +155,12 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--duration", type=_positive, help="optional live-mode run time in seconds"
     )
+    parser.add_argument("--web", action="store_true", help="browser control for explicit live mode")
+    parser.add_argument("--host", default="127.0.0.1", help="browser listen address")
+    parser.add_argument("--port", type=int, default=8080, help="browser port (default 8080)")
+    parser.add_argument("--allow-network", default="192.168.1.0/24", help="trusted IPv4 browser network")
+    parser.add_argument("--library", type=Path, default=Path.home() / ".local/share/phreqed-dmx/library.json",
+                        help="user preset and scene JSON file")
     return parser
 
 
@@ -197,6 +212,10 @@ def _run_live(controller: Controller, duration: float | None) -> None:
 def main(argv: list[str] | None = None) -> int:
     parser = build_parser()
     args = parser.parse_args(argv)
+    if args.web and args.command != "live":
+        parser.error("--web requires the explicit live command; use web for browser simulation")
+    if (args.command == "web" or args.web) and args.duration is not None:
+        parser.error("--duration is not supported by browser control")
     if args.command == "simulate" and args.duration is not None:
         parser.error("--duration is available only in live mode")
 
@@ -205,7 +224,12 @@ def main(argv: list[str] | None = None) -> int:
     controller = Controller(config, engine, speed=args.speed)
 
     try:
-        if args.command == "live":
+        if args.command == "web" or args.web:
+            from .web_control import serve
+
+            serve(controller, args.library, host=args.host, port=args.port,
+                  allow_network=args.allow_network, allow_live=args.command == "live")
+        elif args.command == "live":
             _run_live(controller, args.duration)
         else:
             from .simulator import TkSimulator
