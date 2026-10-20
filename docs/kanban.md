@@ -171,6 +171,48 @@ procedure before package configuration or effect changes.
 
 ## Backlog
 
+### PROJ-001 — Projector playback foundation (`P2`, visual output)
+
+Add an explicitly enabled projection adapter that plays validated local video
+and image assets on a selected Pi HDMI output. Playback runs in a separate
+process from the 25 FPS DMX loop and supports load, play, pause, stop, loop,
+seek, output blank, and clean shutdown. Media lives outside Git in an
+operator-configured library. Compare VLC, `mpv`, and GStreamer/direct-rendering
+behavior on the current Debian Trixie Pi before selecting the backend.
+
+Acceptance: no projector is opened by default; hardware-free tests use a fake
+player; missing media and player failure fall back to black without disrupting
+DMX, audio, MIDI, browser control, or blackout; and a Pi soak documents video
+drops, CPU/GPU/memory/temperature, and DMX missed frames at an initial 1080p
+target. See `docs/projector-output.md`.
+
+### PROJ-002 — Projector effects and overlay compositor (`P2`, visuals)
+
+Composite local video, stills, colour fields, and lightweight procedural or
+shader overlays with crop/fit, opacity, blend modes, intensity limits, and
+smooth transitions. Reuse normalized audio analysis only through the existing
+performance context. Keep projector frames and RGB fixture grids as distinct
+render targets.
+
+Acceptance: deterministic controls and fallback frames are testable without a
+display; overlays cannot stall DMX; audio response is bounded; and the target
+Pi sustains the selected projector frame rate alongside QLC+, browser control,
+microphone analysis, and MIDI input.
+
+### SHOW-002 — Unified lighting and projection cues (`P2`, show control)
+
+Extend show cues so one transport-independent cue can select a lighting preset
+and an optional projection preset. The existing Ampero remains sufficient for
+the first version: previous/next advance the unified cue, tap tempo is shared,
+and the safety switch can blank projection after that path is separately tested.
+A second pedal is optional for future independent video transport, not a
+requirement for the foundation.
+
+Acceptance: projector failure cannot block lighting commands; lighting blackout
+and projector blank remain independently testable; unified cue transitions are
+repeatable; missing projection content fails black; and pedal mappings cannot
+start live DMX or projector output implicitly.
+
 ### VIDEO-001 — Video-to-grid sampler (`P2`, visuals)
 
 Sample video into two normalized 12 x 4 frames with configurable crop, fit,

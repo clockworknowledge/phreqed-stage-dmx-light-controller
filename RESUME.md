@@ -5,7 +5,8 @@ Last updated: 2026-10-20
 This is the short operational handoff for a new Codex session. Read
 `AGENTS.md`, this file, and `docs/kanban.md` before taking action. The detailed
 design remains in `docs/architecture.md`, `docs/effects.md`, and
-`docs/raspberry-pi-deployment.md`.
+`docs/raspberry-pi-deployment.md`. The future projector architecture is in
+`docs/projector-output.md`.
 
 ## Latest checkpoint — Pi audio capture accepted functionally
 
@@ -29,6 +30,12 @@ path working: capture stayed active, the browser meters responded, and the
 audio-reactive visual changed with the room input. This did not enable Art-Net
 or exercise physical light output. Functional Pi acceptance has passed; only a
 sustained CPU, latency, and missed-frame measurement remains for AUDIO-002.
+
+Projector output is now scoped in the backlog as PROJ-001, PROJ-002, and
+SHOW-002. The intended design uses a separate HDMI player/compositor process
+and unified light/projection cues. The current Ampero can control those cues, so
+a second pedal is not required for the foundation. No projector code or runtime
+dependency has been added yet.
 
 ## Hotone Ampero Control branch
 

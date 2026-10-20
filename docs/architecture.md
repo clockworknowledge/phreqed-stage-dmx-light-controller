@@ -45,9 +45,10 @@ navigation commands without importing Art-Net.
 
 `audio_analysis.py` defines normalized loudness, onset, and three-band values
 plus a small `AudioAnalysisSource` boundary. Manual and recorded sources are
-dependency-free and deterministic. Future microphone capture remains an
-optional adapter outside effects and DMX transport; with no source configured,
-rendering follows the existing non-audio path unchanged.
+dependency-free and deterministic. `audio_capture.py` optionally runs explicit
+ALSA capture and PCM analysis on a worker outside the render deadline. With no
+source configured, the capture module is not imported and rendering follows the
+existing non-audio path unchanged.
 
 `foot_control.py` parses standard MIDI channel messages without a third-party
 runtime dependency and maps an explicitly selected Hotone Ampero Control input
@@ -55,6 +56,17 @@ onto that command boundary. It does not import Art-Net or fixture mapping and
 cannot enable live output. Browser-mode pedal actions are routed through the
 browser controller's existing serialized command path so cue navigation,
 blackout, and safety state remain consistent.
+
+## Future projector output
+
+Projector playback and overlays will be a separate render target, not another
+branch of DMX composition. A future show coordinator can send the same unified
+cue to the existing lighting controller and an independently supervised
+projection process. Video decode, overlay timing, and HDMI presentation must
+never execute on or block the 25 FPS DMX thread. The existing Ampero can advance
+unified cues; a second pedal is optional only for independent projector
+transport. See `docs/projector-output.md` and PROJ-001/PROJ-002/SHOW-002 in the
+Kanban.
 
 ## Coordinates and physical zones
 
