@@ -113,20 +113,21 @@ therefore required for physical geometry validation.
 The diagram covers only the 48 RGB zones. Two central rows of white
 strobe/blinder LEDs are physically present and remain separate from the RGB
 grid. The LF4808 152-channel table defines eight linearly dimmed white parts on
-fixture channels 145-152. Their physical front-view order is commissioned
-separately rather than inferred from RGB orientation.
+fixture channels 145-152. Physical testing confirmed Parts 1-8 progress
+right-to-left from the front and each part drives both visible rows on both
+fixtures.
 
 The browser canvas represents the two white rows between the upper and lower
-RGB row pairs. An operator can preview audio-onset hits on those lines, but the
-preview state is display-only and reports `output_enabled=false`. It is not a
-normal show layer: the RGB scene remains exactly four rows of twelve values and
-normal DMX white levels remain zero.
+RGB row pairs. Preview remains available in simulation. Physical peak output is
+a separate browser-live state outside presets and RGB effects: it requires an
+audio source and explicit toggle, is capped at 10%, uses short threshold-crossing
+pulses no faster than 4 Hz, and is disarmed by every stop/blackout path.
 
 Every RGB zone maps to R, G, then B. Cube A's RGB data occupies DMX 1-144 and
 its white parts occupy 145-152. Cube B's RGB data occupies 153-296 and its white
 parts occupy 297-304. `compose_dmx` accepts optional normalized white levels;
-omitting them produces zeros. Physical commissioning is limited to the capped,
-steady procedure in `lf4808-white-commissioning.md`.
+omitting them produces zeros. The commissioned mapping and original capped,
+steady procedure are recorded in `lf4808-white-commissioning.md`.
 
 ## Extension points
 

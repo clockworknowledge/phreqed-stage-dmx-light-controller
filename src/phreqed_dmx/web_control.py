@@ -20,6 +20,13 @@ from .foot_control import RawMidiFootController
 from .library import UserLibrary, number, object_fields, parse_preset, preset_data
 from .presets import PRESETS
 from .render import compose_dmx
+from .white_output import (
+    DEFAULT_WHITE_OUTPUT_LEVEL,
+    MAX_WHITE_FLASH_HZ,
+    WHITE_OUTPUT_CEILING,
+    WhitePeakLimiter,
+    commissioned_white_levels,
+)
 
 ASSETS = Path(__file__).with_name('web')
 
@@ -72,6 +79,11 @@ class BrowserControl:
         self.white_peak_preview = False
         self.white_preview_threshold = 0.65
         self.white_preview_level = 0.8
+        self.white_preview_active_level = 0.0
+        self.white_output_enabled = False
+        self.white_output_level = DEFAULT_WHITE_OUTPUT_LEVEL
+        self.white_output_active_level = 0.0
+        self.white_peak_limiter = WhitePeakLimiter()
         self.foot_controller: RawMidiFootController | None = None
         self.frames = black_scene(self.engine.geometry)
         self.thread: threading.Thread | None = None
@@ -121,16 +133,10 @@ class BrowserControl:
                 if self.foot_controller is not None
                 else None
             )
-            white_level = 0.0
-            if (
-                self.white_peak_preview
-                and not self.engine.blackout_enabled
-                and analysis is not None
-                and analysis.onset >= self.white_preview_threshold
-            ):
-                span = max(0.001, 1.0 - self.white_preview_threshold)
-                peak = (analysis.onset - self.white_preview_threshold) / span
-                white_level = self.white_preview_level * (0.35 + peak * 0.65)
+            white_commissioned = all(
+                fixture.white_commissioned and fixture.white_rows_together
+                for fixture in self.controller.config.fixtures
+            )
             return dict(live_allowed=self.allow_live, live=self.sender is not None,
                         blackout=self.engine.blackout_enabled, error=self.error, notice=self.notice,
                         preset_id=self.engine.active_preset_id, playing=scenes.playing,
@@ -146,8 +152,21 @@ class BrowserControl:
                             enabled=self.white_peak_preview,
                             threshold=self.white_preview_threshold,
                             level=self.white_preview_level,
-                            active_level=white_level,
-                            output_enabled=False,
+                            active_level=self.white_preview_active_level,
+                            commissioned=white_commissioned,
+                            mapping='Parts 1-8 right-to-left; both rows together',
+                            output_available=(
+                                self.allow_live
+                                and self.sender is not None
+                                and white_commissioned
+                                and source is not None
+                                and not self.engine.blackout_enabled
+                            ),
+                            output_enabled=self.white_output_enabled,
+                            output_level=self.white_output_level,
+                            output_active_level=self.white_output_active_level,
+                            output_ceiling=WHITE_OUTPUT_CEILING,
+                            flash_rate_limit_hz=MAX_WHITE_FLASH_HZ,
                         ),
                         foot_control=(
                             dict(
@@ -180,9 +199,16 @@ class BrowserControl:
         self.controller.scenes.replace(self.library.cues)
 
     def _stop_live(self) -> None:
+        self._disable_white_output()
         sender, self.sender = self.sender, None
         if sender is not None:
             sender.close()
+
+    def _disable_white_output(self) -> None:
+        self.white_output_enabled = False
+        self.white_preview_active_level = 0.0
+        self.white_output_active_level = 0.0
+        self.white_peak_limiter.reset()
 
     def command(self, raw: object) -> None:
         data = object_fields(
@@ -201,6 +227,7 @@ class BrowserControl:
                 self.lease_deadline = time.monotonic() + 5
             elif action == 'blackout':
                 self.engine.set_blackout(True)
+                self._disable_white_output()
                 scenes.playing = False
                 self.controller._transition_from = None
                 self.frames = black_scene(self.engine.geometry)
@@ -257,6 +284,30 @@ class BrowserControl:
                 self.white_peak_preview = enabled
                 self.white_preview_threshold = threshold
                 self.white_preview_level = level
+            elif action == 'white_output':
+                enabled = data.get('enabled')
+                if not isinstance(enabled, bool):
+                    raise ValueError('white output enabled must be boolean')
+                level = number(
+                    data.get('level'), 'white output level', 0.01,
+                    WHITE_OUTPUT_CEILING,
+                )
+                if enabled:
+                    if not self.allow_live or self.sender is None:
+                        raise ValueError('start explicit browser live output before enabling whites')
+                    if self.engine.blackout_enabled:
+                        raise ValueError('release blackout before enabling whites')
+                    if self.controller.audio_source is None:
+                        raise ValueError('audio input is required for white peak output')
+                    if not all(
+                        fixture.white_commissioned and fixture.white_rows_together
+                        for fixture in self.controller.config.fixtures
+                    ):
+                        raise ValueError('white output requires commissioned fixtures')
+                self.white_output_level = level
+                self.white_output_enabled = enabled
+                if not enabled:
+                    self._disable_white_output()
             elif action == 'preset':
                 preset_id = data.get('value')
                 if not isinstance(preset_id, str) or preset_id not in self.engine.presets:
@@ -320,8 +371,40 @@ class BrowserControl:
                 self._stop_live()
                 self.notice = 'Browser connection lost. Output stopped with blackout; start it explicitly to resume.'
             self.frames = self.controller.render_scene(now - self.started)
+            source = self.controller.audio_source
+            analysis = source.sample(now - self.started) if source is not None else None
+            onset = analysis.onset if analysis is not None else 0.0
+            white_requested = self.white_peak_preview or self.white_output_enabled
+            strength = self.white_peak_limiter.update(
+                now,
+                onset,
+                enabled=white_requested and not self.engine.blackout_enabled,
+                threshold=self.white_preview_threshold,
+            )
+            self.white_preview_active_level = (
+                self.white_preview_level * strength
+                if self.white_peak_preview
+                else 0.0
+            )
+            self.white_output_active_level = (
+                self.white_output_level * strength
+                if self.white_output_enabled and self.sender is not None
+                else 0.0
+            )
             if self.sender is not None:
-                self.sender.send(compose_dmx(self.controller.config.fixtures, self.frames))
+                white_zones = (
+                    commissioned_white_levels(
+                        self.controller.config.fixtures,
+                        self.white_output_active_level,
+                    )
+                    if self.white_output_enabled
+                    else None
+                )
+                self.sender.send(compose_dmx(
+                    self.controller.config.fixtures,
+                    self.frames,
+                    white_zones=white_zones,
+                ))
 
     def start(self) -> None:
         def run() -> None:

@@ -50,7 +50,7 @@ class TkSimulator:
             self._root,
             text=(
                 "SIMULATION - Art-Net disabled - RGB zones only; "
-                "white strobes unavailable in this build"
+                "center whites are guarded browser-live controls"
             ),
             foreground="#eeeeee",
             background="#202020",

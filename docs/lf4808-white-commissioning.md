@@ -41,10 +41,23 @@ white rows respond together. There is at least 0.75 seconds of blackout between
 parts. `--level` cannot exceed 0.10, and normal shutdown or Ctrl+C requests a
 final full-universe blackout.
 
-Do not add pulse, beat, or strobe effects until all sixteen observations have
-been recorded and agree between the fixtures. The normal show engine continues
-to send zero on these channels unless an explicit white-zone frame is supplied.
+The original acceptance gate prohibited pulse, beat, or strobe effects until
+all sixteen observations were recorded and agreed between fixtures. The result
+below satisfies that mapping gate. Normal rendering still sends zero unless the
+separately guarded browser-live peak control supplies a white-zone frame.
 
-The browser's optional audio-onset white-line animation is a display-only
-preview. It does not construct a white-zone frame and is not evidence that the
-physical part order has been commissioned.
+## Accepted result — 2026-10-21
+
+The operator completed the steady 5% physical test and reported identical
+behavior on both fixtures:
+
+- Parts 1-8 progress right-to-left when viewed from the front.
+- Every part drives both visible white rows together.
+- Cube A and Cube B match.
+
+This result is encoded in `config/fixtures.toml` and fixture mapping tests. The
+browser-live controller may now produce audio-onset peak accents, but only after
+its separate physical-white toggle is enabled. Output defaults to 5%, has a hard
+10% ceiling, uses pulses no longer than 0.10 seconds at no more than 4 Hz, and is
+disarmed by blackout, stop, failure, or lease loss. Presets and normal rendering
+still leave all white channels zero.

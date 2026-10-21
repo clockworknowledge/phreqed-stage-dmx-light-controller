@@ -53,11 +53,12 @@ class BrowserControlTests(unittest.TestCase):
             self.assertEqual(len(frame), 4)
             self.assertTrue(all(len(row) == 12 for row in frame))
 
-    def test_browser_preview_documents_disabled_center_strobes(self):
+    def test_browser_documents_commissioned_center_whites(self):
         html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
         script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
-        self.assertIn('12 by 4 RGB grid and two center white preview lines', html)
-        self.assertIn('whites preview-only', html)
+        self.assertIn('12 by 4 RGB grid and two commissioned center white rows', html)
+        self.assertIn('Parts 1-8 run right-to-left', html)
+        self.assertIn('id="white-output"', html)
         self.assertIn("const white = Math.round", script)
         self.assertIn("white.active_level", script)
 
@@ -132,6 +133,7 @@ class BrowserControlTests(unittest.TestCase):
                         dict(action='audio_dimming', enabled=True, floor=0.5),
                         dict(action='white_preview', enabled=True, threshold=0.0, level=0.8),
                         dict(action='white_preview', enabled=True, threshold=0.65, level=2.0),
+                        dict(action='white_output', enabled=True, level=0.05),
                         dict(action='anything')):
             with self.subTest(command=command), self.assertRaises(ValueError):
                 self.control.command(command)
@@ -139,6 +141,7 @@ class BrowserControlTests(unittest.TestCase):
         self.assertEqual(self.control.engine.compositor.global_brightness, 0.25)
         self.assertFalse(self.control.controller.audio_clock.deep_dim_enabled)
         self.assertFalse(self.control.white_peak_preview)
+        self.assertFalse(self.control.white_output_enabled)
 
     def test_browser_brightness_uses_explicit_controller_ceiling(self):
         config = load_config()
@@ -205,7 +208,40 @@ class BrowserControlTests(unittest.TestCase):
         html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
         self.assertIn('id="deep-dim"', html)
         self.assertIn('id="white-preview"', html)
-        self.assertIn('Physical output locked', html)
+        self.assertIn('Output is capped at 10%', html)
+
+    def test_commissioned_white_output_requires_live_and_is_capped(self):
+        source = ManualAudioAnalysisSource(
+            AudioAnalysis(0.3, 0.9, FrequencyBands(0.4, 0.2, 0.2))
+        )
+        control = BrowserControl(
+            Controller(load_config(), audio_source=source), self.path, allow_live=True
+        )
+        self.addCleanup(control.close)
+        with self.assertRaisesRegex(ValueError, 'start explicit browser live'):
+            control.command(dict(action='white_output', enabled=True, level=0.05))
+
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='start_live'))
+            control.command(dict(action='white_output', enabled=True, level=0.05))
+            control.step(control.started + 1.0)
+            payload = sender.return_value.send.call_args.args[0]
+            cube_a = payload[144:152]
+            cube_b = payload[296:304]
+            self.assertEqual(len(set(cube_a)), 1)
+            self.assertEqual(cube_a, cube_b)
+            self.assertGreater(cube_a[0], 0)
+            self.assertLessEqual(cube_a[0], 26)
+            state = control.state()['white_preview']
+            self.assertTrue(state['commissioned'])
+            self.assertTrue(state['output_enabled'])
+            self.assertEqual(state['output_ceiling'], 0.10)
+            control.command(dict(action='blackout'))
+            state = control.state()['white_preview']
+            self.assertFalse(state['output_enabled'])
+            self.assertEqual(state['active_level'], 0.0)
+            self.assertEqual(state['output_active_level'], 0.0)
+            sender.return_value.blackout.assert_called_once_with()
 
     def test_live_requires_two_steps_and_watchdog_closes_with_blackout(self):
         control = BrowserControl(Controller(load_config()), self.path, allow_live=True)

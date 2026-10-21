@@ -90,19 +90,26 @@ function renderState(s) {
   if (document.activeElement !== $('quiet-floor')) $('quiet-floor').value = audio.quiet_floor ?? 0.03;
   $('quiet-floor-value').textContent = `${Math.round((audio.quiet_floor ?? 0.03)*100)}%`;
   $('quiet-floor').disabled = !audio.deep_dim_enabled;
-  const white = s.white_preview || {enabled:false,threshold:0.65,level:0.8,active_level:0,output_enabled:false};
+  const white = s.white_preview || {enabled:false,threshold:0.65,level:0.8,active_level:0,commissioned:false,output_available:false,output_enabled:false,output_level:0.05,output_active_level:0,output_ceiling:0.10};
   $('white-preview').checked = Boolean(white.enabled);
+  $('white-output').checked = Boolean(white.output_enabled);
   if (document.activeElement !== $('white-threshold')) $('white-threshold').value = white.threshold;
   if (document.activeElement !== $('white-level')) $('white-level').value = white.level;
+  if (document.activeElement !== $('white-output-level')) $('white-output-level').value = white.output_level;
   $('white-threshold-value').textContent = `${Math.round(white.threshold*100)}%`;
   $('white-level-value').textContent = `${Math.round(white.level*100)}%`;
-  $('white-threshold').disabled = $('white-level').disabled = !white.enabled;
-  $('white-preview-status').textContent = white.active_level > 0 ? 'Preview peak active' : 'Physical output locked';
+  $('white-output-level-value').textContent = `${Math.round(white.output_level*100)}%`;
+  $('white-threshold').disabled = !(white.enabled || white.output_enabled);
+  $('white-level').disabled = !white.enabled;
+  $('white-output').disabled = !white.output_available;
+  $('white-output-level').disabled = !white.output_available;
+  $('white-preview-status').textContent = white.output_active_level > 0 ? 'LIVE WHITE PEAK' : white.output_enabled ? `Live whites armed · max ${Math.round(white.output_ceiling*100)}%` : white.commissioned ? 'Commissioned · output off' : 'Physical output locked';
   const foot = s.foot_control || {enabled:false,connected:false,message:'Foot control disabled',messages_received:0,reconnects:0};
   $('foot-status').textContent = foot.enabled ? `${foot.connected ? 'Pedal connected' : foot.message} · ${foot.messages_received} events · ${foot.reconnects} reconnects` : 'Foot control disabled';
   document.querySelectorAll('[data-cue]').forEach(e => e.classList.toggle('active', Number(e.dataset.cue) === s.scene_index));
   document.querySelectorAll('[data-preset]').forEach(e => e.classList.toggle('active', e.dataset.preset === s.preset_id));
-  const frames = Object.values(s.frames); if (frames[0]) draw($('cube-a'),frames[0],white.active_level); if (frames[1]) draw($('cube-b'),frames[1],white.active_level);
+  const displayWhite = Math.max(white.active_level, white.output_ceiling ? white.output_active_level/white.output_ceiling*0.8 : 0);
+  const frames = Object.values(s.frames); if (frames[0]) draw($('cube-a'),frames[0],displayWhite); if (frames[1]) draw($('cube-b'),frames[1],displayWhite);
   if (s.error || s.notice) notify(s.error || s.notice, Boolean(s.error));
 }
 function newLayer() { return {effect_id:'plasma', fixtures:null, opacity:1, blend_mode:'alpha', parameters:{}}; }
@@ -169,6 +176,10 @@ for(const id of ['white-threshold','white-level']){
   $(id).addEventListener('input',()=>{ $('white-threshold-value').textContent=`${Math.round($('white-threshold').value*100)}%`; $('white-level-value').textContent=`${Math.round($('white-level').value*100)}%`; });
   $(id).addEventListener('change',updateWhitePreview);
 }
+function updateWhiteOutput(){act('white_output',{enabled:$('white-output').checked,level:Number($('white-output-level').value)});}
+$('white-output').addEventListener('change',updateWhiteOutput);
+$('white-output-level').addEventListener('input',e=>{$('white-output-level-value').textContent=`${Math.round(e.target.value*100)}%`;});
+$('white-output-level').addEventListener('change',updateWhiteOutput);
 for(const [id,action] of Object.entries({prev:'previous_scene',next:'next_scene',play:'play',pause:'pause',tap:'tap','release-blackout':'resume','stop-live':'stop_live'})) $(id).addEventListener('click',()=>act(action));
 // Blackout bypasses the edit queue so a pending save cannot delay it.
 $('blackout').addEventListener('click',()=>{if(!token)return;request('/api/command',{method:'POST',headers:{'Content-Type':'application/json','X-Control-Token':token},body:JSON.stringify({action:'blackout'})}).catch(error=>notify(`Blackout not confirmed: ${error.message}`,true));});

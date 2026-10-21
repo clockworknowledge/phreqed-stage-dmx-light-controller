@@ -42,6 +42,11 @@
   height: 20px;
 }
 
+.white-live-toggle {
+  margin-top: 12px;
+  color: #ffd3cf;
+}
+
 @media (max-width: 760px) {
   .audio-meters {
     grid-template-columns: repeat(2, 1fr);

@@ -44,6 +44,24 @@ class FixtureMappingTests(unittest.TestCase):
         with self.assertRaises(TypeError):
             self.fixture.white_offset(True)
 
+    def test_commissioned_white_parts_progress_right_to_left_and_drive_both_rows(self) -> None:
+        fixture = FixtureConfig(
+            name="Commissioned",
+            start_address=1,
+            white_horizontal_order="right_to_left",
+            white_rows_together=True,
+            white_commissioned=True,
+        )
+        self.assertEqual(
+            tuple(fixture.white_part_number(x) for x in range(8)),
+            (8, 7, 6, 5, 4, 3, 2, 1),
+        )
+        self.assertTrue(fixture.white_rows_together)
+
+    def test_uncommissioned_white_orientation_is_not_addressable_logically(self) -> None:
+        with self.assertRaises(RuntimeError):
+            self.fixture.white_part_number(0)
+
     def test_rejects_fixture_outside_universe(self) -> None:
         with self.assertRaises(ValueError):
             FixtureConfig(name="Overflow", start_address=400)

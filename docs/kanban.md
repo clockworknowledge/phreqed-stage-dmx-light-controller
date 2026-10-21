@@ -41,6 +41,20 @@ safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
 
+### HW-002 — Guarded audio peak output for commissioned whites (`P0`, safety)
+
+Browser live can now separately arm audio-onset accents across all eight white
+parts on both fixtures. The control requires explicit browser-live activation,
+an audio source, and its own toggle; it defaults to 5%, is hard-capped at 10%,
+uses pulses no longer than 0.10 seconds at no more than 4 Hz, and disarms on
+blackout, stop, render failure, or browser-lease loss. Simulation and ordinary
+live rendering continue to keep the white channels zero.
+
+Acceptance remaining: deploy to the Pi and perform a short 5% audio-triggered
+test with fixtures secured, people warned, and QLC+ blackout immediately
+available. Confirm blackout, Stop output, and lost-browser handling each disarm
+the toggle before raising the physical level.
+
 ### REL-002 — Persistent show controls and MIDI recovery (`P0`, reliability)
 
 Browser preset and scene changes now preserve the operator's master brightness
@@ -230,23 +244,6 @@ Blocked on receiving a copy of the actual Raspberry Pi source tree. When it is
 available, follow `docs/pi-script-import.md`: copy it into a new dated directory,
 hash it, and compare it without changing either preserved baseline.
 
-### HW-001 — Commission LF4808 white-zone mapping (`P0`, safety)
-
-The recovered 152-channel manual identifies channels 145-152 as eight directly,
-linearly dimmed white parts. The package mapping and a steady-output diagnostic
-are implemented with normalized values, fixture isolation, a hard 10% ceiling,
-blackout gaps, and final shutdown blackout. Normal show rendering still leaves
-all eight channels zero unless an explicit white-zone frame is supplied.
-
-Acceptance remaining: run `scripts/white-zone-check.py` offline and live at 5%,
-record the physical order of Parts 1-8 and whether both white rows respond
-together on both fixtures, then add the verified orientation to tests before
-building pulse or strobe effects. See `docs/lf4808-white-commissioning.md`.
-
-The offline step was revalidated on Windows on 2026-10-20: all sixteen frames
-contained one isolated value of 13 on DMX 145-152 or 297-304, all other values
-were zero, and no socket was created. Only the physical live observation remains.
-
 ## Backlog
 
 ### WEAR-001 — Performer-safe wearable lighting prototype (`P2`, visual output)
@@ -349,6 +346,14 @@ Generate representative simulator images for every effect and preset at fixed
 times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
+
+### HW-001 — Commission LF4808 white-zone mapping (`P0`, safety)
+
+The offline diagnostic verified sixteen isolated 5% frames with no socket. On
+2026-10-21 the operator completed the steady physical test and confirmed Parts
+1-8 progress right-to-left, every part drives both visible rows together, and
+Cube A and Cube B match. The mapping is encoded in fixture configuration and
+automated tests. Guarded peak behavior is tracked separately by HW-002.
 
 ### QLC-002 — Manage headless QLC+ with systemd (`P0`, reliability)
 

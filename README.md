@@ -55,10 +55,10 @@ mode; the 12-by-4 front-view orientation comes from physical fixture testing.
 - zones advance right-to-left, then bottom-to-top
 - two center rows contain eight documented, linearly dimmed white parts on
   fixture channels 145-152; they are not part of the RGB grid
-- normal show output keeps those white parts at zero until their front-view
-  order is commissioned with the capped steady-output diagnostic
-- the browser can preview onset hits on both center-white lines, but this is
-  display-only and never writes those values to DMX
+- physical commissioning confirmed Parts 1-8 progress right-to-left and each
+  part drives both rows, identically on both fixtures
+- normal output keeps those parts at zero; browser live can separately arm
+  audio-onset accents capped at 10%, 0.10 seconds, and 4 Hz
 
 The committed settings are in [`config/fixtures.toml`](config/fixtures.toml).
 
@@ -221,6 +221,12 @@ page:
 Live browser output is capped at 25% when first enabled and stops with blackout
 if browser heartbeats are absent for five seconds. Keep QLC+ blackout available;
 the lease is an additional safeguard, not a substitute for physical controls.
+
+Center-white output is an additional explicit step after browser live starts.
+It requires an active microphone and the **Enable physical white peak output**
+toggle. The default level is 5% and cannot exceed 10%. Blackout, Stop output,
+render failure, or browser-lease loss disarms it; it never activates in the
+simulation-only `web` command or ordinary non-browser live mode.
 
 ## Test
 

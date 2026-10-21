@@ -18,6 +18,9 @@ class FixtureConfig:
     height: int = 4
     channels_per_pixel: int = 3
     white_zone_count: int = 8
+    white_horizontal_order: str | None = None
+    white_rows_together: bool = False
+    white_commissioned: bool = False
     horizontal_order: str = "right_to_left"
     vertical_order: str = "bottom_to_top"
 
@@ -40,6 +43,18 @@ class FixtureConfig:
             raise ValueError("white_zone_count must be a nonnegative integer")
         if self.pixel_channel_count + self.white_zone_count > self.channel_count:
             raise ValueError("fixture channel_count is smaller than its RGB and white footprint")
+        if self.white_horizontal_order not in HORIZONTAL_ORDERS | {None}:
+            raise ValueError(
+                f"unsupported white_horizontal_order: {self.white_horizontal_order}"
+            )
+        if not isinstance(self.white_rows_together, bool):
+            raise TypeError("white_rows_together must be boolean")
+        if not isinstance(self.white_commissioned, bool):
+            raise TypeError("white_commissioned must be boolean")
+        if self.white_commissioned and self.white_horizontal_order is None:
+            raise ValueError(
+                "commissioned white zones require a horizontal orientation"
+            )
         if self.end_address > UNIVERSE_CHANNELS:
             raise ValueError("fixture extends beyond the 512-channel DMX universe")
         if self.horizontal_order not in HORIZONTAL_ORDERS:
@@ -86,6 +101,21 @@ class FixtureConfig:
                 f"white zone {zone_number} is outside 1 through {self.white_zone_count}"
             )
         return self.start_address - 1 + self.pixel_channel_count + zone_number - 1
+
+    def white_part_number(self, x: int) -> int:
+        """Map a left-to-right logical white coordinate to Part 1 through 8."""
+
+        if not self.white_commissioned or self.white_horizontal_order is None:
+            raise RuntimeError("white-zone orientation has not been commissioned")
+        if isinstance(x, bool) or not isinstance(x, int):
+            raise TypeError("white part coordinate must be an integer")
+        if not 0 <= x < self.white_zone_count:
+            raise IndexError(
+                f"white part coordinate {x} is outside 0 through {self.white_zone_count - 1}"
+            )
+        if self.white_horizontal_order == "left_to_right":
+            return x + 1
+        return self.white_zone_count - x
 
 
 def validate_fixture_set(fixtures: tuple[FixtureConfig, ...]) -> None:

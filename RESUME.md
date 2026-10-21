@@ -1,6 +1,19 @@
 # Codex Resume: Audio Contract, Ampero Control, and Show Scene Pack
 
-Last updated: 2026-10-20
+Last updated: 2026-10-21
+
+## Latest checkpoint — center whites commissioned and guarded output added
+
+On 2026-10-21 the operator completed the steady 5% physical test: white Parts
+1-8 progress right-to-left, each part drives both visible rows together, and
+both fixtures match. `config/fixtures.toml` now records the accepted mapping.
+
+Browser live has a separate **Enable physical white peak output** control. It
+requires active browser-live output and a microphone, defaults to 5%, cannot
+exceed 10%, and turns audio onset threshold crossings into pulses no longer
+than 0.10 seconds and no faster than 4 Hz. Blackout, Stop output, render failure,
+and browser-lease loss disarm it. Simulation, presets, and ordinary live output
+still send zero on DMX 145-152 and 297-304.
 
 ## Latest checkpoint — stage-look expansion and reliability fixes
 
@@ -15,18 +28,18 @@ blaster and wave effects treat the fixtures as a continuous 24-by-4 surface.
 Inferno Rise was corrected so row 3 is the physical hot bottom and turbulence
 rises toward row 0; keep the LF4808s upright with their printed text readable.
 
-Center-white onset response is available only as a browser preview. It never
-enters `compose_dmx`; DMX 145-152 and 297-304 remain zero during normal show
-rendering until HW-001 commissioning is complete.
+Center-white preview remains available without output. Physical output is
+isolated from presets and must be explicitly re-armed after every stop path.
 
 The Ampero input worker now reconnects to the same raw-MIDI path after transient
 read/device failures and reports connection, message, and reconnect counts in
 the browser. A stable udev link remains required for card renumbering. The full
-Python 3.12 suite passes 132 tests and browser JavaScript passes syntax checks.
+Python 3.12 suite passes 138 tests and browser JavaScript passes syntax checks.
 
 Next Pi steps: pull this branch, run the suite, visually review the five new
 presets in simulation, confirm master persistence, and complete a pedal soak
-with one controlled USB reconnect. Do not enable physical center-white output.
+with one controlled USB reconnect. Validate HW-002 at the default 5% with QLC+
+blackout immediately available before considering any higher white level.
 
 The earlier integrated Pi bench run is valid evidence for the then-current 31
 looks: render timing, Snowball capture, and foot input all passed; capture ended
@@ -73,7 +86,7 @@ then validate the response curves across every preset at rehearsal level and
 perform a gradual live brightness check on the secured rig with QLC+ blackout
 available.
 
-## Latest checkpoint — LF4808 white-zone commissioning ready
+## Prior checkpoint — LF4808 white-zone commissioning
 
 The recovered LF4808 152-channel manual maps fixture channels 145-152 as eight
 independently, linearly dimmed white parts. Cube A therefore uses universe DMX
@@ -82,10 +95,9 @@ independently, linearly dimmed white parts. Cube A therefore uses universe DMX
 only an explicit live sequence: one steady part at 5%, at least 0.75 seconds of
 blackout between parts, a hard 10% ceiling, and final shutdown blackout.
 
-The Windows suite passes 118 tests. Next run the offline and live commissioning
-steps in `docs/lf4808-white-commissioning.md`, recording Part 1-8 physical order
-and whether both visible white rows respond together. Do not build flashing or
-audio-triggered white effects until those observations agree on both fixtures.
+The physical run subsequently passed: Parts 1-8 progress right-to-left, each
+part drives both rows, and both fixtures match. The guarded implementation is
+described in the latest checkpoint above.
 
 ## Latest checkpoint — Pi audio capture accepted functionally
 
@@ -191,16 +203,9 @@ with no socket creation. After deployment, acceptance requires a low-brightness
 physical marker test of that row transition on both fixtures. Channels 145-152
 and 297-304 remain zero.
 
-Each LF4808 also has two central white strobe/blinder elements. They are not
-part of the 12-by-4 RGB grid. The operator reports that original Pi scripts
-successfully controlled them, but no such script or channel assignment exists
-in this reviewed checkout or its Git history. Import and characterize that
-source before adding white-strobe controls; do not rediscover it by sweeping
-live channels.
-
-The browser fixture preview now places two disabled grey white-strobe lines
-between the upper and lower pairs of RGB rows. These are display-only; browser
-state and DMX frames still contain only the 48 RGB values per fixture.
+Each LF4808 also has two central white rows outside the 12-by-4 RGB grid. Their
+eight-part mapping has now been physically commissioned and encoded. The browser
+shows both rows and exposes separately gated audio peaks only in browser live.
 
 ## Prior checkpoint — integrated Pi validation
 
@@ -381,7 +386,8 @@ until persistent logs capture any natural recurrence.
   check also exposed the superseded 8-by-6 preview geometry.
 - The original source files from the Raspberry Pi have not been imported and
   compared with the preserved reconstructed baseline.
-- The eight unverified channels on each fixture remain intentionally unmapped.
+- The eight white channels on each fixture are commissioned; guarded live peak
+  output still requires its first post-implementation Pi validation.
 
 ## Commissioning history — 2026-10-19
 

@@ -35,7 +35,7 @@
 
 ## Verification
 
-- 130 automated tests pass on Python 3.12 after browser control, persistent user
+- 138 automated tests pass on Python 3.12 after browser control, persistent user
   looks, foot control, the show scene pack, opt-in audio capture, shared audio
   dynamics, white-channel commissioning, and the explicit RGB ceiling gate
   were integrated.
@@ -75,7 +75,9 @@
 - USB foot control is implemented and has passed an initial browser-simulation
   and guarded-live operator check; a stable udev link and rehearsal-length soak
   remain. Bluetooth MIDI and video-to-RGB mapping remain future work.
-- The eight unverified fixture channels remain zero and inaccessible.
+- The eight white channels per fixture are now commissioned. They remain zero
+  by default and are accessible only through the separately gated, capped
+  browser-live peak control described in the latest section below.
 
 ## Show scene pack and Ampero validation — 2026-10-20
 
@@ -443,7 +445,7 @@ Audio deep dim is explicit and disabled by default. When enabled, the operator
 can choose a 0%-25% near-black floor below the persistent manual master. A
 center-white onset visualization is also available in the browser, but it is
 preview-only: all normal frames continue to hold DMX 145-152 and 297-304 at
-zero. The complete Windows Python 3.12 suite passes 132 tests.
+zero. The complete Windows Python 3.12 suite passes 138 tests.
 
 The operator's earlier integrated Raspberry Pi bench report passed all 31 looks
 present at that time. Its render-timing, audio-capture, and foot-control checks
@@ -459,3 +461,18 @@ successful recovery test. It now records lifecycle messages separately and
 evaluates the final connection state, required action counts, and genuine
 mapped-action failures. Automated coverage verifies recovered reconnect,
 missing-action, final-disconnected, and command-error outcomes.
+
+## LF4808 white commissioning and guarded peaks — 2026-10-21
+
+The operator completed the steady 5% diagnostic and confirmed that white Parts
+1-8 progress right-to-left, each part drives both center rows together, and the
+two fixtures match. The configuration now records this physical mapping and
+tests resolve logical left-to-right positions to Parts 8-1.
+
+Physical audio peaks remain independent of presets and normal rendering. They
+require explicit `live --web`, active browser output, an audio source, and a
+separate toggle. Output defaults to 5%, is hard-capped at 10%, and converts only
+onset threshold crossings into pulses no longer than 0.10 seconds and no faster
+than 4 Hz. Blackout, Stop output, rendering failure, and browser-lease loss
+disarm the feature. Simulation and all default output paths keep DMX 145-152 and
+297-304 at zero.

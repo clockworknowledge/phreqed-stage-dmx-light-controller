@@ -21,6 +21,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/show_control.py`: transport-independent performance commands.
 - `src/phreqed_dmx/foot_control.py`: dependency-free MIDI parsing and explicit
   Ampero Control input; it maps pedal messages only to show commands.
+- `src/phreqed_dmx/white_output.py`: commissioned white-part output, onset pulse
+  shaping, and the independent 10%/4 Hz safety limits.
 - `src/phreqed_dmx/scenes.py`: deterministic ordered-cue playback and transitions.
 - `src/phreqed_dmx/library.py`: validated, atomic user presets and scene storage.
 - `src/phreqed_dmx/fixtures.py`: fixture geometry and logical-pixel-to-DMX mapping.
@@ -53,12 +55,14 @@ the 12-by-4 geometry are based on controlled physical fixture testing.
   assumption retained in the immutable reconstructed baseline.
 - Each fixture also has two central rows of white strobe/blinder LEDs. The
   recovered LF4808 152-channel table maps them as eight linearly dimmed white
-  parts on fixture channels 145-152. Their front-view order still requires
-  controlled physical commissioning.
+  parts on fixture channels 145-152. Physical commissioning on 2026-10-21
+  confirmed Parts 1-8 progress right-to-left and each part drives both rows,
+  identically on both fixtures.
 - Zone 1 is bottom-right. Zones advance right-to-left across a row, then
   bottom-to-top through the rows.
-- RGB uses the first 144 fixture channels. The final eight white channels are
-  mapped but remain zero during normal show rendering until commissioning.
+- RGB uses the first 144 fixture channels. The final eight white channels remain
+  zero during normal show rendering unless the commissioned browser-live white
+  peak control is separately enabled.
 - Each Art-Net transmission carries a complete 512-channel DMX payload.
 - QLC+ must be the only process bound to UDP 6454. The baseline notes record a
   prior conflict with OLA's `olad`; keep that service disabled while QLC+ is in use.
@@ -70,13 +74,12 @@ not effect code, converts those coordinates to physical zone order.
 
 - Simulation is the default. Live transmission always requires the explicit
   `live` command.
-- Keep fixture channels 145-152 zero in normal rendering until the steady,
-  low-level procedure in `docs/lf4808-white-commissioning.md` records their
-  front-view order on both fixtures. Commission with one steady part at a time,
-  never a flashing sweep.
-- A browser-only center-white visualization may react to audio, but it must be
-  explicitly labelled preview-only, remain outside `compose_dmx`, and keep
-  `output_enabled` false until physical commissioning is accepted.
+- Keep fixture channels 145-152 zero by default. Physical white output requires
+  explicit `live --web`, active browser-live output, an audio source, and the
+  separate white-output toggle. Cap it at 10%, use onset threshold crossings
+  only, and limit pulses to at most 0.10 seconds and 4 Hz.
+- Blackout, live stop, render failure, and browser-lease loss must immediately
+  disable white output. Releasing blackout must not silently re-arm it.
 - Keep the default RGB ceiling at 0.65. A higher ceiling is a temporary
   show-time override only: require explicit `live` mode plus
   `--acknowledge-high-output`, display the selected ceiling to the operator,

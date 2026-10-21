@@ -5,8 +5,9 @@ universe = 0
 fps = 25
 
 # The LF4808 152-channel manual maps channels 1-144 to 48 RGB zones and
-# channels 145-152 to eight linearly dimmed white zones. Normal show rendering
-# keeps every white zone at zero until the physical zone order is commissioned.
+# channels 145-152 to eight linearly dimmed white zones. Parts 1-8 were
+# physically commissioned on 2026-10-21: they progress right-to-left from the
+# front, and each part drives both visible white rows.
 
 [[fixtures]]
 name = "Cube A"
@@ -16,6 +17,9 @@ width = 12
 height = 4
 channels_per_pixel = 3
 white_zone_count = 8
+white_horizontal_order = "right_to_left"
+white_rows_together = true
+white_commissioned = true
 horizontal_order = "right_to_left"
 vertical_order = "bottom_to_top"
 
@@ -27,5 +31,8 @@ width = 12
 height = 4
 channels_per_pixel = 3
 white_zone_count = 8
+white_horizontal_order = "right_to_left"
+white_rows_together = true
+white_commissioned = true
 horizontal_order = "right_to_left"
 vertical_order = "bottom_to_top"
