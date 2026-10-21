@@ -22,6 +22,7 @@ from .presets import PRESETS
 from .render import compose_dmx
 from .show_control import ShowController
 from .scenes import SceneSequencer
+from .white_output import MAX_WHITE_OUTPUT_CEILING, WHITE_OUTPUT_CEILING
 
 
 class Controller:
@@ -144,6 +145,15 @@ def _ceiling(value: str) -> float:
     return parsed
 
 
+def _white_ceiling(value: str) -> float:
+    parsed = _brightness(value)
+    if not math.isfinite(parsed) or not 0.0 < parsed <= MAX_WHITE_OUTPUT_CEILING:
+        raise argparse.ArgumentTypeError(
+            "white ceiling must be above 0.0 and at most 1.0"
+        )
+    return parsed
+
+
 def _positive(value: str) -> float:
     parsed = float(value)
     if parsed <= 0:
@@ -225,6 +235,21 @@ def build_parser() -> argparse.ArgumentParser:
         "--acknowledge-high-output",
         action="store_true",
         help="required with live mode when --rgb-ceiling is above the safe default",
+    )
+    parser.add_argument(
+        "--white-ceiling",
+        type=_white_ceiling,
+        default=WHITE_OUTPUT_CEILING,
+        metavar="0.0-1.0",
+        help=(
+            "physical center-white ceiling (default 0.10; higher values require "
+            "explicit live --web acknowledgement)"
+        ),
+    )
+    parser.add_argument(
+        "--acknowledge-high-output-whites",
+        action="store_true",
+        help="required with live --web when --white-ceiling is above 0.10",
     )
     parser.add_argument(
         "--speed",
@@ -347,6 +372,16 @@ def main(argv: list[str] | None = None) -> int:
             parser.error(
                 "--rgb-ceiling above 0.65 requires --acknowledge-high-output"
             )
+    if args.white_ceiling > WHITE_OUTPUT_CEILING:
+        if args.command != "live" or not args.web:
+            parser.error(
+                "--white-ceiling above 0.10 is available only with explicit live --web"
+            )
+        if not args.acknowledge_high_output_whites:
+            parser.error(
+                "--white-ceiling above 0.10 requires "
+                "--acknowledge-high-output-whites"
+            )
     if args.brightness is not None and args.brightness > args.rgb_ceiling:
         parser.error("--brightness may not exceed --rgb-ceiling")
 
@@ -403,7 +438,8 @@ def main(argv: list[str] | None = None) -> int:
             serve(controller, args.library, host=args.host, port=args.port,
                   allow_network=args.allow_network, allow_live=args.command == "live",
                   foot_midi_device=args.foot_midi_device,
-                  foot_midi_channel=args.foot_midi_channel)
+                  foot_midi_channel=args.foot_midi_channel,
+                  white_output_ceiling=args.white_ceiling)
         elif args.command == "live":
             _run_live(controller, args.duration)
         else:

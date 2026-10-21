@@ -22,7 +22,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/foot_control.py`: dependency-free MIDI parsing and explicit
   Ampero Control input; it maps pedal messages only to show commands.
 - `src/phreqed_dmx/white_output.py`: commissioned white-part output, onset pulse
-  shaping, and the independent 10%/4 Hz safety limits.
+  shaping, default 10% ceiling, explicit live override boundary, and independent
+  0.10-second/4 Hz safety limits.
 - `src/phreqed_dmx/scenes.py`: deterministic ordered-cue playback and transitions.
 - `src/phreqed_dmx/library.py`: validated, atomic user presets and scene storage.
 - `src/phreqed_dmx/fixtures.py`: fixture geometry and logical-pixel-to-DMX mapping.
@@ -76,16 +77,19 @@ not effect code, converts those coordinates to physical zone order.
   `live` command.
 - Keep fixture channels 145-152 zero by default. Physical white output requires
   explicit `live --web`, active browser-live output, an audio source, and the
-  separate white-output toggle. Cap it at 10%, use onset threshold crossings
-  only, and limit pulses to at most 0.10 seconds and 4 Hz.
+  separate white-output toggle. The default ceiling is 10%. A higher
+  process-local ceiling requires `--white-ceiling` plus
+  `--acknowledge-high-output-whites`, is forbidden outside explicit
+  `live --web`, and must display a persistent browser warning. Always use onset
+  threshold crossings and limit pulses to at most 0.10 seconds and 4 Hz.
 - Blackout, live stop, render failure, and browser-lease loss must immediately
   disable white output. Releasing blackout must not silently re-arm it.
 - Keep the default RGB ceiling at 0.65. A higher ceiling is a temporary
   show-time override only: require explicit `live` mode plus
   `--acknowledge-high-output`, display the selected ceiling to the operator,
   and retain the luminance-rise and flash-interval limiter. Saved presets stay
-  at or below 0.65. The override must never affect the separate white-channel
-  commissioning ceiling.
+  at or below 0.65. The RGB override must never alter the separately configured
+  white-channel ceiling.
 - New default effects must avoid rapid high-intensity full-frame flashes.
 - New configuration must be rejected if a fixture falls outside the 512-channel
   universe or overlaps another fixture.

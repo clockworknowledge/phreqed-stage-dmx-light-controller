@@ -33,6 +33,16 @@ class WhiteOutputTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             commissioned_white_levels(fixtures, 0.11)
 
+    def test_elevated_level_requires_an_explicit_ceiling(self) -> None:
+        fixtures = load_config().fixtures
+        levels = commissioned_white_levels(fixtures, 0.55, maximum=0.60)
+        self.assertEqual(levels["Cube A"], (0.55,) * 8)
+        self.assertEqual(levels["Cube B"], (0.55,) * 8)
+        with self.assertRaises(ValueError):
+            commissioned_white_levels(fixtures, 0.61, maximum=0.60)
+        with self.assertRaises(ValueError):
+            commissioned_white_levels(fixtures, 0.05, maximum=1.01)
+
 
 if __name__ == "__main__":
     unittest.main()

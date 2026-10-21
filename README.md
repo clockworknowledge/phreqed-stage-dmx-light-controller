@@ -58,7 +58,9 @@ mode; the 12-by-4 front-view orientation comes from physical fixture testing.
 - physical commissioning confirmed Parts 1-8 progress right-to-left and each
   part drives both rows, identically on both fixtures
 - normal output keeps those parts at zero; browser live can separately arm
-  audio-onset accents capped at 10%, 0.10 seconds, and 4 Hz
+  audio-onset accents with a default 10% ceiling, 0.10-second pulse limit, and
+  4 Hz rate limit; a separately acknowledged live override can raise only the
+  process-local ceiling
 
 The committed settings are in [`config/fixtures.toml`](config/fixtures.toml).
 
@@ -202,7 +204,7 @@ the following explicit live options:
 Browser live still starts at 0.25 or lower; its master slider then shows and
 respects the selected ceiling. The luminance-rise and flash-interval limiter
 remain active. Saved presets remain capped at 0.65, and this RGB override does
-not raise the separate 10% white-channel commissioning limit. Use `--effect`
+not change the separately configured white-channel ceiling. Use `--effect`
 for manual mode, with `--mode mirror|complementary|independent` and
 `--second-effect` where needed. Run `phreqed-dmx --help` for the complete effect
 and preset lists. With no command, the CLI defaults to simulation; network
@@ -224,9 +226,26 @@ the lease is an additional safeguard, not a substitute for physical controls.
 
 Center-white output is an additional explicit step after browser live starts.
 It requires an active microphone and the **Enable physical white peak output**
-toggle. The default level is 5% and cannot exceed 10%. Blackout, Stop output,
-render failure, or browser-lease loss disarms it; it never activates in the
-simulation-only `web` command or ordinary non-browser live mode.
+toggle. The default level is 5% and the default ceiling is 10%. Blackout, Stop
+output, render failure, or browser-lease loss disarms it; it never activates in
+the simulation-only `web` command or ordinary non-browser live mode.
+
+After low-level commissioning, an operator may explicitly expose a higher
+center-white ceiling for one browser-live process. Start conservatively and
+raise it only as needed:
+
+```bash
+.venv/bin/phreqed-dmx live --web --host 0.0.0.0 \
+  --allow-network 192.168.1.0/24 \
+  --audio-device plughw:CARD=Snowball,DEV=0 \
+  --white-ceiling 0.40 --acknowledge-high-output-whites
+```
+
+Values above 0.10 are rejected without both explicit `live --web` and the
+white-specific acknowledgement. The browser shows a persistent warning and
+limits the physical slider to the selected ceiling. The onset threshold,
+0.10-second pulse limit, 4 Hz limiter, blackout, stop, and lease-loss safeguards
+remain active even in elevated mode.
 
 ## Test
 

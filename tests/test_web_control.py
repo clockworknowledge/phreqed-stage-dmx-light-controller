@@ -208,7 +208,9 @@ class BrowserControlTests(unittest.TestCase):
         html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
         self.assertIn('id="deep-dim"', html)
         self.assertIn('id="white-preview"', html)
-        self.assertIn('Output is capped at 10%', html)
+        self.assertIn('id="white-output-warning"', html)
+        self.assertIn('href="/safety.css"', html)
+        self.assertIn('The default ceiling is 10%', html)
 
     def test_commissioned_white_output_requires_live_and_is_capped(self):
         source = ManualAudioAnalysisSource(
@@ -242,6 +244,45 @@ class BrowserControlTests(unittest.TestCase):
             self.assertEqual(state['active_level'], 0.0)
             self.assertEqual(state['output_active_level'], 0.0)
             sender.return_value.blackout.assert_called_once_with()
+
+    def test_acknowledged_high_white_ceiling_is_visible_and_enforced(self):
+        source = ManualAudioAnalysisSource(
+            AudioAnalysis(0.3, 0.9, FrequencyBands(0.4, 0.2, 0.2))
+        )
+        controller = Controller(load_config(), audio_source=source)
+        with self.assertRaisesRegex(ValueError, 'explicit live browser mode'):
+            BrowserControl(
+                controller, self.path, white_output_ceiling=0.60
+            )
+        for invalid in (True, 0.0, 1.01, float('nan')):
+            with self.subTest(invalid=invalid), self.assertRaises(ValueError):
+                BrowserControl(
+                    controller,
+                    self.path,
+                    allow_live=True,
+                    white_output_ceiling=invalid,
+                )
+
+        control = BrowserControl(
+            controller,
+            self.path,
+            allow_live=True,
+            white_output_ceiling=0.60,
+        )
+        self.addCleanup(control.close)
+        state = control.state()['white_preview']
+        self.assertEqual(state['output_ceiling'], 0.60)
+        self.assertTrue(state['high_output'])
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='start_live'))
+            control.command(dict(action='white_output', enabled=True, level=0.55))
+            control.step(control.started + 1.0)
+            payload = sender.return_value.send.call_args.args[0]
+        self.assertGreater(payload[144], round(0.10 * 255))
+        self.assertLessEqual(payload[144], round(0.55 * 255))
+        self.assertEqual(payload[144:152], payload[296:304])
+        with self.assertRaises(ValueError):
+            control.command(dict(action='white_output', enabled=True, level=0.61))
 
     def test_live_requires_two_steps_and_watchdog_closes_with_blackout(self):
         control = BrowserControl(Controller(load_config()), self.path, allow_live=True)
@@ -369,3 +410,12 @@ class HttpBoundaryTests(unittest.TestCase):
         handler.do_POST()
         self.assertEqual(handler.reply.call_args.args[0],200)
         handler.server.control.command.assert_called_once_with({'action':'blackout'})
+
+    def test_safety_stylesheet_is_served_with_css_mime_type(self):
+        handler = self.handler(b'')
+        handler.path = '/safety.css'
+        handler.do_GET()
+        self.assertEqual(handler.reply.call_args.args[0], 200)
+        self.assertEqual(
+            handler.reply.call_args.args[2], 'text/css; charset=utf-8'
+        )

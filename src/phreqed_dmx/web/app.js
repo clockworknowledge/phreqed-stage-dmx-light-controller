@@ -91,6 +91,18 @@ function renderState(s) {
   $('quiet-floor-value').textContent = `${Math.round((audio.quiet_floor ?? 0.03)*100)}%`;
   $('quiet-floor').disabled = !audio.deep_dim_enabled;
   const white = s.white_preview || {enabled:false,threshold:0.65,level:0.8,active_level:0,commissioned:false,output_available:false,output_enabled:false,output_level:0.05,output_active_level:0,output_ceiling:0.10};
+  $('white-output-level').max = white.output_ceiling;
+  const highWhite = Boolean(white.high_output || white.output_ceiling > 0.10);
+  $('white-output-warning').hidden = !highWhite;
+  $('white-output-warning').textContent = highWhite
+    ? `WARNING: high-output center whites are available up to ${Math.round(white.output_ceiling*100)}%. Use the lowest workable level; warn everyone nearby and keep blackout immediately available.`
+    : '';
+  $('white-output-hint').textContent = highWhite
+    ? 'This process was explicitly armed above the normal 10% ceiling. Pulses remain onset-thresholded, at most 0.10 seconds and 4 Hz, and stop on blackout, output stop, failure, or lease loss.'
+    : 'Physical whites require live output and this separate toggle. The default ceiling is 10%; pulses remain short, onset-thresholded, limited to no more than 4 Hz, and disabled by blackout, stop, or a lost browser lease.';
+  if (highWhite) {
+    $('live-warning').textContent += ` HIGH-OUTPUT CENTER WHITES are also available up to ${Math.round(white.output_ceiling*100)}% and require their separate in-page toggle.`;
+  }
   $('white-preview').checked = Boolean(white.enabled);
   $('white-output').checked = Boolean(white.output_enabled);
   if (document.activeElement !== $('white-threshold')) $('white-threshold').value = white.threshold;

@@ -5,6 +5,7 @@ from dataclasses import asdict
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 import ipaddress
 import json
+import math
 from pathlib import Path
 import secrets
 import signal
@@ -23,6 +24,7 @@ from .render import compose_dmx
 from .white_output import (
     DEFAULT_WHITE_OUTPUT_LEVEL,
     MAX_WHITE_FLASH_HZ,
+    MAX_WHITE_OUTPUT_CEILING,
     WHITE_OUTPUT_CEILING,
     WhitePeakLimiter,
     commissioned_white_levels,
@@ -53,7 +55,23 @@ class BrowserFootCommands:
 
 class BrowserControl:
     """One serialized engine and one optional sender shared by every browser."""
-    def __init__(self, controller: Controller, library_path: Path, *, allow_live: bool = False) -> None:
+    def __init__(
+        self,
+        controller: Controller,
+        library_path: Path,
+        *,
+        allow_live: bool = False,
+        white_output_ceiling: float = WHITE_OUTPUT_CEILING,
+    ) -> None:
+        if (
+            isinstance(white_output_ceiling, bool)
+            or not isinstance(white_output_ceiling, (int, float))
+            or not math.isfinite(white_output_ceiling)
+            or not 0.0 < white_output_ceiling <= MAX_WHITE_OUTPUT_CEILING
+        ):
+            raise ValueError('white output ceiling must be above zero and at most 1.0')
+        if white_output_ceiling > WHITE_OUTPUT_CEILING and not allow_live:
+            raise ValueError('high-output whites require explicit live browser mode')
         self.controller = controller
         self.engine = controller.engine
         self.library = UserLibrary(library_path, tuple(self.engine.geometry))
@@ -69,6 +87,7 @@ class BrowserControl:
             )
         )
         self.allow_live = allow_live
+        self.white_output_ceiling = float(white_output_ceiling)
         self.sender: ArtNetSender | None = None
         self.lock = threading.RLock()
         self.stop_event = threading.Event()
@@ -165,7 +184,10 @@ class BrowserControl:
                             output_enabled=self.white_output_enabled,
                             output_level=self.white_output_level,
                             output_active_level=self.white_output_active_level,
-                            output_ceiling=WHITE_OUTPUT_CEILING,
+                            output_ceiling=self.white_output_ceiling,
+                            high_output=(
+                                self.white_output_ceiling > WHITE_OUTPUT_CEILING
+                            ),
                             flash_rate_limit_hz=MAX_WHITE_FLASH_HZ,
                         ),
                         foot_control=(
@@ -290,7 +312,7 @@ class BrowserControl:
                     raise ValueError('white output enabled must be boolean')
                 level = number(
                     data.get('level'), 'white output level', 0.01,
-                    WHITE_OUTPUT_CEILING,
+                    self.white_output_ceiling,
                 )
                 if enabled:
                     if not self.allow_live or self.sender is None:
@@ -396,6 +418,7 @@ class BrowserControl:
                     commissioned_white_levels(
                         self.controller.config.fixtures,
                         self.white_output_active_level,
+                        maximum=self.white_output_ceiling,
                     )
                     if self.white_output_enabled
                     else None
@@ -495,12 +518,16 @@ class ControlHandler(BaseHTTPRequestHandler):
                 self.reply(200, json.dumps(self.server.control.catalog()).encode())
         elif path == '/api/session':
             self.reply(200, json.dumps({'token': self.server.token}).encode())
-        elif path in ('/', '/app.js', '/style.css', '/fixture.css', '/audio.css'):
+        elif path in (
+            '/', '/app.js', '/style.css', '/fixture.css', '/audio.css',
+            '/safety.css',
+        ):
             name = 'index.html' if path == '/' else path[1:]
             content_type = {'index.html': 'text/html; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8',
                             'style.css': 'text/css; charset=utf-8',
                             'fixture.css': 'text/css; charset=utf-8',
-                            'audio.css': 'text/css; charset=utf-8'}[name]
+                            'audio.css': 'text/css; charset=utf-8',
+                            'safety.css': 'text/css; charset=utf-8'}[name]
             self.reply(200, (ASSETS / name).read_bytes(), content_type)
         elif path == '/favicon.ico':
             self.reply(204, b'', 'image/x-icon')
@@ -533,12 +560,18 @@ class ControlHandler(BaseHTTPRequestHandler):
 
 def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1', port: int = 8080,
           allow_network: str = '192.168.1.0/24', allow_live: bool = False,
-          foot_midi_device: Path | None = None, foot_midi_channel: int = 1) -> None:
+          foot_midi_device: Path | None = None, foot_midi_channel: int = 1,
+          white_output_ceiling: float = WHITE_OUTPUT_CEILING) -> None:
     if not 1 <= port <= 65535:
         raise ValueError('browser port must be between 1 and 65535')
     if controller.config.fps > 25:
         raise ValueError('browser control requires an output rate at or below 25 FPS')
-    control = BrowserControl(controller, library_path, allow_live=allow_live)
+    control = BrowserControl(
+        controller,
+        library_path,
+        allow_live=allow_live,
+        white_output_ceiling=white_output_ceiling,
+    )
     foot_controller = (
         RawMidiFootController(
             foot_midi_device,
@@ -555,6 +588,12 @@ def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1'
         raise KeyboardInterrupt
     signal.signal(signal.SIGTERM, interrupted)
     print(f'Phreqed browser: http://{host}:{port} — simulation active; output stopped', flush=True)
+    if white_output_ceiling > WHITE_OUTPUT_CEILING:
+        print(
+            'WARNING: HIGH-OUTPUT CENTER WHITES ENABLED FOR THIS PROCESS; '
+            f'operator ceiling {white_output_ceiling:.0%}',
+            flush=True,
+        )
     control.start()
     try:
         if foot_controller is not None:

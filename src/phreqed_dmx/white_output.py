@@ -9,6 +9,7 @@ from .fixtures import FixtureConfig
 
 
 WHITE_OUTPUT_CEILING = 0.10
+MAX_WHITE_OUTPUT_CEILING = 1.0
 DEFAULT_WHITE_OUTPUT_LEVEL = 0.05
 MAX_WHITE_FLASH_HZ = 4.0
 WHITE_PULSE_SECONDS = 0.08
@@ -71,17 +72,27 @@ class WhitePeakLimiter:
 
 
 def commissioned_white_levels(
-    fixtures: tuple[FixtureConfig, ...], level: float
+    fixtures: tuple[FixtureConfig, ...], level: float, *,
+    maximum: float = WHITE_OUTPUT_CEILING,
 ) -> dict[str, tuple[float, ...]]:
     """Create equal output for all eight commissioned parts on both fixtures."""
 
     if (
+        isinstance(maximum, bool)
+        or not isinstance(maximum, (int, float))
+        or not math.isfinite(maximum)
+        or not 0.0 < maximum <= MAX_WHITE_OUTPUT_CEILING
+    ):
+        raise ValueError("white output ceiling must be above 0.0 and at most 1.0")
+    if (
         isinstance(level, bool)
         or not isinstance(level, (int, float))
         or not math.isfinite(level)
-        or not 0.0 <= level <= WHITE_OUTPUT_CEILING
+        or not 0.0 <= level <= maximum
     ):
-        raise ValueError("white output level must be between 0.0 and 0.10")
+        raise ValueError(
+            f"white output level must be between 0.0 and {maximum:.2f}"
+        )
     result: dict[str, tuple[float, ...]] = {}
     for fixture in fixtures:
         if not fixture.white_commissioned:

@@ -183,6 +183,22 @@ the active ceiling but still starts live output at 0.25 or lower. Frame-rise
 and flash-interval limiting remain active. The override applies only to the RGB
 matrix; `scripts/white-zone-check.py` retains its independent hard 10% ceiling.
 
+The show controller's center-white peak path also defaults to a separate 10%
+ceiling. After the exact rig has been commissioned at low level, a higher
+process-local ceiling requires every explicit option below:
+
+```bash
+.venv/bin/phreqed-dmx live --web --host 0.0.0.0 \
+  --allow-network 192.168.1.0/24 \
+  --audio-device plughw:CARD=Snowball,DEV=0 \
+  --white-ceiling 0.40 --acknowledge-high-output-whites
+```
+
+The browser will warn continuously and restrict its physical-white slider to
+the selected ceiling. Begin at a low setting and increase only after warning
+everyone nearby. The onset threshold, 0.10-second pulse duration, 4 Hz limiter,
+blackout, stop, render-failure, and browser-lease shutdowns remain mandatory.
+
 ## Optional Ampero foot control
 
 The Hotone Ampero Control adapter is disabled by default. Follow

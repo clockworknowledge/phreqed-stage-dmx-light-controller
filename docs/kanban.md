@@ -45,15 +45,20 @@ safely, supports both fixtures independently, and has visual regression tests.
 
 Browser live can now separately arm audio-onset accents across all eight white
 parts on both fixtures. The control requires explicit browser-live activation,
-an audio source, and its own toggle; it defaults to 5%, is hard-capped at 10%,
-uses pulses no longer than 0.10 seconds at no more than 4 Hz, and disarms on
-blackout, stop, render failure, or browser-lease loss. Simulation and ordinary
-live rendering continue to keep the white channels zero.
+an audio source, and its own toggle; it defaults to 5% with a 10% ceiling. A
+higher process-local ceiling is accepted only with explicit `live --web`,
+`--white-ceiling`, and `--acknowledge-high-output-whites`; the browser then
+shows a persistent warning and constrains its slider to that selected ceiling.
+All modes use pulses no longer than 0.10 seconds at no more than 4 Hz and disarm
+on blackout, stop, render failure, or browser-lease loss. Simulation and
+ordinary live rendering continue to keep the white channels zero.
 
 Acceptance remaining: deploy to the Pi and perform a short 5% audio-triggered
 test with fixtures secured, people warned, and QLC+ blackout immediately
 available. Confirm blackout, Stop output, and lost-browser handling each disarm
-the toggle before raising the physical level.
+the toggle. Only then validate an elevated ceiling in deliberate small steps;
+the browser warning, threshold control, and dynamic slider bound must remain
+visible throughout.
 
 ### REL-002 — Persistent show controls and MIDI recovery (`P0`, reliability)
 

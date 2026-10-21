@@ -28,6 +28,8 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIsNone(args.audio_sensitivity)
         self.assertEqual(args.rgb_ceiling, 0.65)
         self.assertFalse(args.acknowledge_high_output)
+        self.assertEqual(args.white_ceiling, 0.10)
+        self.assertFalse(args.acknowledge_high_output_whites)
         self.assertFalse(args.audio_deep_dim)
         self.assertEqual(args.audio_quiet_floor, 0.03)
 
@@ -128,6 +130,34 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(controller.engine.compositor.maximum_brightness, 0.9)
         self.assertEqual(controller.engine.compositor.global_brightness, 0.8)
         self.assertEqual(controller.safety_limiter.maximum_brightness, 0.9)
+
+    def test_high_white_ceiling_is_explicit_browser_live_only(self) -> None:
+        for arguments in (
+            ["live", "--web", "--white-ceiling", "0.5"],
+            ["live", "--white-ceiling", "0.5",
+             "--acknowledge-high-output-whites"],
+            ["simulate", "--white-ceiling", "0.5",
+             "--acknowledge-high-output-whites"],
+            ["web", "--white-ceiling", "0.5",
+             "--acknowledge-high-output-whites"],
+        ):
+            with self.subTest(arguments=arguments), self.assertRaises(SystemExit):
+                main(arguments)
+
+        for value in ("0", "1.01", "nan", "inf"):
+            with self.subTest(value=value), self.assertRaises(SystemExit):
+                build_parser().parse_args(["--white-ceiling", value])
+
+    def test_acknowledged_white_ceiling_reaches_browser_server(self) -> None:
+        with patch("phreqed_dmx.web_control.serve") as serve:
+            self.assertEqual(
+                main([
+                    "live", "--web", "--white-ceiling", "0.60",
+                    "--acknowledge-high-output-whites",
+                ]),
+                0,
+            )
+        self.assertEqual(serve.call_args.kwargs["white_output_ceiling"], 0.60)
 
     def test_controller_blackout_produces_complete_zero_dmx_frame(self) -> None:
         config = load_config()

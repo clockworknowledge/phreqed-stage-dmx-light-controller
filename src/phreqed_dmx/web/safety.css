@@ -1,0 +1,10 @@
+.white-danger {
+  border: 1px solid #a55851;
+  background: #402120;
+  color: #ffd3cf;
+  border-radius: 9px;
+  padding: 12px 14px;
+  margin: 14px 0;
+  font-size: 12px;
+  line-height: 1.6;
+}

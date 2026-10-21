@@ -2,6 +2,23 @@
 
 Last updated: 2026-10-21
 
+## Latest checkpoint — guarded high-output center whites
+
+The commissioned audio-peak white path still defaults to 5% with a 10% ceiling.
+An operator can now expose a higher per-process ceiling only with explicit
+`live --web --white-ceiling VALUE --acknowledge-high-output-whites`. Elevated
+mode is rejected from simulation, simulation-only browser control, ordinary
+non-browser live mode, and acknowledged live browser startup without the
+white-specific acknowledgement. The browser publishes the selected ceiling,
+bounds its physical-white slider to it, and shows a persistent red warning.
+
+This override does not change the onset threshold or relax the 0.10-second,
+4 Hz, blackout, Stop output, render-failure, or five-second browser-lease
+safeguards. `scripts/white-zone-check.py` retains its independent hard 10%
+commissioning cap. The 149-test Windows suite and a clean browser warning/slider
+inspection pass without starting Art-Net. Pi stepped-output acceptance remains
+to be recorded for this slice.
+
 ## Latest checkpoint — Matrix, directional blaster, and blinking eyes
 
 Matrix Rain now activates a sparse deterministic subset of columns. Each bright

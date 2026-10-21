@@ -52,6 +52,14 @@ the rendered scene below it and cannot alter the ceiling. Browser preset and
 scene selection preserve the active manual master override rather than
 reapplying each preset's stored global brightness.
 
+Commissioned center-white output has an independent process-local ceiling. It
+defaults to 0.10. A value above 0.10 can enter `BrowserControl` only from the
+CLI's explicit `live --web` path with `--white-ceiling` and
+`--acknowledge-high-output-whites`. The browser publishes the selected
+ceiling, constrains its physical-level slider to it, and displays a persistent
+warning. This override does not relax onset thresholding, the 0.10-second pulse
+limit, the 4 Hz limiter, blackout, live-stop, failure, or lease-loss behavior.
+
 `AudioReactiveClock` integrates a continuous animation time shared by every
 effect. Tempo establishes the baseline rate, `--speed` is the operator trim,
 and smoothed audio energy provides a bounded 1.0x-2.0x motion multiplier.
@@ -120,8 +128,10 @@ fixtures.
 The browser canvas represents the two white rows between the upper and lower
 RGB row pairs. Preview remains available in simulation. Physical peak output is
 a separate browser-live state outside presets and RGB effects: it requires an
-audio source and explicit toggle, is capped at 10%, uses short threshold-crossing
-pulses no faster than 4 Hz, and is disarmed by every stop/blackout path.
+audio source and explicit toggle, defaults to a 10% ceiling, uses short
+threshold-crossing pulses no faster than 4 Hz, and is disarmed by every
+stop/blackout path. The separately acknowledged process-local override described
+above can raise the ceiling without relaxing those timing or shutdown gates.
 
 Every RGB zone maps to R, G, then B. Cube A's RGB data occupies DMX 1-144 and
 its white parts occupy 145-152. Cube B's RGB data occupies 153-296 and its white

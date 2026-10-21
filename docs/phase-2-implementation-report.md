@@ -5,12 +5,12 @@
 - A normalized RGB pipeline with DMX quantization only at the output boundary.
 - A deterministic effect contract with metadata, typed validated parameters,
   fixture identity, and optional performance context.
-- Eighteen advanced procedural effects and four legacy-preservation effects,
+- Twenty procedural effects and four legacy-preservation effects,
   all dependency-free.
 - A compositor with alpha, additive, and lighten blending; layer opacity;
   per-fixture targeting; radial masks; global limits; and pure crossfades.
 - A configurable stateful limiter for large repeated full-frame luminance rises.
-- Seventeen built-in multi-layer presets, including independent and cross-cube
+- Eighteen built-in multi-layer presets, including independent and cross-cube
   show looks.
 - Transport-independent show commands for effect and parameter changes, preset
   activation, events, blackout, tap tempo, and scene navigation.
@@ -21,6 +21,9 @@
   browser exposes both values.
 - An explicit show-time RGB ceiling override that requires live mode and a
   high-output acknowledgement while retaining frame-rise safeguards.
+- An independent center-white ceiling override that keeps 10% as the default,
+  requires explicit browser-live acknowledgement above it, and retains onset,
+  pulse-duration, flash-rate, blackout, stop, and watchdog safeguards.
 - An interactive two-cube Tk simulator with dynamic parameters, independent
   cube effects, speed and brightness, FPS display, pause/resume, stepping,
   blackout, and dependency-free PPM screenshot export.
@@ -35,10 +38,10 @@
 
 ## Verification
 
-- 138 automated tests pass on Python 3.12 after browser control, persistent user
+- 149 automated tests pass on Python 3.12 after browser control, persistent user
   looks, foot control, the show scene pack, opt-in audio capture, shared audio
-  dynamics, white-channel commissioning, and the explicit RGB ceiling gate
-  were integrated.
+  dynamics, white-channel commissioning, and the explicit RGB and center-white
+  ceiling gates were integrated.
 - A real Tk smoke run constructed two 48-cell grids and both parameter panels.
 - The deadline scheduler measured 25.0 FPS over a 2.2-second local GUI run.
 - On the Windows development machine, the slowest single-effect two-cube frame
@@ -532,8 +535,11 @@ tests resolve logical left-to-right positions to Parts 8-1.
 
 Physical audio peaks remain independent of presets and normal rendering. They
 require explicit `live --web`, active browser output, an audio source, and a
-separate toggle. Output defaults to 5%, is hard-capped at 10%, and converts only
-onset threshold crossings into pulses no longer than 0.10 seconds and no faster
-than 4 Hz. Blackout, Stop output, rendering failure, and browser-lease loss
-disarm the feature. Simulation and all default output paths keep DMX 145-152 and
-297-304 at zero.
+separate toggle. Output defaults to 5% with a 10% ceiling and converts only onset
+threshold crossings into pulses no longer than 0.10 seconds and no faster than
+4 Hz. A higher process-local ceiling requires explicit `live --web`,
+`--white-ceiling`, and `--acknowledge-high-output-whites`; the browser displays
+a persistent warning and cannot request more than that value. Blackout, Stop
+output, rendering failure, and browser-lease loss disarm the feature in every
+mode. Simulation and all default output paths keep DMX 145-152 and 297-304 at
+zero.
