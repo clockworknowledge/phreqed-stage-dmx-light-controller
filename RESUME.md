@@ -15,9 +15,13 @@ bounds its physical-white slider to it, and shows a persistent red warning.
 This override does not change the onset threshold or relax the 0.10-second,
 4 Hz, blackout, Stop output, render-failure, or five-second browser-lease
 safeguards. `scripts/white-zone-check.py` retains its independent hard 10%
-commissioning cap. The 149-test Windows suite and a clean browser warning/slider
+commissioning cap. The 150-test Windows suite and a clean browser warning/slider
 inspection pass without starting Art-Net. Pi stepped-output acceptance remains
 to be recorded for this slice.
+
+Python 3.13 exposed an `argparse` help-formatting bug caused by an unescaped
+literal percent sign in the deep-dim help text. The CLI help string is corrected
+and a regression test now renders the complete help output.
 
 ## Latest checkpoint — Matrix, directional blaster, and blinking eyes
 

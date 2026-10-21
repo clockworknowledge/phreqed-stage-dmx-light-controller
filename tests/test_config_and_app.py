@@ -33,6 +33,11 @@ class ConfigurationTests(unittest.TestCase):
         self.assertFalse(args.audio_deep_dim)
         self.assertEqual(args.audio_quiet_floor, 0.03)
 
+    def test_command_line_help_renders_literal_percentages(self) -> None:
+        help_text = build_parser().format_help()
+        self.assertIn("default 55% floor", help_text)
+        self.assertIn("--white-ceiling", help_text)
+
     def test_live_output_requires_explicit_command(self) -> None:
         args = build_parser().parse_args(["live", "--effect", "cross-cube"])
         self.assertEqual(args.command, "live")

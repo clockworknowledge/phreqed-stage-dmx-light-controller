@@ -292,7 +292,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--audio-deep-dim",
         action="store_true",
-        help="allow quiet audio to dim near black instead of the default 55% floor",
+        help="allow quiet audio to dim near black instead of the default 55%% floor",
     )
     parser.add_argument(
         "--audio-quiet-floor",

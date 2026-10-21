@@ -38,7 +38,7 @@
 
 ## Verification
 
-- 149 automated tests pass on Python 3.12 after browser control, persistent user
+- 150 automated tests pass on Python 3.12 after browser control, persistent user
   looks, foot control, the show scene pack, opt-in audio capture, shared audio
   dynamics, white-channel commissioning, and the explicit RGB and center-white
   ceiling gates were integrated.
