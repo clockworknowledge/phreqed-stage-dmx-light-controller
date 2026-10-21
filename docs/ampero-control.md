@@ -81,6 +81,11 @@ disconnect cycles occurred. This addresses transient USB/ALSA failures, but it
 does not solve Linux assigning the pedal a different card number. Use a stable
 udev symlink for unattended stage operation.
 
+The integrated soak report records all reconnect messages under `foot_events`,
+only mapped-action failures under `foot_errors`, and the pre-shutdown device
+state under `foot_final_status`. A recovered controlled reconnect is accepted;
+missing switch actions or a final disconnected state still fails the test.
+
 On 2026-10-20 the operator observed `90 3C 7F`, `90 3D 7F`, `90 3E 7F`,
 `B0 17 7F`, and `B0 17 00` from the raw device. All mapped actions passed in
 trusted-LAN browser simulation, and guarded browser-live operation was reported

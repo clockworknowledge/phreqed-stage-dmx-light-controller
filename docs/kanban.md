@@ -49,6 +49,11 @@ transient select/read/disconnect error: it closes the descriptor, retries the
 same configured path, contains command/reporting failures, and exposes
 connection, message, and reconnect counts in the browser.
 
+The integrated Pi soak now separates recoverable MIDI lifecycle events from
+genuine action errors. A recovered reconnect can pass only when the final device
+state is connected and all required pedal actions were observed; missing
+actions, a lost device, or a command error still fails the gate.
+
 Acceptance remaining: deploy to the Pi, verify brightness through repeated
 scene navigation, then perform a rehearsal-length pedal soak including one
 controlled USB disconnect/reconnect. A stable udev path is still required to

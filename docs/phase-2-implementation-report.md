@@ -443,7 +443,7 @@ Audio deep dim is explicit and disabled by default. When enabled, the operator
 can choose a 0%-25% near-black floor below the persistent manual master. A
 center-white onset visualization is also available in the browser, but it is
 preview-only: all normal frames continue to hold DMX 145-152 and 297-304 at
-zero. The complete Windows Python 3.12 suite passes 130 tests.
+zero. The complete Windows Python 3.12 suite passes 132 tests.
 
 The operator's earlier integrated Raspberry Pi bench report passed all 31 looks
 present at that time. Its render-timing, audio-capture, and foot-control checks
@@ -452,3 +452,10 @@ mapped pedal action was observed multiple times. This is retained as valid
 hardware evidence for that revision. The expanded 22-effect/17-preset catalog
 requires a new 39-look run, including one controlled MIDI reconnect, before
 closing the current acceptance cards.
+
+The soak harness originally classified every MIDI reporting callback as a fatal
+error, including the expected disconnect and reconnected messages from a
+successful recovery test. It now records lifecycle messages separately and
+evaluates the final connection state, required action counts, and genuine
+mapped-action failures. Automated coverage verifies recovered reconnect,
+missing-action, final-disconnected, and command-error outcomes.

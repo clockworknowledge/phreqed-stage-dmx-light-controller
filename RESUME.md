@@ -22,7 +22,7 @@ rendering until HW-001 commissioning is complete.
 The Ampero input worker now reconnects to the same raw-MIDI path after transient
 read/device failures and reports connection, message, and reconnect counts in
 the browser. A stable udev link remains required for card renumbering. The full
-Python 3.12 suite passes 130 tests and browser JavaScript passes syntax checks.
+Python 3.12 suite passes 132 tests and browser JavaScript passes syntax checks.
 
 Next Pi steps: pull this branch, run the suite, visually review the five new
 presets in simulation, confirm master persistence, and complete a pedal soak
@@ -34,6 +34,12 @@ healthy after 6,681 chunks. The current catalog has 39 looks, so it still needs
 one updated bench run. White-channel software commissioning also passes offline
 for all sixteen isolated 5% frames, but no physical Part 1-8 orientation has
 been recorded in the repository.
+
+The Pi soak foot gate now treats a recovered disconnect/reconnect as a lifecycle
+event instead of an automatic failure. It still fails when the final MIDI state
+is disconnected, required switch counts are missing, or a mapped action raises
+an error. Reports include `foot_events`, genuine `foot_errors`, and
+`foot_final_status` for diagnosis.
 
 This is the short operational handoff for a new Codex session. Read
 `AGENTS.md`, this file, and `docs/kanban.md` before taking action. The detailed

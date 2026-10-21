@@ -10,6 +10,7 @@ SCRIPT = runpy.run_path(
     str(Path(__file__).parents[1] / "scripts" / "pi-soak.py")
 )
 FootProbeCommands = SCRIPT["FootProbeCommands"]
+foot_control_passed = SCRIPT["foot_control_passed"]
 run_look = SCRIPT["run_look"]
 
 
@@ -61,6 +62,49 @@ class PiSoakTests(unittest.TestCase):
         self.assertTrue(result["audio"]["healthy"])
         self.assertGreater(result["audio"]["chunks_processed"], 0)
         self.assertEqual(result["audio"]["loudness_peak"], 0.4)
+
+    def test_foot_gate_accepts_a_recovered_disconnect(self):
+        actions = {
+            "previous_scene": 1,
+            "next_scene": 1,
+            "tap_tempo": 2,
+            "blackout_on": 1,
+            "blackout_off": 1,
+        }
+        status = SimpleNamespace(running=True, connected=True)
+        events = [
+            "Foot controller disconnected; reconnecting: USB reset",
+            "Foot controller reconnected",
+        ]
+        self.assertTrue(
+            foot_control_passed(actions, events, status, require_actions=True)
+        )
+
+    def test_foot_gate_rejects_missing_actions_lost_device_and_command_errors(self):
+        actions = {
+            "previous_scene": 1,
+            "next_scene": 0,
+            "tap_tempo": 2,
+            "blackout_on": 1,
+            "blackout_off": 1,
+        }
+        connected = SimpleNamespace(running=True, connected=True)
+        disconnected = SimpleNamespace(running=True, connected=False)
+        self.assertFalse(
+            foot_control_passed(actions, [], connected, require_actions=True)
+        )
+        actions["next_scene"] = 1
+        self.assertFalse(
+            foot_control_passed(actions, [], disconnected, require_actions=True)
+        )
+        self.assertFalse(
+            foot_control_passed(
+                actions,
+                ["Foot action next_scene ignored: invalid scene"],
+                connected,
+                require_actions=True,
+            )
+        )
 
 
 if __name__ == "__main__":

@@ -56,6 +56,49 @@ class FootProbeCommands:
             return dict(self._counts)
 
 
+MINIMUM_FOOT_ACTIONS = {
+    'previous_scene': 1,
+    'next_scene': 1,
+    'tap_tempo': 2,
+    'blackout_on': 1,
+    'blackout_off': 1,
+}
+
+
+def foot_control_passed(
+    actions: dict[str, int],
+    events: list[str],
+    status: object | None,
+    *,
+    require_actions: bool,
+) -> bool:
+    """Accept recovered reconnects but reject a lost device or command failure."""
+
+    if status is None:
+        return not require_actions
+    if not bool(getattr(status, 'running', False)):
+        return False
+    if not bool(getattr(status, 'connected', False)):
+        return False
+    if any(event.startswith('Foot action ') for event in events):
+        return False
+    return not require_actions or all(
+        actions.get(action, 0) >= minimum
+        for action, minimum in MINIMUM_FOOT_ACTIONS.items()
+    )
+
+
+def foot_status_data(status: object | None) -> dict[str, object] | None:
+    if status is None:
+        return None
+    return {
+        key: getattr(status, key)
+        for key in (
+            'running', 'connected', 'message', 'messages_received', 'reconnects'
+        )
+    }
+
+
 def resident_kib() -> int | None:
     """Return current Linux RSS; unsupported platforms report no value."""
     try:
@@ -214,7 +257,8 @@ def main() -> None:
     audio_source = None
     foot_controller = None
     foot_probe = FootProbeCommands()
-    foot_errors: list[str] = []
+    foot_events: list[str] = []
+    foot_final_status = None
     try:
         if args.audio_device:
             from phreqed_dmx.audio_capture import ArecordAudioSource
@@ -230,7 +274,7 @@ def main() -> None:
                 args.foot_midi_device,
                 foot_probe,
                 channel=args.foot_midi_channel,
-                on_error=foot_errors.append,
+                on_error=foot_events.append,
             )
             foot_controller.start()
         # Guard both the transport constructor and all standard Python sockets.
@@ -248,9 +292,14 @@ def main() -> None:
                     print(json.dumps(result), flush=True)
     finally:
         if foot_controller is not None:
+            foot_final_status = foot_controller.status()
             foot_controller.close()
         report['foot_actions'] = foot_probe.snapshot()
-        report['foot_errors'] = foot_errors
+        report['foot_events'] = foot_events
+        report['foot_errors'] = [
+            event for event in foot_events if event.startswith('Foot action ')
+        ]
+        report['foot_final_status'] = foot_status_data(foot_final_status)
         if audio_source is not None:
             report['audio_final_status'] = {
                 key: getattr(audio_source.status(), key)
@@ -268,19 +317,11 @@ def main() -> None:
         and item.get('audio', {}).get('chunks_processed', 0) > 0
         for item in report['looks']
     )
-    minimum_foot_actions = {
-        'previous_scene': 1,
-        'next_scene': 1,
-        'tap_tempo': 2,
-        'blackout_on': 1,
-        'blackout_off': 1,
-    }
-    foot_passed = not foot_errors and (
-        not args.require_foot_actions
-        or all(
-            report['foot_actions'][action] >= minimum
-            for action, minimum in minimum_foot_actions.items()
-        )
+    foot_passed = foot_control_passed(
+        report['foot_actions'],
+        foot_events,
+        foot_final_status,
+        require_actions=args.require_foot_actions,
     )
     report['checks'] = {
         'render_timing': render_passed,
