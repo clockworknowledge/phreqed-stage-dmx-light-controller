@@ -34,7 +34,7 @@ ceiling of 0.65.
 | `energy-transfer` | Cross-Cube Energy | cross-fixture | `rate` 0.5-16, `trail` 0.5-8.0 |
 | `cross-blaster` | Cross-Cube Blaster | cross-fixture | `rate` 1-24, `trail` 1-18, `core_width` 0.25-4, `spread` 0.2-3 |
 | `flame-jet` | Anchored Flame Jet | cross-fixture | `length` 0.45-1.25, `turbulence` 0.25-2, `strand_width` 0.18-1.2, `muzzle_size` 0.4-3 |
-| `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5 |
+| `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5, `pulse_frequency` 0-1.5, `cosine_morph` 0-1 |
 | `inside-out-vu` | Inside-Out VU | musical | `sensitivity` 0.25-2.5, `peak_width` 0.015-0.25 |
 | `radial-pulse` | Radial Pulse | musical | `frequency` 0.5-6.0, `sharpness` 1-6 |
 | `tunnel` | Legacy Tunnel | legacy | `ring_frequency` 0.5-6.0, `floor` 0-0.5 |
@@ -59,6 +59,12 @@ still passes through the shared tempo and dynamics clock. The `fire` gradient
 is hottest at logical row 3, the physical bottom row; turbulence advects upward
 toward row 0. Fixtures should remain upright with their printed text readable.
 
+`dynamic-wave` remains a sine-led ribbon in quiet passages. Tap tempo and the
+shared smoothed dynamics clock establish its baseline phase velocity. Music
+onsets temporarily increase its spatial frequency and crossfade the carrier
+toward a cosine pattern; treble adds a smaller secondary ripple. Both reactions
+are bounded and return to the sine baseline as the onset decays.
+
 ## Included presets
 
 - `psychedelic-bloom`: neon plasma plus additive concentric rings.
@@ -77,7 +83,8 @@ toward row 0. Fixtures should remain upright with their printed text readable.
 - `blaster-sweep`: a neon bolt travelling left-to-right across both fixtures.
 - `flame-thrower`: a fixed far-left muzzle firing long, turbulent ember strands
   across the full combined display.
-- `wave-rider`: a continuous sine/cosine ribbon whose velocity follows dynamics.
+- `wave-rider`: a tempo-led sine ribbon that tightens and morphs toward cosine
+  on detected musical pulses.
 - `inside-out-vu`: music energy growing from the shared centre to both outer edges.
 
 All presets default below the 0.65 global safety ceiling and contain no

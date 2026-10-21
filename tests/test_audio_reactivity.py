@@ -69,6 +69,23 @@ class AudioReactiveClockTests(unittest.TestCase):
                 self.assertGreater(controller.audio_clock.animation_time, 0.5)
                 self.assertLessEqual(controller.audio_brightness_multiplier, 1.0)
 
+    def test_wave_rider_uses_tempo_as_its_baseline_rate(self) -> None:
+        config = load_config()
+
+        def render_at(tempo_bpm: float):
+            engine = SceneEngine(config.fixtures)
+            engine.activate_preset("wave-rider")
+            controller = Controller(config, engine)
+            return controller.render_scene(
+                0.75,
+                context=PerformanceContext(tempo_bpm=tempo_bpm),
+                apply_safety=False,
+            )
+
+        slow = render_at(60.0)
+        fast = render_at(120.0)
+        self.assertNotEqual(slow["Cube A"].rows(), fast["Cube A"].rows())
+
 
 if __name__ == "__main__":
     unittest.main()

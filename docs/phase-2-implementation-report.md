@@ -501,6 +501,13 @@ with zero missed slots, zero over-budget frames, zero reserved-channel output,
 and zero shutdown blackout. The revised Flame Thrower measured 2.883 ms mean,
 3.129 ms p95, and 3.129 ms maximum in that abbreviated Windows smoke.
 
+Wave Rider was then refined so tempo remains its baseline phase clock while
+music pulses shape the ribbon locally. Audio onset temporarily increases the
+number of cycles across the combined 24-by-4 surface and crossfades its sine
+carrier toward a cosine variant; treble contributes a smaller secondary ripple.
+The `pulse_frequency` and `cosine_morph` parameters bound these responses, and
+quiet input returns to the sine-led baseline without changing output limits.
+
 ## LF4808 white commissioning and guarded peaks — 2026-10-21
 
 The operator completed the steady 5% diagnostic and confirmed that white Parts

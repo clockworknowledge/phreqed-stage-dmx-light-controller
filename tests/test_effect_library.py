@@ -1,6 +1,7 @@
 import unittest
 import hashlib
 
+from phreqed_dmx.audio_analysis import AudioAnalysis, FrequencyBands
 from phreqed_dmx.color import NormalizedRGB, Palette, palette_color
 from phreqed_dmx.effect_api import FixtureIdentity, PerformanceContext
 from phreqed_dmx.effect_library import EFFECT_REGISTRY
@@ -207,6 +208,33 @@ class EffectLibraryTests(unittest.TestCase):
                 self.assertGreater(left_seam, 0.05)
                 self.assertGreater(right_seam, 0.05)
                 self.assertGreater(far_tip, 0.01)
+
+    def test_dynamic_wave_morphs_and_contracts_on_music_pulse(self) -> None:
+        effect = EFFECT_REGISTRY.get("dynamic-wave")
+        parameters = EFFECT_REGISTRY.parameters("dynamic-wave")
+        quiet = PerformanceContext(audio=AudioAnalysis())
+        pulse = PerformanceContext(
+            audio=AudioAnalysis(
+                loudness=0.8,
+                onset=1.0,
+                bands=FrequencyBands(bass=0.9, mid=0.5, treble=0.7),
+            )
+        )
+
+        def frame(context: PerformanceContext) -> tuple[NormalizedRGB, ...]:
+            return tuple(
+                effect.sample(
+                    x, y, 12, 4, 0.75,
+                    FixtureIdentity("Cube A", 0, 2),
+                    parameters,
+                    context,
+                )
+                for y in range(4)
+                for x in range(12)
+            )
+
+        self.assertEqual(frame(quiet), frame(quiet))
+        self.assertNotEqual(frame(quiet), frame(pulse))
 
 
 if __name__ == "__main__":

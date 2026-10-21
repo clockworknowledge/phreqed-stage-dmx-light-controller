@@ -493,14 +493,28 @@ def _dynamic_wave(
     total_width = width * fixture.count
     global_x = x + fixture.index * width
     u = global_x / max(1, total_width - 1)
-    cycles = parameters.number("cycles")
-    amplitude = parameters.number("amplitude")
-    secondary = 0.22
+    onset = 0.0
+    treble = 0.0
     if context and context.audio is not None:
-        secondary += context.audio.bands.treble * 0.28
+        onset = context.audio.onset
+        treble = context.audio.bands.treble
+
+    # The controller's shared animation clock already integrates tap tempo and
+    # smoothed music energy into t. Onset adds a local spatial contraction so a
+    # drum hit visibly increases frequency without replacing the tempo baseline.
+    cycles = parameters.number("cycles") * (
+        1.0 + onset * parameters.number("pulse_frequency")
+    )
+    amplitude = parameters.number("amplitude")
+    spatial_phase = u * cycles * TAU
+    sine_shape = math.sin(spatial_phase - t * 2.1)
+    cosine_shape = math.cos(spatial_phase * 1.18 + t * 1.65)
+    morph = _clamp(onset * parameters.number("cosine_morph"))
+    carrier = _lerp(sine_shape, cosine_shape, morph)
+    secondary = 0.16 + treble * 0.26
     line = (
         (height - 1) / 2
-        + math.sin(u * cycles * TAU - t * 2.1) * amplitude
+        + carrier * amplitude
         + math.cos(u * (cycles * 0.5 + 0.35) * TAU + t * 1.3) * secondary
     )
     thickness = parameters.number("thickness")
@@ -713,6 +727,8 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("cycles", "Wave cycles", 2.2, 0.5, 6.0, 0.1, "Cycles across the combined display"),
             number("amplitude", "Amplitude", 1.15, 0.1, 1.8, 0.05, "Vertical wave travel"),
             number("thickness", "Line thickness", 0.52, 0.12, 1.5, 0.02, "Soft line width"),
+            number("pulse_frequency", "Pulse frequency boost", 0.75, 0.0, 1.5, 0.05, "Extra wave cycles at maximum onset"),
+            number("cosine_morph", "Cosine hit morph", 0.9, 0.0, 1.0, 0.05, "Sine-to-cosine morph strength on onset"),
         ), brightness=0.64), _dynamic_wave),
         ProceduralEffect(_metadata("inside-out-vu", "Inside-Out VU", "Audio level expands from the shared centre toward both outer edges.", "musical", (
             number("sensitivity", "VU sensitivity", 1.15, 0.25, 2.5, 0.05, "Audio level gain"),

@@ -468,7 +468,7 @@ EXAMPLE_PRESETS = (
     VisualPreset(
         "wave-rider",
         "Wave Rider",
-        "A continuous sine/cosine ribbon changes velocity with the music.",
+        "A tempo-locked sine ribbon contracts and morphs toward cosine on musical hits.",
         (
             EffectLayerSpec(
                 "dynamic-wave",
@@ -479,6 +479,8 @@ EXAMPLE_PRESETS = (
                     "cycles": 2.1,
                     "amplitude": 1.2,
                     "thickness": 0.48,
+                    "pulse_frequency": 0.85,
+                    "cosine_morph": 0.95,
                 },
             ),
             EffectLayerSpec(

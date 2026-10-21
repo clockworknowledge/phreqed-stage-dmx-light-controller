@@ -93,7 +93,9 @@ Four deterministic effects and five presets add Matrix Rain, a cross-fixture
 blaster, a fixed-source flame jet, a dynamics-driven sine/cosine ribbon, and an
 inside-out VU. Flame Thrower now has a compact hot muzzle at the far left of
 Cube A and several turbulent strands crossing continuously into Cube B instead
-of reusing the travelling bolt. Inferno Rise places its heat source on logical
+of reusing the travelling bolt. Wave Rider keeps tempo as its baseline velocity;
+audio onsets briefly raise spatial frequency and morph its sine carrier toward
+cosine while treble supplies a smaller ripple. Inferno Rise places its heat source on logical
 row 3 (the confirmed physical bottom) and advects turbulence upward. Automated
 tests cover geometry, determinism, fixture independence, RGB ranges, directional
 flame continuity, and zero white-channel output.

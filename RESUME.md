@@ -2,6 +2,16 @@
 
 Last updated: 2026-10-21
 
+## Latest checkpoint — Wave Rider pulse synchronization
+
+Wave Rider keeps the shared tap-tempo animation clock as its baseline rate. Its
+`dynamic-wave` layer now uses detected audio onset to temporarily increase
+spatial frequency and crossfade the sine-led carrier toward a cosine pattern;
+treble adds a smaller secondary ripple. The response is bounded, deterministic
+for a supplied audio frame, and returns to the original sine behavior as onset
+decays. New `pulse_frequency` and `cosine_morph` parameters expose both response
+depths in the browser look editor. Pi visual and rehearsal-level tuning remain.
+
 ## Latest checkpoint — Flame Thrower redesigned as an anchored jet
 
 Flame Thrower no longer reuses the travelling Cross-Cube Blaster plus unrelated
