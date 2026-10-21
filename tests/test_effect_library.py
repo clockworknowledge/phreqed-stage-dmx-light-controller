@@ -23,6 +23,7 @@ REQUIRED_ADVANCED_EFFECTS = {
     "energy-transfer",
     "radial-pulse",
     "cross-blaster",
+    "flame-jet",
     "dynamic-wave",
     "inside-out-vu",
 }
@@ -177,6 +178,35 @@ class EffectLibraryTests(unittest.TestCase):
                 )
             with self.subTest(animation_time=animation_time):
                 self.assertGreater(rows[-1], rows[0])
+
+    def test_flame_jet_has_left_muzzle_and_crosses_fixture_boundary(self) -> None:
+        effect = EFFECT_REGISTRY.get("flame-jet")
+        parameters = EFFECT_REGISTRY.parameters("flame-jet")
+        fixture_a = FixtureIdentity("Cube A", 0, 2)
+        fixture_b = FixtureIdentity("Cube B", 1, 2)
+
+        def energy(fixture: FixtureIdentity, x: int, animation_time: float) -> float:
+            return sum(
+                sum((color.red, color.green, color.blue))
+                for y in range(4)
+                for color in (
+                    effect.sample(
+                        x, y, 12, 4, animation_time, fixture, parameters,
+                        self.context,
+                    ),
+                )
+            )
+
+        for animation_time in (0.0, 0.6, 1.2):
+            with self.subTest(animation_time=animation_time):
+                muzzle = energy(fixture_a, 0, animation_time)
+                left_seam = energy(fixture_a, 11, animation_time)
+                right_seam = energy(fixture_b, 0, animation_time)
+                far_tip = energy(fixture_b, 11, animation_time)
+                self.assertGreater(muzzle, far_tip)
+                self.assertGreater(left_seam, 0.05)
+                self.assertGreater(right_seam, 0.05)
+                self.assertGreater(far_tip, 0.01)
 
 
 if __name__ == "__main__":

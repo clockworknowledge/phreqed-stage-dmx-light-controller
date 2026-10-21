@@ -488,6 +488,19 @@ received and no action errors. This is a successful functional recovery case,
 but it does not invalidate the earlier silent-after-reopen case tracked by
 `CONTROL-002`.
 
+Following visual review, Flame Thrower was separated from the travelling
+Cross-Cube Blaster. The new `flame-jet` effect keeps a compact hot source at the
+far left of Cube A and carries three turbulent strands through the Cube A/B
+boundary to the far edge of Cube B. Its length breathes modestly with bounded
+audio dynamics while direction remains fixed. The preset no longer overlays the
+single-fixture rising spark effect. This increases the current catalog to 23
+effects and 40 soak looks; the prior 39-look Pi pass remains valid for its
+revision and the new catalog requires a fresh full-duration Pi timing run. The
+Windows suite passes 139 tests; a short socket-blocked 40-look smoke also passed
+with zero missed slots, zero over-budget frames, zero reserved-channel output,
+and zero shutdown blackout. The revised Flame Thrower measured 2.883 ms mean,
+3.129 ms p95, and 3.129 ms maximum in that abbreviated Windows smoke.
+
 ## LF4808 white commissioning and guarded peaks — 2026-10-21
 
 The operator completed the steady 5% diagnostic and confirmed that white Parts

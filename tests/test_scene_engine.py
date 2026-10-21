@@ -66,6 +66,15 @@ class SceneEngineTests(unittest.TestCase):
         self.assertIn(("Cube A",), {layer.fixtures for layer in targeted.layers})
         self.assertIn(("Cube B",), {layer.fixtures for layer in targeted.layers})
 
+        flame_thrower = next(
+            preset for preset in EXAMPLE_PRESETS
+            if preset.preset_id == "flame-thrower"
+        )
+        self.assertEqual(
+            [layer.effect_id for layer in flame_thrower.layers],
+            ["flame-jet"],
+        )
+
     def test_manual_fixture_effects_remain_independent(self) -> None:
         self.engine.select_effect("Cube A", "plasma")
         self.engine.select_effect("Cube B", "tunnel")

@@ -2,6 +2,19 @@
 
 Last updated: 2026-10-21
 
+## Latest checkpoint — Flame Thrower redesigned as an anchored jet
+
+Flame Thrower no longer reuses the travelling Cross-Cube Blaster plus unrelated
+vertical sparks. A dedicated deterministic `flame-jet` effect anchors a compact
+white-hot muzzle at the far left of Cube A, then forks three turbulent ember
+strands continuously across Cube A and Cube B. Audio dynamics make reach and
+motion breathe without reversing the left-to-right direction. Directional tests
+cover the source gradient, both sides of the fixture boundary, and the far-right
+tip. This adds one standalone effect, so the catalog now contains 23 effects,
+17 presets, and 40 total Pi-soak looks. The 139-test Windows suite, browser
+preview, and a short socket-blocked 40-look smoke pass; operator Pi visual
+acceptance and the full five-second-per-look timing run remain.
+
 ## Latest checkpoint — current 39-look Pi bench passed
 
 The 2026-10-21 socket-blocked integrated Pi bench passed all 39 looks at 25 FPS
@@ -60,7 +73,7 @@ built-in/user preset or moving through a scene list no longer clears it. Audio
 response also has an explicit deep-dim toggle and adjustable 0%-25% quiet floor;
 the existing 55% floor remains the safe default.
 
-The effect catalog now has 22 effects and 17 built-in presets. New looks are
+The effect catalog now has 23 effects and 17 built-in presets. New looks are
 Matrix Rain, Blaster Sweep, Flame Thrower, Wave Rider, and Inside-Out VU. The
 blaster and wave effects treat the fixtures as a continuous 24-by-4 surface.
 Inferno Rise was corrected so row 3 is the physical hot bottom and turbulence

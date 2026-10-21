@@ -89,15 +89,25 @@ pedal retains its programmed bank, while the silent-pedal case remains open.
 
 ### EFFECT-003 — Music-driven stage look expansion (`P1`, visuals)
 
-Three deterministic effects and five presets add Matrix Rain, cross-fixture
-blaster/flame sweeps, a dynamics-driven sine/cosine ribbon, and an inside-out
-VU. Inferno Rise now places its heat source on logical row 3 (the confirmed
-physical bottom) and advects turbulence upward. Automated tests cover geometry,
-determinism, fixture independence, RGB ranges, and zero white-channel output.
+Four deterministic effects and five presets add Matrix Rain, a cross-fixture
+blaster, a fixed-source flame jet, a dynamics-driven sine/cosine ribbon, and an
+inside-out VU. Flame Thrower now has a compact hot muzzle at the far left of
+Cube A and several turbulent strands crossing continuously into Cube B instead
+of reusing the travelling bolt. Inferno Rise places its heat source on logical
+row 3 (the confirmed physical bottom) and advects turbulence upward. Automated
+tests cover geometry, determinism, fixture independence, RGB ranges, directional
+flame continuity, and zero white-channel output.
 
-Acceptance remaining: review all five looks in browser simulation, confirm
+Acceptance remaining: review all five looks in browser simulation, confirm the
+revised Flame Thrower reads as a left-origin jet across both fixtures, confirm
 Inferno Rise rises upward with fixtures upright and printed text readable, and
-run a low-brightness live scene check.
+run a low-brightness live scene check. The added standalone effect expands the
+current bench catalog to 40 looks, so rerun the socket-blocked timing gate.
+
+Windows validation passes 139 tests. A clean browser preview shows the anchored
+source and cross-cube strands, and a short socket-blocked 40-look smoke reports
+zero missed slots, zero over-budget frames, zero reserved-channel output, and a
+zero shutdown blackout. Operator review on the Pi remains the visual authority.
 
 The current 39-look Pi bench passed render timing at 25 FPS with zero reported
 missed slots, zero reserved-channel output, and successful shutdown blackout.

@@ -33,6 +33,7 @@ ceiling of 0.65.
 | `sparks` | Spark Trail | particle | `count` 3-24, `decay` 0.15-1.5 |
 | `energy-transfer` | Cross-Cube Energy | cross-fixture | `rate` 0.5-16, `trail` 0.5-8.0 |
 | `cross-blaster` | Cross-Cube Blaster | cross-fixture | `rate` 1-24, `trail` 1-18, `core_width` 0.25-4, `spread` 0.2-3 |
+| `flame-jet` | Anchored Flame Jet | cross-fixture | `length` 0.45-1.25, `turbulence` 0.25-2, `strand_width` 0.18-1.2, `muzzle_size` 0.4-3 |
 | `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5 |
 | `inside-out-vu` | Inside-Out VU | musical | `sensitivity` 0.25-2.5, `peak_width` 0.015-0.25 |
 | `radial-pulse` | Radial Pulse | musical | `frequency` 0.5-6.0, `sharpness` 1-6 |
@@ -45,6 +46,11 @@ ceiling of 0.65.
 audio-analysis frame. Loudness and band energy scale the existing ring, onset
 adds a limited accent, and bass/treble balance supplies a small hue offset. With
 no audio frame, its established tempo-aware rendering remains unchanged.
+
+`flame-jet` anchors a compact white-hot source at the far left of Cube A and
+forks a persistent ember jet across Cube A, the fixture boundary, and Cube B.
+Audio dynamics make its reach and motion breathe without reversing its fixed
+left-to-right direction.
 
 `inside-out-vu` uses normalized audio energy when present and expands from the
 gap between Cube A and Cube B toward the outside edges. `dynamic-wave` and
@@ -69,7 +75,8 @@ toward row 0. Fixtures should remain upright with their printed text readable.
 - `crossfire`: hot and cool independent cube fields with cross-cube energy transfer.
 - `matrix-rain`: matrix-green code columns with restrained scan distortion.
 - `blaster-sweep`: a neon bolt travelling left-to-right across both fixtures.
-- `flame-thrower`: a warmer ember plume and sparks crossing the combined display.
+- `flame-thrower`: a fixed far-left muzzle firing long, turbulent ember strands
+  across the full combined display.
 - `wave-rider`: a continuous sine/cosine ribbon whose velocity follows dynamics.
 - `inside-out-vu`: music energy growing from the shared centre to both outer edges.
 

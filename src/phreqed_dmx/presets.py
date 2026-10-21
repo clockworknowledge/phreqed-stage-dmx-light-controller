@@ -448,30 +448,18 @@ EXAMPLE_PRESETS = (
     VisualPreset(
         "flame-thrower",
         "Flame Thrower",
-        "An ember plume and sparks rip left-to-right across the combined display.",
+        "A hot muzzle on the far left fires long flame strands across both fixtures.",
         (
             EffectLayerSpec(
-                "cross-blaster",
+                "flame-jet",
                 parameters={
-                    "speed": 0.72,
-                    "brightness": 0.92,
+                    "speed": 0.82,
+                    "brightness": 0.96,
                     "palette": "ember",
-                    "rate": 6.5,
-                    "trail": 11.0,
-                    "core_width": 2.0,
-                    "spread": 1.25,
-                },
-            ),
-            EffectLayerSpec(
-                "sparks",
-                opacity=0.44,
-                blend_mode=BlendMode.ADDITIVE,
-                parameters={
-                    "speed": 1.1,
-                    "brightness": 0.5,
-                    "palette": "magma",
-                    "count": 16.0,
-                    "decay": 0.38,
+                    "length": 1.12,
+                    "turbulence": 1.15,
+                    "strand_width": 0.48,
+                    "muzzle_size": 1.25,
                 },
             ),
         ),

@@ -404,6 +404,86 @@ def _cross_blaster(
     return _paint(global_x / max(1, total_width - 1) * 0.24 + t * 0.03, intensity, parameters)
 
 
+def _flame_jet(
+    x: int, y: int, width: int, height: int, animation_time: float,
+    fixture: FixtureIdentity, parameters: EffectParameters,
+    context: PerformanceContext | None,
+) -> NormalizedRGB:
+    """Render an anchored muzzle and turbulent strands across all fixtures."""
+    t = _time(animation_time, parameters)
+    total_width = width * fixture.count
+    global_x = x + fixture.index * width
+    u = global_x / max(1, total_width - 1)
+    center = (height - 1) / 2
+    turbulence = parameters.number("turbulence")
+    strand_width = parameters.number("strand_width")
+
+    dynamics = context.energy if context is not None else 0.5
+    if context is not None and context.audio is not None:
+        audio = context.audio
+        dynamics = _clamp(
+            audio.loudness * 0.5
+            + audio.bands.bass * 0.25
+            + audio.bands.mid * 0.15
+            + audio.onset * 0.1
+        )
+
+    # Length is a fraction of the complete multi-fixture surface. Dynamics can
+    # make the tips breathe, but the default remains long enough to cross the
+    # fixture boundary even in a quiet room.
+    reach = parameters.number("length") * (0.9 + dynamics * 0.1)
+    tip_fade = _clamp((reach - u) * total_width / 3.0)
+
+    seed = context.seed if context is not None else 0
+    flow_noise = _value_noise(
+        global_x * (0.32 + turbulence * 0.08) - t * (3.8 + turbulence),
+        y * 1.7 + math.sin(t * 0.7),
+        seed + 911,
+    )
+    flow = 0.58 + flow_noise * 0.42
+    downstream_width = strand_width * (0.78 + u * 0.52)
+
+    # Three coherent filaments share one origin and diverge into distinct,
+    # continuously moving flame strands. Their phases are deliberately
+    # different so the four-row fixture still shows gaps and forked tips.
+    strands = 0.0
+    strand_shapes = (
+        (0.0, 0.42, 0.58, 1.0, 0.0),
+        (-0.48, 0.34, 0.83, 0.72, 1.9),
+        (0.48, 0.31, 0.71, 0.68, 4.2),
+    )
+    for offset, amplitude, frequency, weight, phase in strand_shapes:
+        divergence = offset * (0.18 + u * 1.55)
+        wave = math.sin(
+            global_x * frequency * turbulence
+            - t * (2.8 + frequency)
+            + phase
+        )
+        ripple = math.sin(global_x * 1.31 + t * 1.9 + phase * 0.7) * 0.12
+        line = center + divergence + (wave * amplitude + ripple) * (0.2 + u)
+        distance = abs(y - line)
+        filament = math.exp(-((distance / max(0.08, downstream_width)) ** 2))
+        strands = max(strands, filament * weight)
+
+    horizontal = (0.42 + 0.58 * math.exp(-u * 1.35)) * tip_fade
+    jet = strands * horizontal * flow
+
+    muzzle_size = parameters.number("muzzle_size")
+    muzzle_distance = math.hypot(
+        global_x / max(0.1, muzzle_size),
+        (y - center) / max(0.1, strand_width * 2.4),
+    )
+    muzzle_pulse = 0.94 + 0.06 * math.sin(t * 5.3)
+    muzzle = math.exp(-(muzzle_distance ** 2)) * muzzle_pulse
+    intensity = max(jet, muzzle)
+
+    # Ember is white-yellow at the muzzle, orange through the body, and red at
+    # the tips. Clamp below 1.0 to avoid wrapping the cyclic palette to black.
+    source_heat = math.exp(-global_x / max(0.1, muzzle_size)) * 0.12
+    heat = min(0.99, 0.94 - u * 0.31 + (flow - 0.58) * 0.08 + source_heat)
+    return _paint(heat, intensity, parameters)
+
+
 def _dynamic_wave(
     x: int, y: int, width: int, height: int, animation_time: float,
     fixture: FixtureIdentity, parameters: EffectParameters,
@@ -623,6 +703,12 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("core_width", "Core width", 1.4, 0.25, 4.0, 0.05, "Width of the leading blast core"),
             number("spread", "Vertical spread", 1.0, 0.2, 3.0, 0.05, "Vertical plume spread"),
         ), brightness=0.62), _cross_blaster),
+        ProceduralEffect(_metadata("flame-jet", "Anchored Flame Jet", "A fixed left-side muzzle fires turbulent flame strands across both fixtures.", "cross-fixture", (
+            number("length", "Jet length", 1.08, 0.45, 1.25, 0.01, "Fraction of the combined display reached by the flame"),
+            number("turbulence", "Turbulence", 1.0, 0.25, 2.0, 0.05, "Motion and curl of the flame strands"),
+            number("strand_width", "Strand width", 0.5, 0.18, 1.2, 0.02, "Soft width of each flame filament"),
+            number("muzzle_size", "Muzzle size", 1.15, 0.4, 3.0, 0.05, "Size of the hot source at the far left"),
+        ), brightness=0.68), _flame_jet),
         ProceduralEffect(_metadata("dynamic-wave", "Dynamic Sine Wave", "A continuous sine/cosine light ribbon drifts across both fixtures.", "musical", (
             number("cycles", "Wave cycles", 2.2, 0.5, 6.0, 0.1, "Cycles across the combined display"),
             number("amplitude", "Amplitude", 1.15, 0.1, 1.8, 0.05, "Vertical wave travel"),
