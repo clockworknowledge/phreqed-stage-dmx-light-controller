@@ -81,6 +81,12 @@ with the iOS app. Treat a valid mapped MIDI event after startup or reconnect as
 the functional readiness gate. Configuration inspection and recovery are
 deferred to CONTROL-002 rather than expanding this reliability fix in place.
 
+The subsequent current-catalog Pi bench passed all 39 looks and encountered one
+unplanned `Errno 19` disconnect. This time the worker reconnected functionally:
+the run ended connected after 62 messages, every required action was observed,
+and no action errors occurred. This validates the reader recovery path when the
+pedal retains its programmed bank, while the silent-pedal case remains open.
+
 ### EFFECT-003 — Music-driven stage look expansion (`P1`, visuals)
 
 Three deterministic effects and five presets add Matrix Rain, cross-fixture
@@ -92,6 +98,11 @@ determinism, fixture independence, RGB ranges, and zero white-channel output.
 Acceptance remaining: review all five looks in browser simulation, confirm
 Inferno Rise rises upward with fixtures upright and printed text readable, and
 run a low-brightness live scene check.
+
+The current 39-look Pi bench passed render timing at 25 FPS with zero reported
+missed slots, zero reserved-channel output, and successful shutdown blackout.
+Flame Thrower was the heaviest reported preset at 16.182 ms maximum render time,
+leaving more than 23 ms within the 40 ms frame budget.
 
 ### SAFE-002 — Explicit show-time RGB ceiling (`P0`, safety)
 
@@ -121,6 +132,9 @@ Acceptance remaining: visually validate every preset with rehearsal-level
 Snowball input, tune the response curves, and confirm 25 FPS timing in the Pi
 soak before calling the dynamics model performance-ready.
 
+The 2026-10-21 current-catalog bench confirmed 25 FPS timing across all 39
+looks. Visual response and rehearsal-level curve tuning remain open.
+
 ### AUDIO-002 — Real-time audio synchronization (`P1`, music)
 
 Explicit `arecord` mono capture, deterministic PCM analysis, adaptive ambient
@@ -138,10 +152,11 @@ Acceptance remaining: document sustained CPU use, analysis latency, and missed
 scene switching and hard onset flashes remain out of scope.
 
 The first integrated, socket-blocked Raspberry Pi bench run passed all 31 looks
-in that revision. Audio remained healthy with 6,681 chunks processed, and the
-render-timing, audio-capture, and foot-control checks all reported true. Because
-the catalog now contains 22 effects and 17 presets, rerun the bench across the
-current 39 looks before final performance acceptance.
+in that revision. The current 39-look rerun also passed: audio ended healthy
+after 8,404 chunks, all three top-level checks were true, no reported frame slot
+was missed, and peak temperature was 49.05 C. Rehearsal-level sensitivity and
+longer-duration resource measurements remain before final performance
+acceptance.
 
 ### AUDIO-001 — Audio-analysis input contract (`P1`, music)
 

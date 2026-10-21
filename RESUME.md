@@ -2,6 +2,23 @@
 
 Last updated: 2026-10-21
 
+## Latest checkpoint — current 39-look Pi bench passed
+
+The 2026-10-21 socket-blocked integrated Pi bench passed all 39 looks at 25 FPS
+with render timing, Snowball capture, and foot control all true. No reported
+look missed a frame slot; reserved channels and shutdown blackout remained
+zero. Audio ended healthy after 8,404 chunks. The heaviest reported preset was
+Flame Thrower at 12.129 ms mean, 14.616 ms p95, and 16.182 ms maximum render
+time against the 40 ms frame budget; peak temperature was 49.05 C.
+
+The pedal registered 18 previous-scene, 17 next-scene, 16 tap-tempo, 6 blackout
+on, and 5 blackout-off actions. One unplanned `Errno 19` disconnect occurred;
+the worker reconnected and the run finished connected with 62 received messages
+and no action errors. This is positive evidence of functional same-path recovery
+when the pedal retains its bank, but it does not close `CONTROL-002`: the earlier
+controlled test still showed that a reopened device can remain silent until app
+reinitialization.
+
 ## Latest checkpoint — Ampero reconnect characterized; recovery sprint deferred
 
 The controlled 2026-10-21 USB reconnect test detected `Errno 19`, reopened the
@@ -541,41 +558,15 @@ the backup until the committed file and runtime configuration are verified.
 
 ## Next actions, in order
 
-1. On the Pi, disconnect the iPhone app and verify that the pedal is currently
-   emitting the expected messages before starting the soak:
-
-   ```bash
-   timeout 15s amidi -d -p hw:3,0,0
-   ```
-
-   Expected input is Note On 60, 61, and 62 plus CC 23 values 127 and 0.
-2. Resume the current 39-look integrated simulation bench without deliberately
-   disconnecting the pedal:
-
-   ```bash
-   .venv/bin/python scripts/pi-soak.py \
-     --seconds-per-look 5 \
-     --audio-device plughw:CARD=Snowball,DEV=0 \
-     --foot-midi-device /dev/snd/midiC3D0 \
-     --require-foot-actions \
-     --output /tmp/phreqed-full-bench-current-2.json
-   ```
-
-   During the run, press FS1 and FS2 at least once, FS3 at least twice, and FS4
-   through both on and off. Repeating the set once provides better evidence.
-   The soak blocks sockets and Art-Net transmission.
-3. Inspect the report's `passed`, `checks`, `foot_actions`, `foot_events`,
-   `foot_errors`, `foot_final_status`, and `audio_final_status` fields. Do not
-   count an ALSA reconnect with zero messages as functional recovery.
-4. In browser simulation, visually review the five newest presets, confirm
+1. In browser simulation, visually review the five newest presets, confirm
    Inferno Rise moves upward, verify master brightness persists through scene
    changes, and exercise audio deep dim.
-5. With fixtures secured and QLC+ blackout immediately available, validate
+2. With fixtures secured and QLC+ blackout immediately available, validate
    `HW-002` at its default 5% and confirm blackout, Stop output, and browser
    lease loss each disarm physical-white peak output.
-6. Defer another deliberate pedal disconnect and all configuration writes to
+3. Defer another deliberate pedal disconnect and all configuration writes to
    the `CONTROL-002` sprint. Keep browser control available as the show backup.
-7. Validate the optional elevated RGB ceiling under `SAFE-002` only after the
+4. Validate the optional elevated RGB ceiling under `SAFE-002` only after the
    default-level live sequence passes.
 
 ## Safety invariants

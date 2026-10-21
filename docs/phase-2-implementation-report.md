@@ -474,6 +474,20 @@ evaluates the final connection state, required action counts, and genuine
 mapped-action failures. Automated coverage verifies recovered reconnect,
 missing-action, final-disconnected, and command-error outcomes.
 
+The current 39-look Raspberry Pi rerun passed on 2026-10-21. Every look held
+25 FPS with no reported missed slots or over-budget frames, unmapped channels
+remained zero, and each shutdown blackout was zero. Audio finished healthy after
+8,404 chunks. Flame Thrower was the heaviest reported preset at 12.129 ms mean,
+14.616 ms p95, and 16.182 ms maximum render time, still below the 40 ms frame
+budget; process temperature peaked at 49.05 C.
+
+The pedal produced 18 previous-scene, 17 next-scene, 16 tap-tempo, 6 blackout-on,
+and 5 blackout-off actions. An unplanned `Errno 19` disconnect occurred, after
+which the worker reconnected; the final status was connected with 62 messages
+received and no action errors. This is a successful functional recovery case,
+but it does not invalidate the earlier silent-after-reopen case tracked by
+`CONTROL-002`.
+
 ## LF4808 white commissioning and guarded peaks — 2026-10-21
 
 The operator completed the steady 5% diagnostic and confirmed that white Parts
