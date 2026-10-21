@@ -27,6 +27,15 @@ class SceneSequenceTests(unittest.TestCase):
         self.scenes.select(1, 3)
         self.assertEqual(self.engine.active_preset_id, 'molten-motion')
 
+    def test_master_brightness_override_survives_scene_changes(self):
+        self.engine.set_global_brightness(0.37)
+        self.scenes.select(0, 0)
+        self.controller.render_scene(0, apply_safety=False)
+        self.assertEqual(self.engine.compositor.global_brightness, 0.37)
+        self.scenes.select(1, 1)
+        self.controller.render_scene(1, apply_safety=False)
+        self.assertEqual(self.engine.compositor.global_brightness, 0.37)
+
     def test_timing_boundaries_and_final_hold(self):
         self.scenes.play(10)
         for timestamp, index in ((11.99, 0), (12, 1), (14.99, 1), (15, 2), (19, 2)):

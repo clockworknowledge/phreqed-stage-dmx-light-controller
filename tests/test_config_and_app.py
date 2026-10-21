@@ -28,6 +28,8 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIsNone(args.audio_sensitivity)
         self.assertEqual(args.rgb_ceiling, 0.65)
         self.assertFalse(args.acknowledge_high_output)
+        self.assertFalse(args.audio_deep_dim)
+        self.assertEqual(args.audio_quiet_floor, 0.03)
 
     def test_live_output_requires_explicit_command(self) -> None:
         args = build_parser().parse_args(["live", "--effect", "cross-cube"])

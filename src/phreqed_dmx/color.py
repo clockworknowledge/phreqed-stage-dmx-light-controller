@@ -57,6 +57,7 @@ class Palette(str, Enum):
     NEON = "neon"
     EMBER = "ember"
     MONOCHROME = "monochrome"
+    MATRIX = "matrix"
 
 
 _PALETTE_STOPS: dict[Palette, tuple[tuple[float, NormalizedRGB], ...]] = {
@@ -87,6 +88,12 @@ _PALETTE_STOPS: dict[Palette, tuple[tuple[float, NormalizedRGB], ...]] = {
     Palette.MONOCHROME: (
         (0.0, BLACK_NORMALIZED),
         (1.0, NormalizedRGB(1.0, 1.0, 1.0)),
+    ),
+    Palette.MATRIX: (
+        (0.0, NormalizedRGB(0.0, 0.015, 0.0)),
+        (0.35, NormalizedRGB(0.0, 0.22, 0.025)),
+        (0.75, NormalizedRGB(0.0, 0.85, 0.12)),
+        (1.0, NormalizedRGB(0.72, 1.0, 0.78)),
     ),
 }
 

@@ -44,3 +44,7 @@ final full-universe blackout.
 Do not add pulse, beat, or strobe effects until all sixteen observations have
 been recorded and agree between the fixtures. The normal show engine continues
 to send zero on these channels unless an explicit white-zone frame is supplied.
+
+The browser's optional audio-onset white-line animation is a display-only
+preview. It does not construct a white-zone frame and is not evidence that the
+physical part order has been commissioned.

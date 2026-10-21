@@ -161,7 +161,10 @@ class TkSimulator:
         container = self._ttk.Frame(self._root, padding=(10, 0, 10, 8))
         container.pack(fill="both", expand=True)
         effect_ids = tuple(metadata.effect_id for metadata in EFFECT_REGISTRY.metadata())
-        palette_values = ("spectrum", "magma", "ocean", "neon", "ember", "monochrome")
+        palette_values = (
+            "spectrum", "magma", "ocean", "neon", "ember", "monochrome",
+            "matrix",
+        )
         for column, fixture in enumerate(self._controller.config.fixtures):
             panel = self._ttk.LabelFrame(container, text=f"{fixture.name} effect", padding=7)
             panel.grid(row=0, column=column, sticky="nsew", padx=4)

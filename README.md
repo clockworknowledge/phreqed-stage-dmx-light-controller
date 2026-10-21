@@ -12,23 +12,24 @@ To continue deployment or development in a fresh Codex session, start with the
 
 The reconstructed conversation baseline is preserved unchanged under
 `phreqed-stage-dmx-baseline/`. The package retains its plasma, tunnel, pulse,
-chase, and cross-cube chase while adding fifteen advanced effects. These
+chase, and cross-cube chase while adding eighteen advanced effects. These
 snapshots are not direct Pi exports; see the [baseline inventory](docs/baseline-inventory.md)
 and [Pi comparison checklist](docs/pi-script-import.md).
 
 ## Phase 2 capabilities
 
-- 19 registered effects with validated metadata and deterministic output
-- spectrum, magma, ocean, neon, ember, and monochrome palettes
+- 22 registered effects with validated metadata and deterministic output
+- spectrum, magma, ocean, neon, ember, monochrome, and matrix palettes
 - alpha, additive, and lighten layers with opacity and masks
 - independent per-cube effects or continuous cross-cube effects
-- twelve built-in multi-layer presets, including independent and cross-cube show looks
+- seventeen built-in multi-layer presets, including independent and cross-cube show looks
 - conservative global brightness ceiling and frame-rise limiter
 - transport-independent blackout, preset, event, tap-tempo, and navigation APIs
 - normalized, replayable audio analysis with explicit opt-in Blue Snowball/ALSA
   capture, browser meters, and silence-on-input-loss behavior
 - optional Hotone Ampero Control input over an explicitly selected ALSA
-  raw-MIDI device; foot input never enables Art-Net output
+  raw-MIDI device, with disconnect recovery and browser status; foot input never
+  enables Art-Net output
 - interactive Tk simulator with live FPS, pause, step, parameters, and PPM export
 - versioned user looks and ordered scenes with atomic JSON persistence
 - browser previews and show control with an explicit live gate and disconnect blackout
@@ -56,8 +57,8 @@ mode; the 12-by-4 front-view orientation comes from physical fixture testing.
   fixture channels 145-152; they are not part of the RGB grid
 - normal show output keeps those white parts at zero until their front-view
   order is commissioned with the capped steady-output diagnostic
-- the browser preview shows both center strobe lines as disabled grey physical
-  references; they are not connected to output values
+- the browser can preview onset hits on both center-white lines, but this is
+  display-only and never writes those values to DMX
 
 The committed settings are in [`config/fixtures.toml`](config/fixtures.toml).
 
@@ -86,6 +87,11 @@ phreqed-dmx simulate --effect fire --mode independent --second-effect digital-ra
 phreqed-dmx simulate --effect energy-transfer
 phreqed-dmx simulate --preset acid-mirrors
 phreqed-dmx simulate --preset crossfire
+phreqed-dmx simulate --preset matrix-rain
+phreqed-dmx simulate --preset blaster-sweep
+phreqed-dmx simulate --preset flame-thrower
+phreqed-dmx simulate --preset wave-rider
+phreqed-dmx simulate --preset inside-out-vu
 ```
 
 The preview shows both cubes from the front and provides:
@@ -141,6 +147,10 @@ too sensitive, add `--audio-sensitivity 8` (valid range `0.1..40`, default
 music dynamics then vary motion from 1.0x to 2.0x and brightness from 55% to
 100% of the manual master; they never raise the RGB ceiling. Input loss clears
 the analysis to silence without stopping controls or tempo-driven movement.
+Enable **Deep dim on quiet passages** in the browser to replace the normal 55%
+floor with an adjustable 0%-25% near-black floor. The setting changes only the
+audio multiplier; the master slider remains the persistent peak level when
+presets or scenes change.
 See [Audio synchronization](docs/audio-synchronization.md) for limitations and
 the remaining Raspberry Pi timing gate.
 
@@ -156,6 +166,11 @@ avoids Bluetooth pairing failures.
 Foot input is disabled unless `--foot-midi-device` is supplied. For setup,
 message assignments, Pi device discovery, and safe testing, see
 [`docs/ampero-control.md`](docs/ampero-control.md).
+
+If USB MIDI drops temporarily, the reader closes and reopens the configured
+device instead of silently terminating. The browser reports connection state,
+message count, and reconnect count. A stable udev path is still required before
+unattended stage use because `/dev/snd/midiC3D0` can change after re-enumeration.
 
 ## Run live on the Raspberry Pi
 

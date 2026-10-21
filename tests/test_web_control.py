@@ -13,7 +13,7 @@ from phreqed_dmx.audio_analysis import AudioAnalysis, FrequencyBands, ManualAudi
 from phreqed_dmx.compositor import Compositor
 from phreqed_dmx.config import load_config
 from phreqed_dmx.engine import SceneEngine
-from phreqed_dmx.library import preset_data
+from phreqed_dmx.library import Cue, preset_data
 from phreqed_dmx.presets import PRESETS
 from phreqed_dmx.web_control import BrowserControl, BrowserFootCommands, ControlHandler
 
@@ -56,9 +56,10 @@ class BrowserControlTests(unittest.TestCase):
     def test_browser_preview_documents_disabled_center_strobes(self):
         html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
         script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
-        self.assertIn('12 by 4 RGB grid and two disabled center white strobe lines', html)
-        self.assertIn('display-only', html)
-        self.assertIn("ctx.fillStyle = '#59615c'", script)
+        self.assertIn('12 by 4 RGB grid and two center white preview lines', html)
+        self.assertIn('whites preview-only', html)
+        self.assertIn("const white = Math.round", script)
+        self.assertIn("white.active_level", script)
 
     def test_browser_reports_disabled_and_active_audio_analysis(self):
         disabled = self.control.state()['audio']
@@ -126,11 +127,18 @@ class BrowserControlTests(unittest.TestCase):
         before = self.control.engine.active_preset_id
         for command in (dict(action='brightness', value=0.7), dict(action='brightness', value=float('inf')),
                         dict(action='preset', value=[]), dict(action='save_scenes', scenes=[{}]),
-                        dict(action='select_scene', index=True), dict(action='anything')):
+                        dict(action='select_scene', index=True),
+                        dict(action='audio_dimming', enabled='yes', floor=0.02),
+                        dict(action='audio_dimming', enabled=True, floor=0.5),
+                        dict(action='white_preview', enabled=True, threshold=0.0, level=0.8),
+                        dict(action='white_preview', enabled=True, threshold=0.65, level=2.0),
+                        dict(action='anything')):
             with self.subTest(command=command), self.assertRaises(ValueError):
                 self.control.command(command)
         self.assertEqual(self.control.engine.active_preset_id, before)
         self.assertEqual(self.control.engine.compositor.global_brightness, 0.25)
+        self.assertFalse(self.control.controller.audio_clock.deep_dim_enabled)
+        self.assertFalse(self.control.white_peak_preview)
 
     def test_browser_brightness_uses_explicit_controller_ceiling(self):
         config = load_config()
@@ -151,6 +159,53 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn('id="brightness-ceiling"', html)
         self.assertIn("$('master').max = s.brightness_ceiling", script)
         self.assertIn('HIGH-OUTPUT MODE', script)
+
+    def test_master_brightness_survives_preset_and_scene_changes(self):
+        self.control.command(dict(action='brightness', value=0.41))
+        self.control.command(dict(action='preset', value='molten-motion'))
+        self.control.step()
+        self.assertEqual(self.control.state()['brightness'], 0.41)
+
+        self.control.controller.scenes.replace((
+            Cue('Matrix', 'matrix-rain', 5, 0),
+            Cue('VU', 'inside-out-vu', 5, 0),
+        ))
+        self.control.command(dict(action='next_scene'))
+        self.control.step()
+        self.control.command(dict(action='next_scene'))
+        self.control.step()
+        self.assertEqual(self.control.state()['brightness'], 0.41)
+
+    def test_deep_dim_and_center_white_peak_preview_are_bounded_and_preview_only(self):
+        source = ManualAudioAnalysisSource(
+            AudioAnalysis(0.1, 0.9, FrequencyBands(0.2, 0.1, 0.1))
+        )
+        control = BrowserControl(
+            Controller(load_config(), audio_source=source), self.path, allow_live=True
+        )
+        self.addCleanup(control.close)
+        control.command(dict(action='audio_dimming', enabled=True, floor=0.02))
+        control.command(dict(
+            action='white_preview', enabled=True, threshold=0.65, level=0.8
+        ))
+        control.step(control.started + 1.0)
+        state = control.state()
+        self.assertTrue(state['audio']['deep_dim_enabled'])
+        self.assertEqual(state['audio']['quiet_floor'], 0.02)
+        self.assertGreater(state['white_preview']['active_level'], 0.0)
+        self.assertFalse(state['white_preview']['output_enabled'])
+
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='start_live'))
+            control.step()
+            payload = sender.return_value.send.call_args.args[0]
+        self.assertEqual(payload[144:152], bytes(8))
+        self.assertEqual(payload[296:304], bytes(8))
+
+        html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
+        self.assertIn('id="deep-dim"', html)
+        self.assertIn('id="white-preview"', html)
+        self.assertIn('Physical output locked', html)
 
     def test_live_requires_two_steps_and_watchdog_closes_with_blackout(self):
         control = BrowserControl(Controller(load_config()), self.path, allow_live=True)

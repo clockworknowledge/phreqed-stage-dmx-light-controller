@@ -2,6 +2,32 @@
 
 Last updated: 2026-10-20
 
+## Latest checkpoint — stage-look expansion and reliability fixes
+
+The browser master slider is now a persistent operator override: selecting a
+built-in/user preset or moving through a scene list no longer clears it. Audio
+response also has an explicit deep-dim toggle and adjustable 0%-25% quiet floor;
+the existing 55% floor remains the safe default.
+
+The effect catalog now has 22 effects and 17 built-in presets. New looks are
+Matrix Rain, Blaster Sweep, Flame Thrower, Wave Rider, and Inside-Out VU. The
+blaster and wave effects treat the fixtures as a continuous 24-by-4 surface.
+Inferno Rise was corrected so row 3 is the physical hot bottom and turbulence
+rises toward row 0; keep the LF4808s upright with their printed text readable.
+
+Center-white onset response is available only as a browser preview. It never
+enters `compose_dmx`; DMX 145-152 and 297-304 remain zero during normal show
+rendering until HW-001 commissioning is complete.
+
+The Ampero input worker now reconnects to the same raw-MIDI path after transient
+read/device failures and reports connection, message, and reconnect counts in
+the browser. A stable udev link remains required for card renumbering. The full
+Python 3.12 suite passes 130 tests and browser JavaScript passes syntax checks.
+
+Next Pi steps: pull this branch, run the suite, visually review the five new
+presets in simulation, confirm master persistence, and complete a pedal soak
+with one controlled USB reconnect. Do not enable physical center-white output.
+
 This is the short operational handoff for a new Codex session. Read
 `AGENTS.md`, this file, and `docs/kanban.md` before taking action. The detailed
 design remains in `docs/architecture.md`, `docs/effects.md`, and

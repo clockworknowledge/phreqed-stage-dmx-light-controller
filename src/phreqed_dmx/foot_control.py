@@ -139,6 +139,15 @@ class AmperoControlMapper:
         return None
 
 
+@dataclass(frozen=True, slots=True)
+class FootControlStatus:
+    running: bool = False
+    connected: bool = False
+    message: str = "configured; not started"
+    messages_received: int = 0
+    reconnects: int = 0
+
+
 def dispatch_foot_action(
     commands: FootCommands, action: FootAction, *, timestamp: float | None = None
 ) -> None:
@@ -173,7 +182,10 @@ class RawMidiFootController:
         *,
         channel: int = 1,
         on_error: Callable[[str], None] | None = None,
+        reconnect_interval: float = 1.0,
     ) -> None:
+        if reconnect_interval <= 0.0:
+            raise ValueError("foot reconnect interval must be positive")
         self.device = Path(device)
         self.commands = commands
         self.mapper = AmperoControlMapper(channel)
@@ -182,6 +194,9 @@ class RawMidiFootController:
         self._stop = threading.Event()
         self._thread: threading.Thread | None = None
         self._file_descriptor: int | None = None
+        self._reconnect_interval = reconnect_interval
+        self._status_lock = threading.Lock()
+        self._status = FootControlStatus()
 
     def start(self) -> None:
         if self._thread is not None:
@@ -189,6 +204,7 @@ class RawMidiFootController:
         flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)
         self._file_descriptor = os.open(self.device, flags)
         self._stop.clear()
+        self._set_status(running=True, connected=True, message="MIDI connected")
         self._thread = threading.Thread(
             target=self._run, name="phreqed-foot-control", daemon=True
         )
@@ -200,8 +216,12 @@ class RawMidiFootController:
             self._thread.join(timeout=1.0)
             self._thread = None
         if self._file_descriptor is not None:
-            os.close(self._file_descriptor)
-            self._file_descriptor = None
+            self._close_descriptor()
+        self._set_status(running=False, connected=False, message="stopped")
+
+    def status(self) -> FootControlStatus:
+        with self._status_lock:
+            return self._status
 
     def __enter__(self) -> RawMidiFootController:
         self.start()
@@ -218,25 +238,90 @@ class RawMidiFootController:
             return False
         try:
             dispatch_foot_action(self.commands, action)
-        except (ValueError, RuntimeError) as exc:
-            self.on_error(f"Foot action {action} ignored: {exc}")
+        except Exception as exc:
+            self._report(f"Foot action {action} ignored: {exc}")
             return False
         return True
 
     def _run(self) -> None:
-        descriptor = self._file_descriptor
-        if descriptor is None:  # pragma: no cover - guarded by start
-            return
-        try:
-            while not self._stop.is_set():
+        while not self._stop.is_set():
+            descriptor = self._file_descriptor
+            if descriptor is None:
+                if self._stop.wait(self._reconnect_interval):
+                    break
+                self._reconnect()
+                continue
+            try:
                 readable, _, _ = select.select((descriptor,), (), (), 0.2)
                 if not readable:
                     continue
                 chunk = os.read(descriptor, 256)
                 if not chunk:
                     raise OSError("MIDI device disconnected")
-                for message in self._parser.feed(chunk):
+                messages = self._parser.feed(chunk)
+                if messages:
+                    self._set_status(
+                        messages_received=(
+                            self.status().messages_received + len(messages)
+                        )
+                    )
+                for message in messages:
                     self.handle_message(message)
+            except (OSError, ValueError) as exc:
+                if not self._stop.is_set():
+                    self._disconnect_for_retry(exc)
+
+    def _disconnect_for_retry(self, exc: Exception) -> None:
+        self._close_descriptor()
+        self._parser = MidiStreamParser()
+        status = self.status()
+        self._set_status(
+            running=True,
+            connected=False,
+            message=f"MIDI disconnected; retrying: {exc}",
+            reconnects=status.reconnects + 1,
+        )
+        self._report(f"Foot controller disconnected; reconnecting: {exc}")
+
+    def _reconnect(self) -> None:
+        flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)
+        try:
+            self._file_descriptor = os.open(self.device, flags)
         except OSError as exc:
-            if not self._stop.is_set():
-                self.on_error(f"Foot controller stopped: {exc}")
+            self._set_status(
+                running=True,
+                connected=False,
+                message=f"Waiting for MIDI device: {exc}",
+            )
+            return
+        self._parser = MidiStreamParser()
+        self._set_status(running=True, connected=True, message="MIDI reconnected")
+        self._report("Foot controller reconnected")
+
+    def _close_descriptor(self) -> None:
+        descriptor, self._file_descriptor = self._file_descriptor, None
+        if descriptor is not None:
+            try:
+                os.close(descriptor)
+            except OSError:
+                pass
+
+    def _set_status(self, **changes: object) -> None:
+        with self._status_lock:
+            current = self._status
+            self._status = FootControlStatus(
+                running=changes.get("running", current.running),
+                connected=changes.get("connected", current.connected),
+                message=changes.get("message", current.message),
+                messages_received=changes.get(
+                    "messages_received", current.messages_received
+                ),
+                reconnects=changes.get("reconnects", current.reconnects),
+            )
+
+    def _report(self, message: str) -> None:
+        try:
+            self.on_error(message)
+        except Exception:
+            # A logging/UI callback must never terminate MIDI input.
+            pass

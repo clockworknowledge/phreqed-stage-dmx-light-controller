@@ -38,6 +38,20 @@ class AudioReactiveClockTests(unittest.TestCase):
         self.assertGreater(loud.brightness_multiplier, quiet.brightness_multiplier)
         self.assertLessEqual(loud.brightness_multiplier, 1.0)
 
+    def test_deep_dim_is_explicit_and_uses_configured_near_black_floor(self) -> None:
+        normal = AudioReactiveClock().advance(
+            2.0, tempo_bpm=120.0, speed=1.0, audio=AudioAnalysis()
+        )
+        deep = AudioReactiveClock(
+            deep_dim_enabled=True, quiet_brightness_floor=0.02
+        ).advance(2.0, tempo_bpm=120.0, speed=1.0, audio=AudioAnalysis())
+        self.assertGreater(normal.brightness_multiplier, 0.54)
+        self.assertLess(deep.brightness_multiplier, 0.03)
+
+        clock = AudioReactiveClock()
+        with self.assertRaises(ValueError):
+            clock.configure_dimming(enabled=True, quiet_floor=0.5)
+
     def test_every_registered_effect_uses_shared_reactive_clock(self) -> None:
         config = load_config()
         for metadata in EFFECT_REGISTRY.metadata():

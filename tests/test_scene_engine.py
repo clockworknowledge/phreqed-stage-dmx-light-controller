@@ -38,6 +38,11 @@ class SceneEngineTests(unittest.TestCase):
             "split-signal",
             "hypnotic-drive",
             "crossfire",
+            "matrix-rain",
+            "blaster-sweep",
+            "flame-thrower",
+            "wave-rider",
+            "inside-out-vu",
         }
         identifiers = [preset.preset_id for preset in EXAMPLE_PRESETS]
         self.assertEqual(len(identifiers), len(set(identifiers)))

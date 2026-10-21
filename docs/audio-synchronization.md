@@ -34,6 +34,13 @@ they can never raise it or the RGB ceiling. Radial Pulse also retains its
 effect-local ring and colour response. All normalized output remains clamped,
 and the frame-rise limiter still applies after modulation.
 
+The optional deep-dim mode replaces the normal 55% quiet floor with an
+operator-selected floor from 0% to 25% (3% by default). It is disabled by
+default so an open or silent microphone cannot unexpectedly black out the
+stage. In browser control, **Deep dim on quiet passages** and its quiet-floor
+slider can be changed during a show. The master brightness remains a persistent
+peak override across preset and scene changes.
+
 ## Real-time capture sprint — AUDIO-002
 
 The first capture implementation is complete and awaiting Pi application-level
@@ -72,7 +79,8 @@ Safe microphone preview on the Pi:
 .venv/bin/phreqed-dmx web --host 0.0.0.0 \
   --allow-network 192.168.1.0/24 \
   --preset phase-collider \
-  --audio-device plughw:CARD=Snowball,DEV=0
+  --audio-device plughw:CARD=Snowball,DEV=0 \
+  --audio-deep-dim --audio-quiet-floor 0.03
 ```
 
 This uses the simulation-only `web` command. The default sensitivity is `12`;

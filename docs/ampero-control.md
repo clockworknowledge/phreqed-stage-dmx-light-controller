@@ -73,10 +73,21 @@ phreqed-dmx live --web --foot-midi-device /dev/snd/midiC3D0
 The pedal cannot start Art-Net transmission. Browser live confirmation and its
 disconnect watchdog remain active.
 
+The raw-MIDI reader automatically retries the same configured path after a
+read, select, or device-disconnect error. A malformed command or UI-reporting
+failure is contained and cannot terminate the input thread. Browser control
+shows whether MIDI is connected, how many messages were received, and how many
+disconnect cycles occurred. This addresses transient USB/ALSA failures, but it
+does not solve Linux assigning the pedal a different card number. Use a stable
+udev symlink for unattended stage operation.
+
 On 2026-10-20 the operator observed `90 3C 7F`, `90 3D 7F`, `90 3E 7F`,
 `B0 17 7F`, and `B0 17 00` from the raw device. All mapped actions passed in
 trusted-LAN browser simulation, and guarded browser-live operation was reported
-working. A rehearsal-length USB soak and stable udev link remain pending.
+working. A later loss of pedal response exposed a reader thread that exited on
+the first device error; automatic same-path reconnect and status reporting are
+now implemented. A rehearsal-length USB soak and stable udev link remain
+pending.
 
 ## Bluetooth status
 

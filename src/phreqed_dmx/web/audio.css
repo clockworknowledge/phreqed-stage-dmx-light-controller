@@ -26,6 +26,22 @@
   color: var(--text);
 }
 
+.response-card > input[type="range"],
+.white-preview-card .form-grid {
+  margin-top: 14px;
+}
+
+.toggle {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+}
+
+.toggle input {
+  width: 20px;
+  height: 20px;
+}
+
 @media (max-width: 760px) {
   .audio-meters {
     grid-template-columns: repeat(2, 1fr);

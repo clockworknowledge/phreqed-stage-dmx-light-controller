@@ -10,7 +10,7 @@ All effects provide:
 
 - `speed`: 0.1-5.0 animation multiplier;
 - `brightness`: 0.0-1.0 effect-local level;
-- `palette`: spectrum, magma, ocean, neon, ember, or monochrome;
+- `palette`: spectrum, magma, ocean, neon, ember, monochrome, or matrix;
 - at least two validated effect-specific parameters.
 
 The compositor imposes a separate default global level and a hard default
@@ -32,6 +32,9 @@ ceiling of 0.65.
 | `glitch` | Glitch Distortion | digital | `block_size` 1-4, `jitter` 0.5-12.0 |
 | `sparks` | Spark Trail | particle | `count` 3-24, `decay` 0.15-1.5 |
 | `energy-transfer` | Cross-Cube Energy | cross-fixture | `rate` 0.5-16, `trail` 0.5-8.0 |
+| `cross-blaster` | Cross-Cube Blaster | cross-fixture | `rate` 1-24, `trail` 1-18, `core_width` 0.25-4, `spread` 0.2-3 |
+| `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5 |
+| `inside-out-vu` | Inside-Out VU | musical | `sensitivity` 0.25-2.5, `peak_width` 0.015-0.25 |
 | `radial-pulse` | Radial Pulse | musical | `frequency` 0.5-6.0, `sharpness` 1-6 |
 | `tunnel` | Legacy Tunnel | legacy | `ring_frequency` 0.5-6.0, `floor` 0-0.5 |
 | `pulse` | Legacy Pulse | legacy | `rate` 0.2-6.0, `sharpness` 1-6 |
@@ -42,6 +45,13 @@ ceiling of 0.65.
 audio-analysis frame. Loudness and band energy scale the existing ring, onset
 adds a limited accent, and bass/treble balance supplies a small hue offset. With
 no audio frame, its established tempo-aware rendering remains unchanged.
+
+`inside-out-vu` uses normalized audio energy when present and expands from the
+gap between Cube A and Cube B toward the outside edges. `dynamic-wave` and
+`cross-blaster` treat both fixtures as one logical 24-by-4 surface. Their motion
+still passes through the shared tempo and dynamics clock. The `fire` gradient
+is hottest at logical row 3, the physical bottom row; turbulence advects upward
+toward row 0. Fixtures should remain upright with their printed text readable.
 
 ## Included presets
 
@@ -57,8 +67,14 @@ no audio frame, its established tempo-aware rendering remains unchanged.
 - `split-signal`: independent digital rain and glitch fields joined by moving energy.
 - `hypnotic-drive`: a forward tunnel reinforced by expanding neon rings.
 - `crossfire`: hot and cool independent cube fields with cross-cube energy transfer.
+- `matrix-rain`: matrix-green code columns with restrained scan distortion.
+- `blaster-sweep`: a neon bolt travelling left-to-right across both fixtures.
+- `flame-thrower`: a warmer ember plume and sparks crossing the combined display.
+- `wave-rider`: a continuous sine/cosine ribbon whose velocity follows dynamics.
+- `inside-out-vu`: music energy growing from the shared centre to both outer edges.
 
 All presets default below the 0.65 global safety ceiling and contain no
 strobe-channel behavior. The added show pack is capped at 0.48 global
 brightness and avoids hard full-frame flashing. `acid-mirrors`, `split-signal`,
-and `crossfire` deliberately render different material on each fixture.
+and `crossfire` deliberately render different material on each fixture. All five
+new musical looks keep the center-white DMX channels at zero.

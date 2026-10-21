@@ -18,11 +18,32 @@ class AudioReactiveState:
 class AudioReactiveClock:
     """Integrate tempo and smoothed audio dynamics without changing safety limits."""
 
-    def __init__(self) -> None:
+    def __init__(
+        self,
+        *,
+        deep_dim_enabled: bool = False,
+        quiet_brightness_floor: float = 0.03,
+    ) -> None:
         self.animation_time = 0.0
         self.motion_multiplier = 1.0
         self.brightness_multiplier = 1.0
         self._last_elapsed = 0.0
+        self.configure_dimming(
+            enabled=deep_dim_enabled, quiet_floor=quiet_brightness_floor
+        )
+
+    def configure_dimming(self, *, enabled: bool, quiet_floor: float) -> None:
+        if not isinstance(enabled, bool):
+            raise TypeError("deep dim enabled must be boolean")
+        if (
+            isinstance(quiet_floor, bool)
+            or not isinstance(quiet_floor, (int, float))
+            or not math.isfinite(quiet_floor)
+            or not 0.0 <= quiet_floor <= 0.25
+        ):
+            raise ValueError("quiet brightness floor must be between 0.0 and 0.25")
+        self.deep_dim_enabled = enabled
+        self.quiet_brightness_floor = float(quiet_floor)
 
     def advance(
         self,
@@ -64,8 +85,7 @@ class AudioReactiveClock:
             self.brightness_multiplier,
         )
 
-    @staticmethod
-    def _targets(audio: AudioAnalysis | None) -> tuple[float, float]:
+    def _targets(self, audio: AudioAnalysis | None) -> tuple[float, float]:
         if audio is None:
             return 1.0, 1.0
         energy = min(
@@ -84,9 +104,10 @@ class AudioReactiveClock:
             + audio.bands.treble * 0.10
             + audio.onset * 0.20,
         )
-        # The operator's master remains the peak. Quiet passages retain a
-        # visible 55% floor, while normalized musical energy can reach it.
-        brightness = 0.55 + intensity * 0.45
+        # The operator's master remains the peak. Deep dim is explicit and
+        # retains an adjustable near-black floor; the default floor stays 55%.
+        floor = self.quiet_brightness_floor if self.deep_dim_enabled else 0.55
+        brightness = floor + intensity * (1.0 - floor)
         return motion, brightness
 
     @staticmethod

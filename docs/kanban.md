@@ -41,6 +41,31 @@ safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
 
+### REL-002 — Persistent show controls and MIDI recovery (`P0`, reliability)
+
+Browser preset and scene changes now preserve the operator's master brightness
+override. The Ampero raw-MIDI worker no longer terminates permanently after a
+transient select/read/disconnect error: it closes the descriptor, retries the
+same configured path, contains command/reporting failures, and exposes
+connection, message, and reconnect counts in the browser.
+
+Acceptance remaining: deploy to the Pi, verify brightness through repeated
+scene navigation, then perform a rehearsal-length pedal soak including one
+controlled USB disconnect/reconnect. A stable udev path is still required to
+survive ALSA card renumbering.
+
+### EFFECT-003 — Music-driven stage look expansion (`P1`, visuals)
+
+Three deterministic effects and five presets add Matrix Rain, cross-fixture
+blaster/flame sweeps, a dynamics-driven sine/cosine ribbon, and an inside-out
+VU. Inferno Rise now places its heat source on logical row 3 (the confirmed
+physical bottom) and advects turbulence upward. Automated tests cover geometry,
+determinism, fixture independence, RGB ranges, and zero white-channel output.
+
+Acceptance remaining: review all five looks in browser simulation, confirm
+Inferno Rise rises upward with fixtures upright and printed text readable, and
+run a low-brightness live scene check.
+
 ### SAFE-002 — Explicit show-time RGB ceiling (`P0`, safety)
 
 The default 0.65 RGB ceiling remains unchanged. A higher process-local ceiling
@@ -61,8 +86,9 @@ All registered effects now use a shared continuous animation clock. Tap tempo
 sets the baseline rate, `--speed` remains an operator trim, and smoothed music
 dynamics provide a bounded 1.0x-2.0x motion multiplier. Audio also modulates
 output from 55%-100% of the manual master without raising the RGB ceiling.
-The browser exposes both live multipliers, and silence preserves tempo-driven
-motion. No new runtime dependency was added.
+The browser exposes both live multipliers and an opt-in deep-dim mode with an
+adjustable 0%-25% quiet floor. Silence preserves tempo-driven motion. No new
+runtime dependency was added.
 
 Acceptance remaining: visually validate every preset with rehearsal-level
 Snowball input, tune the response curves, and confirm 25 FPS timing in the Pi
@@ -117,7 +143,9 @@ The dependency-free USB MIDI parser and explicit raw-device adapter are
 implemented. The operator updated the pedal to firmware 1.1.8, verified notes
 60–62 and CC 23 values 127/0 from `/dev/snd/midiC3D0`, and confirmed scene
 navigation, tap tempo, and blackout in browser simulation. Guarded browser-live
-operation was subsequently reported working correctly.
+operation was subsequently reported working correctly. Same-path automatic
+reconnect and browser connection counters now prevent a transient device error
+from silently ending the reader thread.
 
 Acceptance: create a stable udev link and pass a rehearsal-length USB soak.
 Bluetooth MIDI remains a separate follow-up until Pi pairing and reconnect

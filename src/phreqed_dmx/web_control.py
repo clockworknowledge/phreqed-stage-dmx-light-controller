@@ -69,6 +69,10 @@ class BrowserControl:
         self.lease_deadline = 0.0
         self.error = ''
         self.notice = ''
+        self.white_peak_preview = False
+        self.white_preview_threshold = 0.65
+        self.white_preview_level = 0.8
+        self.foot_controller: RawMidiFootController | None = None
         self.frames = black_scene(self.engine.geometry)
         self.thread: threading.Thread | None = None
 
@@ -84,6 +88,7 @@ class BrowserControl:
         with self.lock:
             scenes = self.controller.scenes
             source = self.controller.audio_source
+            analysis = None
             if source is None:
                 audio = dict(
                     enabled=False, running=False, healthy=False,
@@ -109,6 +114,23 @@ class BrowserControl:
             audio['brightness_multiplier'] = (
                 self.controller.audio_brightness_multiplier
             )
+            audio['deep_dim_enabled'] = self.controller.audio_clock.deep_dim_enabled
+            audio['quiet_floor'] = self.controller.audio_clock.quiet_brightness_floor
+            foot_status = (
+                self.foot_controller.status()
+                if self.foot_controller is not None
+                else None
+            )
+            white_level = 0.0
+            if (
+                self.white_peak_preview
+                and not self.engine.blackout_enabled
+                and analysis is not None
+                and analysis.onset >= self.white_preview_threshold
+            ):
+                span = max(0.001, 1.0 - self.white_preview_threshold)
+                peak = (analysis.onset - self.white_preview_threshold) / span
+                white_level = self.white_preview_level * (0.35 + peak * 0.65)
             return dict(live_allowed=self.allow_live, live=self.sender is not None,
                         blackout=self.engine.blackout_enabled, error=self.error, notice=self.notice,
                         preset_id=self.engine.active_preset_id, playing=scenes.playing,
@@ -120,6 +142,32 @@ class BrowserControl:
                         ),
                         brightness_ceiling=self.engine.compositor.maximum_brightness,
                         audio=audio,
+                        white_preview=dict(
+                            enabled=self.white_peak_preview,
+                            threshold=self.white_preview_threshold,
+                            level=self.white_preview_level,
+                            active_level=white_level,
+                            output_enabled=False,
+                        ),
+                        foot_control=(
+                            dict(
+                                enabled=True,
+                                running=foot_status.running,
+                                connected=foot_status.connected,
+                                message=foot_status.message,
+                                messages_received=foot_status.messages_received,
+                                reconnects=foot_status.reconnects,
+                            )
+                            if foot_status is not None
+                            else dict(
+                                enabled=False,
+                                running=False,
+                                connected=False,
+                                message='Foot control disabled',
+                                messages_received=0,
+                                reconnects=0,
+                            )
+                        ),
                         frames={name: [[[round(c.red * 255), round(c.green * 255), round(c.blue * 255)]
                                         for c in row] for row in grid.rows()]
                                 for name, grid in self.frames.items()})
@@ -137,7 +185,14 @@ class BrowserControl:
             sender.close()
 
     def command(self, raw: object) -> None:
-        data = object_fields(raw, {'action'}, {'value', 'preset', 'scenes', 'index'})
+        data = object_fields(
+            raw,
+            {'action'},
+            {
+                'value', 'preset', 'scenes', 'index', 'enabled', 'floor',
+                'threshold', 'level',
+            },
+        )
         action = data['action']
         with self.lock:
             elapsed = self.elapsed()
@@ -181,6 +236,27 @@ class BrowserControl:
                     data.get('value'), 'brightness', 0,
                     self.engine.compositor.maximum_brightness,
                 ))
+            elif action == 'audio_dimming':
+                enabled = data.get('enabled')
+                if not isinstance(enabled, bool):
+                    raise ValueError('audio deep dim enabled must be boolean')
+                floor = number(data.get('floor'), 'audio quiet floor', 0, 0.25)
+                self.controller.configure_audio_dimming(
+                    enabled=enabled, quiet_floor=floor
+                )
+            elif action == 'white_preview':
+                enabled = data.get('enabled')
+                if not isinstance(enabled, bool):
+                    raise ValueError('white preview enabled must be boolean')
+                threshold = number(
+                    data.get('threshold'), 'white preview threshold', 0.1, 1.0
+                )
+                level = number(
+                    data.get('level'), 'white preview level', 0.05, 1.0
+                )
+                self.white_peak_preview = enabled
+                self.white_preview_threshold = threshold
+                self.white_preview_level = level
             elif action == 'preset':
                 preset_id = data.get('value')
                 if not isinstance(preset_id, str) or preset_id not in self.engine.presets:
@@ -188,7 +264,6 @@ class BrowserControl:
                 self.controller.begin_transition(elapsed, duration=0.8)
                 scenes.playing = False
                 scenes.index = None
-                self.engine.global_brightness_override = None
                 self.engine.activate_preset(preset_id)
             elif action in ('preview', 'save_preset'):
                 preset = parse_preset(data.get('preset'), tuple(self.engine.geometry))
@@ -205,7 +280,6 @@ class BrowserControl:
 
                     preset = replace(preset, preset_id='user-preview-draft')
                     self.engine.presets[preset.preset_id] = preset
-                    self.engine.global_brightness_override = None
                     self.engine.activate_preset(preset.preset_id)
                     scenes.playing = False
                     scenes.index = None
@@ -391,6 +465,7 @@ def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1'
         if foot_midi_device is not None
         else None
     )
+    control.foot_controller = foot_controller
     server = ControlServer((host, port), control, allow_network)
     previous_term = signal.getsignal(signal.SIGTERM)
     def interrupted(signum: int, frame: object) -> None:

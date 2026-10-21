@@ -35,6 +35,8 @@ class Controller:
         speed: float = 1.0,
         safety_limiter: FrameSafetyLimiter | None = None,
         audio_source: AudioAnalysisSource | None = None,
+        audio_deep_dim: bool = False,
+        audio_quiet_floor: float = 0.03,
     ) -> None:
         if speed <= 0:
             raise ValueError("speed must be positive")
@@ -46,7 +48,10 @@ class Controller:
             maximum_brightness=self.engine.compositor.maximum_brightness
         )
         self.audio_source = audio_source
-        self.audio_clock = AudioReactiveClock()
+        self.audio_clock = AudioReactiveClock(
+            deep_dim_enabled=audio_deep_dim,
+            quiet_brightness_floor=audio_quiet_floor,
+        )
         self.audio_motion_multiplier = 1.0
         self.audio_brightness_multiplier = 1.0
         self._last_scene: Scene | None = None
@@ -54,6 +59,11 @@ class Controller:
         self._transition_started = 0.0
         self._transition_duration = 0.0
         self.scenes = SceneSequencer(self.engine, self.begin_transition)
+
+    def configure_audio_dimming(self, *, enabled: bool, quiet_floor: float) -> None:
+        self.audio_clock.configure_dimming(
+            enabled=enabled, quiet_floor=quiet_floor
+        )
 
     def begin_transition(self, elapsed: float, *, duration: float = 0.45) -> None:
         if not math.isfinite(duration) or duration < 0.0:
@@ -148,6 +158,15 @@ def _audio_sensitivity(value: str) -> float:
     return parsed
 
 
+def _quiet_floor(value: str) -> float:
+    parsed = float(value)
+    if not 0.0 <= parsed <= 0.25:
+        raise argparse.ArgumentTypeError(
+            "audio quiet floor must be between 0.0 and 0.25"
+        )
+    return parsed
+
+
 def build_parser() -> argparse.ArgumentParser:
     effect_ids = tuple(metadata.effect_id for metadata in EFFECT_REGISTRY.metadata())
     parser = argparse.ArgumentParser(description=__doc__)
@@ -183,7 +202,10 @@ def build_parser() -> argparse.ArgumentParser:
     )
     parser.add_argument(
         "--palette",
-        choices=("spectrum", "magma", "ocean", "neon", "ember", "monochrome"),
+        choices=(
+            "spectrum", "magma", "ocean", "neon", "ember", "monochrome",
+            "matrix",
+        ),
         default="spectrum",
         help="manual effect palette",
     )
@@ -241,6 +263,18 @@ def build_parser() -> argparse.ArgumentParser:
         type=_audio_sensitivity,
         metavar="0.1-40",
         help="microphone analysis gain (default 12.0; requires --audio-device)",
+    )
+    parser.add_argument(
+        "--audio-deep-dim",
+        action="store_true",
+        help="allow quiet audio to dim near black instead of the default 55% floor",
+    )
+    parser.add_argument(
+        "--audio-quiet-floor",
+        type=_quiet_floor,
+        default=0.03,
+        metavar="0.0-0.25",
+        help="brightness floor used by --audio-deep-dim (default 0.03)",
     )
     return parser
 
@@ -326,7 +360,14 @@ def main(argv: list[str] | None = None) -> int:
         audio_source = ArecordAudioSource(
             args.audio_device, sensitivity=args.audio_sensitivity or 12.0
         )
-    controller = Controller(config, engine, speed=args.speed, audio_source=audio_source)
+    controller = Controller(
+        config,
+        engine,
+        speed=args.speed,
+        audio_source=audio_source,
+        audio_deep_dim=args.audio_deep_dim,
+        audio_quiet_floor=args.audio_quiet_floor,
+    )
     browser_requested = args.command == "web" or args.web
     foot_controller = (
         RawMidiFootController(

@@ -383,6 +383,161 @@ EXAMPLE_PRESETS = (
         ),
         global_brightness=0.46,
     ),
+    VisualPreset(
+        "matrix-rain",
+        "Matrix Rain",
+        "Green code columns fall across both fixtures with restrained scan glitches.",
+        (
+            EffectLayerSpec(
+                "digital-rain",
+                parameters={
+                    "speed": 1.05,
+                    "brightness": 0.88,
+                    "palette": "matrix",
+                    "density": 0.92,
+                    "trail": 2.8,
+                },
+            ),
+            EffectLayerSpec(
+                "glitch",
+                opacity=0.16,
+                blend_mode=BlendMode.LIGHTEN,
+                parameters={
+                    "speed": 0.45,
+                    "brightness": 0.28,
+                    "palette": "matrix",
+                    "block_size": 1.0,
+                    "jitter": 2.0,
+                },
+            ),
+        ),
+        global_brightness=0.42,
+    ),
+    VisualPreset(
+        "blaster-sweep",
+        "Blaster Sweep",
+        "A neon energy bolt burns from the far left through both fixtures.",
+        (
+            EffectLayerSpec(
+                "cross-blaster",
+                parameters={
+                    "speed": 0.9,
+                    "brightness": 0.9,
+                    "palette": "neon",
+                    "rate": 8.5,
+                    "trail": 6.0,
+                    "core_width": 1.2,
+                    "spread": 0.8,
+                },
+            ),
+            EffectLayerSpec(
+                "energy-transfer",
+                opacity=0.2,
+                blend_mode=BlendMode.LIGHTEN,
+                parameters={
+                    "speed": 0.65,
+                    "brightness": 0.38,
+                    "palette": "ocean",
+                    "rate": 5.0,
+                    "trail": 5.0,
+                },
+            ),
+        ),
+        global_brightness=0.46,
+    ),
+    VisualPreset(
+        "flame-thrower",
+        "Flame Thrower",
+        "An ember plume and sparks rip left-to-right across the combined display.",
+        (
+            EffectLayerSpec(
+                "cross-blaster",
+                parameters={
+                    "speed": 0.72,
+                    "brightness": 0.92,
+                    "palette": "ember",
+                    "rate": 6.5,
+                    "trail": 11.0,
+                    "core_width": 2.0,
+                    "spread": 1.25,
+                },
+            ),
+            EffectLayerSpec(
+                "sparks",
+                opacity=0.44,
+                blend_mode=BlendMode.ADDITIVE,
+                parameters={
+                    "speed": 1.1,
+                    "brightness": 0.5,
+                    "palette": "magma",
+                    "count": 16.0,
+                    "decay": 0.38,
+                },
+            ),
+        ),
+        global_brightness=0.47,
+    ),
+    VisualPreset(
+        "wave-rider",
+        "Wave Rider",
+        "A continuous sine/cosine ribbon changes velocity with the music.",
+        (
+            EffectLayerSpec(
+                "dynamic-wave",
+                parameters={
+                    "speed": 0.9,
+                    "brightness": 0.9,
+                    "palette": "spectrum",
+                    "cycles": 2.1,
+                    "amplitude": 1.2,
+                    "thickness": 0.48,
+                },
+            ),
+            EffectLayerSpec(
+                "flow-noise",
+                opacity=0.14,
+                blend_mode=BlendMode.LIGHTEN,
+                parameters={
+                    "speed": 0.3,
+                    "brightness": 0.3,
+                    "palette": "ocean",
+                    "scale": 3.0,
+                    "drift": 0.18,
+                },
+            ),
+        ),
+        global_brightness=0.44,
+    ),
+    VisualPreset(
+        "inside-out-vu",
+        "Inside-Out VU",
+        "Audio energy expands from the gap between fixtures toward both outside edges.",
+        (
+            EffectLayerSpec(
+                "inside-out-vu",
+                parameters={
+                    "speed": 0.65,
+                    "brightness": 0.9,
+                    "palette": "neon",
+                    "sensitivity": 1.25,
+                    "peak_width": 0.05,
+                },
+            ),
+            EffectLayerSpec(
+                "radial-pulse",
+                opacity=0.13,
+                blend_mode=BlendMode.LIGHTEN,
+                parameters={
+                    "speed": 0.45,
+                    "brightness": 0.24,
+                    "palette": "ocean",
+                    "frequency": 1.4,
+                    "sharpness": 2.5,
+                },
+            ),
+        ),
+        global_brightness=0.46,
+    ),
 )
 
 PRESETS = {preset.preset_id: preset for preset in EXAMPLE_PRESETS}

@@ -48,14 +48,17 @@ to 0.65; a higher process-local ceiling can be constructed only by the CLI's
 explicit live acknowledgement path. Browser state publishes that ceiling so
 the master control cannot request a value above it. Saved preset brightness is
 still limited to 0.65. The manual master is a peak level; audio may only scale
-the rendered scene below it and cannot alter the ceiling.
+the rendered scene below it and cannot alter the ceiling. Browser preset and
+scene selection preserve the active manual master override rather than
+reapplying each preset's stored global brightness.
 
 `AudioReactiveClock` integrates a continuous animation time shared by every
 effect. Tempo establishes the baseline rate, `--speed` is the operator trim,
 and smoothed audio energy provides a bounded 1.0x-2.0x motion multiplier.
 Audio also supplies a bounded 55%-100% brightness multiplier below the manual
-master. With no audio source, both multipliers remain exactly 1.0, preserving
-the deterministic non-audio path.
+master. An explicit deep-dim setting can replace the 55% floor with an
+operator-selected 0%-25% floor. With no audio source, both multipliers remain
+exactly 1.0, preserving the deterministic non-audio path.
 
 `audio_analysis.py` defines normalized loudness, onset, and three-band values
 plus a small `AudioAnalysisSource` boundary. Manual and recorded sources are
@@ -69,7 +72,9 @@ runtime dependency and maps an explicitly selected Hotone Ampero Control input
 onto that command boundary. It does not import Art-Net or fixture mapping and
 cannot enable live output. Browser-mode pedal actions are routed through the
 browser controller's existing serialized command path so cue navigation,
-blackout, and safety state remain consistent.
+blackout, and safety state remain consistent. Its worker reopens the same raw
+MIDI path after transient read/device errors and publishes connection and
+reconnect status; a stable udev link is still needed if ALSA renumbers the card.
 
 ## Future projector output
 
@@ -111,10 +116,11 @@ grid. The LF4808 152-channel table defines eight linearly dimmed white parts on
 fixture channels 145-152. Their physical front-view order is commissioned
 separately rather than inferred from RGB orientation.
 
-The browser canvas represents the two white rows as disabled grey center
-lines between the upper and lower RGB row pairs. This is a physical-layout cue,
-not yet a normal show layer: the RGB scene remains exactly four rows of twelve
-values and the white levels default to zero.
+The browser canvas represents the two white rows between the upper and lower
+RGB row pairs. An operator can preview audio-onset hits on those lines, but the
+preview state is display-only and reports `output_enabled=false`. It is not a
+normal show layer: the RGB scene remains exactly four rows of twelve values and
+normal DMX white levels remain zero.
 
 Every RGB zone maps to R, G, then B. Cube A's RGB data occupies DMX 1-144 and
 its white parts occupy 145-152. Cube B's RGB data occupies 153-296 and its white

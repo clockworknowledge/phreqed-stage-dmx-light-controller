@@ -292,8 +292,10 @@ def _fire(
     seed = (context.seed if context else 0) + fixture.index * 313
     turbulence = parameters.number("turbulence")
     cooling = parameters.number("cooling")
-    noise = _fbm(u * turbulence, v * turbulence - t * 1.7, seed)
-    intensity = _clamp((1.0 - v) * 1.15 + noise * 0.7 - cooling)
+    # Logical y=0 is the visible top. Heat is anchored at the bottom and the
+    # noise coordinate advances so features travel upward as time increases.
+    noise = _fbm(u * turbulence, v * turbulence + t * 1.7, seed)
+    intensity = _clamp(v * 1.15 + noise * 0.7 - cooling)
     return _paint(intensity * 0.24, intensity, parameters)
 
 
@@ -373,6 +375,89 @@ def _energy_transfer(
     horizontal = math.exp(-distance / max(0.1, trail))
     vertical = 0.45 + 0.55 * ((math.sin(y * 1.8 - t * 2.0) + 1.0) / 2.0)
     return _paint(global_x / total_width + t * 0.04, horizontal * vertical, parameters)
+
+
+def _cross_blaster(
+    x: int, y: int, width: int, height: int, animation_time: float,
+    fixture: FixtureIdentity, parameters: EffectParameters,
+    context: PerformanceContext | None,
+) -> NormalizedRGB:
+    t = _time(animation_time, parameters)
+    total_width = width * fixture.count
+    global_x = x + fixture.index * width
+    trail = parameters.number("trail")
+    core_width = parameters.number("core_width")
+    rate = parameters.number("rate")
+    head = (t * rate) % (total_width + trail + core_width) - trail
+    behind = head - global_x
+    if behind < -core_width or behind > trail:
+        return BLACK_NORMALIZED
+    if behind < 0.0:
+        horizontal = 1.0 - abs(behind) / max(0.1, core_width)
+    else:
+        horizontal = math.exp(-behind / max(0.1, trail * 0.42))
+    seed = context.seed if context else 0
+    flicker = 0.72 + _value_noise(global_x * 0.7 - t * 5.0, y * 1.3, seed) * 0.28
+    center = (height - 1) / 2 + math.sin(global_x * 0.7 - t * 2.3) * 0.35
+    vertical = math.exp(-abs(y - center) / parameters.number("spread"))
+    intensity = horizontal * vertical * flicker
+    return _paint(global_x / max(1, total_width - 1) * 0.24 + t * 0.03, intensity, parameters)
+
+
+def _dynamic_wave(
+    x: int, y: int, width: int, height: int, animation_time: float,
+    fixture: FixtureIdentity, parameters: EffectParameters,
+    context: PerformanceContext | None,
+) -> NormalizedRGB:
+    t = _time(animation_time, parameters)
+    total_width = width * fixture.count
+    global_x = x + fixture.index * width
+    u = global_x / max(1, total_width - 1)
+    cycles = parameters.number("cycles")
+    amplitude = parameters.number("amplitude")
+    secondary = 0.22
+    if context and context.audio is not None:
+        secondary += context.audio.bands.treble * 0.28
+    line = (
+        (height - 1) / 2
+        + math.sin(u * cycles * TAU - t * 2.1) * amplitude
+        + math.cos(u * (cycles * 0.5 + 0.35) * TAU + t * 1.3) * secondary
+    )
+    thickness = parameters.number("thickness")
+    distance = abs(y - line)
+    intensity = math.exp(-((distance / max(0.05, thickness)) ** 2))
+    return _paint(u * 0.65 - t * 0.035, intensity, parameters)
+
+
+def _inside_out_vu(
+    x: int, y: int, width: int, height: int, animation_time: float,
+    fixture: FixtureIdentity, parameters: EffectParameters,
+    context: PerformanceContext | None,
+) -> NormalizedRGB:
+    t = _time(animation_time, parameters)
+    if context and context.audio is not None:
+        audio = context.audio
+        level = (
+            audio.loudness * 0.58
+            + audio.bands.bass * 0.24
+            + audio.bands.mid * 0.12
+            + audio.bands.treble * 0.06
+            + audio.onset * 0.18
+        ) * parameters.number("sensitivity")
+    else:
+        level = 0.5 + math.sin(t * 1.7) * 0.38
+    level = _clamp(level)
+    distance = (width - 1 - x) if fixture.index == 0 else x
+    normalized = distance / max(1, width - 1)
+    peak_width = parameters.number("peak_width")
+    if normalized <= level:
+        fill = 0.35 + (1.0 - normalized) * 0.65
+    else:
+        fill = 0.0
+    peak = math.exp(-((normalized - level) / max(0.015, peak_width)) ** 2)
+    row_shape = 0.72 + 0.28 * math.cos((y - (height - 1) / 2) * 1.7)
+    intensity = max(fill * row_shape, peak)
+    return _paint(normalized * 0.38 + t * 0.015, intensity, parameters)
 
 
 def _radial_pulse(
@@ -532,6 +617,21 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("rate", "Transfer rate", 5.0, 0.5, 16.0, 0.5, "Horizontal travel rate"),
             number("trail", "Trail", 2.8, 0.5, 8.0, 0.1, "Energy trail length"),
         )), _energy_transfer),
+        ProceduralEffect(_metadata("cross-blaster", "Cross-Cube Blaster", "A hot energy or flame bolt sweeps left-to-right across both fixtures.", "cross-fixture", (
+            number("rate", "Travel rate", 7.0, 1.0, 24.0, 0.5, "Horizontal cells per animation second"),
+            number("trail", "Trail length", 7.0, 1.0, 18.0, 0.5, "Length of the trailing plume"),
+            number("core_width", "Core width", 1.4, 0.25, 4.0, 0.05, "Width of the leading blast core"),
+            number("spread", "Vertical spread", 1.0, 0.2, 3.0, 0.05, "Vertical plume spread"),
+        ), brightness=0.62), _cross_blaster),
+        ProceduralEffect(_metadata("dynamic-wave", "Dynamic Sine Wave", "A continuous sine/cosine light ribbon drifts across both fixtures.", "musical", (
+            number("cycles", "Wave cycles", 2.2, 0.5, 6.0, 0.1, "Cycles across the combined display"),
+            number("amplitude", "Amplitude", 1.15, 0.1, 1.8, 0.05, "Vertical wave travel"),
+            number("thickness", "Line thickness", 0.52, 0.12, 1.5, 0.02, "Soft line width"),
+        ), brightness=0.64), _dynamic_wave),
+        ProceduralEffect(_metadata("inside-out-vu", "Inside-Out VU", "Audio level expands from the shared centre toward both outer edges.", "musical", (
+            number("sensitivity", "VU sensitivity", 1.15, 0.25, 2.5, 0.05, "Audio level gain"),
+            number("peak_width", "Peak width", 0.055, 0.015, 0.25, 0.005, "Width of the bright level marker"),
+        ), brightness=0.72), _inside_out_vu),
         ProceduralEffect(_metadata("radial-pulse", "Radial Pulse", "Tempo-aware radial waves without hard flashes.", "musical", (
             number("frequency", "Frequency", 2.2, 0.5, 6.0, 0.1, "Radial pulse spacing"),
             number("sharpness", "Sharpness", 2.0, 1.0, 6.0, 0.1, "Pulse edge sharpness"),

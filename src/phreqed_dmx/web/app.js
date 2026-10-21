@@ -36,7 +36,7 @@ function renderCatalog() {
   }
   renderCues();
 }
-function draw(canvas, rows) {
+function draw(canvas, rows, whiteLevel = 0) {
   const ctx = canvas.getContext('2d'); ctx.fillStyle = '#0c100d'; ctx.fillRect(0,0,canvas.width,canvas.height);
   const height = rows.length, width = rows[0]?.length || 0;
   if (!width || rows.some(row => row.length !== width)) return;
@@ -51,7 +51,8 @@ function draw(canvas, rows) {
   if (centerGap) {
     const lineHeight = Math.max(3,centerGap*0.22), lineGap = centerGap*0.12;
     const lineTop = top+(height/2)*cell+(centerGap-(lineHeight*2+lineGap))/2;
-    ctx.fillStyle = '#59615c';
+    const white = Math.round(89 + (255-89)*Math.max(0,Math.min(1,whiteLevel)));
+    ctx.fillStyle = `rgb(${white},${white},${white})`;
     ctx.fillRect(left+pad,lineTop,width*cell-pad*2,lineHeight);
     ctx.fillRect(left+pad,lineTop+lineHeight+lineGap,width*cell-pad*2,lineHeight);
   }
@@ -83,11 +84,25 @@ function renderState(s) {
   $('audio-status').textContent = !audio.enabled ? 'Disabled' : audio.healthy ? 'Microphone active' : 'Input unavailable';
   $('audio-detail').textContent = audio.message;
   for (const key of ['loudness','onset','bass','mid','treble']) $(`audio-${key}`).value = audio[key] || 0;
-  $('audio-motion').textContent = `${(audio.motion_multiplier || 1).toFixed(2)}x`;
-  $('audio-brightness').textContent = `${Math.round((audio.brightness_multiplier || 1)*100)}%`;
+  $('audio-motion').textContent = `${(audio.motion_multiplier ?? 1).toFixed(2)}x`;
+  $('audio-brightness').textContent = `${Math.round((audio.brightness_multiplier ?? 1)*100)}%`;
+  $('deep-dim').checked = Boolean(audio.deep_dim_enabled);
+  if (document.activeElement !== $('quiet-floor')) $('quiet-floor').value = audio.quiet_floor ?? 0.03;
+  $('quiet-floor-value').textContent = `${Math.round((audio.quiet_floor ?? 0.03)*100)}%`;
+  $('quiet-floor').disabled = !audio.deep_dim_enabled;
+  const white = s.white_preview || {enabled:false,threshold:0.65,level:0.8,active_level:0,output_enabled:false};
+  $('white-preview').checked = Boolean(white.enabled);
+  if (document.activeElement !== $('white-threshold')) $('white-threshold').value = white.threshold;
+  if (document.activeElement !== $('white-level')) $('white-level').value = white.level;
+  $('white-threshold-value').textContent = `${Math.round(white.threshold*100)}%`;
+  $('white-level-value').textContent = `${Math.round(white.level*100)}%`;
+  $('white-threshold').disabled = $('white-level').disabled = !white.enabled;
+  $('white-preview-status').textContent = white.active_level > 0 ? 'Preview peak active' : 'Physical output locked';
+  const foot = s.foot_control || {enabled:false,connected:false,message:'Foot control disabled',messages_received:0,reconnects:0};
+  $('foot-status').textContent = foot.enabled ? `${foot.connected ? 'Pedal connected' : foot.message} · ${foot.messages_received} events · ${foot.reconnects} reconnects` : 'Foot control disabled';
   document.querySelectorAll('[data-cue]').forEach(e => e.classList.toggle('active', Number(e.dataset.cue) === s.scene_index));
   document.querySelectorAll('[data-preset]').forEach(e => e.classList.toggle('active', e.dataset.preset === s.preset_id));
-  const frames = Object.values(s.frames); if (frames[0]) draw($('cube-a'),frames[0]); if (frames[1]) draw($('cube-b'),frames[1]);
+  const frames = Object.values(s.frames); if (frames[0]) draw($('cube-a'),frames[0],white.active_level); if (frames[1]) draw($('cube-b'),frames[1],white.active_level);
   if (s.error || s.notice) notify(s.error || s.notice, Boolean(s.error));
 }
 function newLayer() { return {effect_id:'plasma', fixtures:null, opacity:1, blend_mode:'alpha', parameters:{}}; }
@@ -144,6 +159,16 @@ function renderCues() {
 $('quick-preset').addEventListener('change',e=>act('preset',{value:e.target.value}));
 $('master').addEventListener('input',e=>{$('master-value').textContent=`${Math.round(e.target.value*100)}%`;});
 $('master').addEventListener('change',e=>act('brightness',{value:Number(e.target.value)}));
+function updateAudioDimming(){act('audio_dimming',{enabled:$('deep-dim').checked,floor:Number($('quiet-floor').value)});}
+$('deep-dim').addEventListener('change',updateAudioDimming);
+$('quiet-floor').addEventListener('input',e=>{$('quiet-floor-value').textContent=`${Math.round(e.target.value*100)}%`;});
+$('quiet-floor').addEventListener('change',updateAudioDimming);
+function updateWhitePreview(){act('white_preview',{enabled:$('white-preview').checked,threshold:Number($('white-threshold').value),level:Number($('white-level').value)});}
+$('white-preview').addEventListener('change',updateWhitePreview);
+for(const id of ['white-threshold','white-level']){
+  $(id).addEventListener('input',()=>{ $('white-threshold-value').textContent=`${Math.round($('white-threshold').value*100)}%`; $('white-level-value').textContent=`${Math.round($('white-level').value*100)}%`; });
+  $(id).addEventListener('change',updateWhitePreview);
+}
 for(const [id,action] of Object.entries({prev:'previous_scene',next:'next_scene',play:'play',pause:'pause',tap:'tap','release-blackout':'resume','stop-live':'stop_live'})) $(id).addEventListener('click',()=>act(action));
 // Blackout bypasses the edit queue so a pending save cannot delay it.
 $('blackout').addEventListener('click',()=>{if(!token)return;request('/api/command',{method:'POST',headers:{'Content-Type':'application/json','X-Control-Token':token},body:JSON.stringify({action:'blackout'})}).catch(error=>notify(`Blackout not confirmed: ${error.message}`,true));});

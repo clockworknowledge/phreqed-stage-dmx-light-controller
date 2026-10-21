@@ -34,7 +34,6 @@ class SceneSequencer:
         if cue.preset_id not in self.engine.presets:
             raise ValueError('scene references an unknown preset')
         self.transition(elapsed, duration=cue.fade_seconds)
-        self.engine.global_brightness_override = None
         self.engine.activate_preset(cue.preset_id)
         self.index = index
         self.started = elapsed

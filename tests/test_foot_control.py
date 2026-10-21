@@ -1,4 +1,5 @@
 import unittest
+import time
 from unittest.mock import patch
 
 from phreqed_dmx.foot_control import (
@@ -112,6 +113,42 @@ class AmperoControlTests(unittest.TestCase):
         self.assertTrue(controller.handle_message(MidiMessage("note_on", 1, 62, 127)))
         self.assertIn("add a scene first", errors[0])
         self.assertEqual(commands.calls, [("tap_tempo", None)])
+
+    def test_device_disconnect_reopens_input_instead_of_ending_thread(self) -> None:
+        errors: list[str] = []
+        commands = FakeCommands()
+        controller = RawMidiFootController(
+            "/dev/snd/midiC1D0",
+            commands,
+            on_error=errors.append,
+            reconnect_interval=0.001,
+        )
+
+        def select_device(readers, writers, errors_list, timeout):
+            descriptor = readers[0]
+            if descriptor == 10:
+                raise OSError("USB MIDI disconnected")
+            controller._stop.set()
+            return (), (), ()
+
+        with (
+            patch("phreqed_dmx.foot_control.os.open", side_effect=(10, 11)) as opened,
+            patch("phreqed_dmx.foot_control.os.close") as closed,
+            patch("phreqed_dmx.foot_control.select.select", side_effect=select_device),
+        ):
+            controller.start()
+            deadline = time.monotonic() + 1.0
+            while controller._thread is not None and controller._thread.is_alive():
+                if time.monotonic() >= deadline:
+                    self.fail("MIDI reconnect thread did not finish")
+                time.sleep(0.005)
+            status = controller.status()
+            self.assertEqual(opened.call_count, 2)
+            self.assertEqual(status.reconnects, 1)
+            self.assertTrue(status.connected)
+            self.assertTrue(any("reconnecting" in message for message in errors))
+            controller.close()
+            self.assertGreaterEqual(closed.call_count, 2)
 
 
 if __name__ == "__main__":

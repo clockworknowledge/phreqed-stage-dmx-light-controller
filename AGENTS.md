@@ -74,6 +74,9 @@ not effect code, converts those coordinates to physical zone order.
   low-level procedure in `docs/lf4808-white-commissioning.md` records their
   front-view order on both fixtures. Commission with one steady part at a time,
   never a flashing sweep.
+- A browser-only center-white visualization may react to audio, but it must be
+  explicitly labelled preview-only, remain outside `compose_dmx`, and keep
+  `output_enabled` false until physical commissioning is accepted.
 - Keep the default RGB ceiling at 0.65. A higher ceiling is a temporary
   show-time override only: require explicit `live` mode plus
   `--acknowledge-high-output`, display the selected ceiling to the operator,
@@ -114,6 +117,8 @@ not effect code, converts those coordinates to physical zone order.
 - Route tempo and audio dynamics through the shared bounded animation clock so
   every effect receives the same continuous time base. Audio brightness is a
   multiplier below the manual master and must never raise an output ceiling.
+- Treat the browser master brightness as a persistent operator override; preset
+  and scene navigation must not silently clear or replace it.
 - Effects implement the standardized per-pixel interface, declare complete
   metadata, and use normalized RGB. Quantize only in `compose_dmx`.
 - Every effect exposes speed, effect level, palette, and at least two validated

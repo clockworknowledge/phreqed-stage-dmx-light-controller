@@ -5,12 +5,12 @@
 - A normalized RGB pipeline with DMX quantization only at the output boundary.
 - A deterministic effect contract with metadata, typed validated parameters,
   fixture identity, and optional performance context.
-- Fifteen requested advanced procedural effects and four legacy-preservation
-  effects, all dependency-free.
+- Eighteen advanced procedural effects and four legacy-preservation effects,
+  all dependency-free.
 - A compositor with alpha, additive, and lighten blending; layer opacity;
   per-fixture targeting; radial masks; global limits; and pure crossfades.
 - A configurable stateful limiter for large repeated full-frame luminance rises.
-- Twelve built-in multi-layer presets, including independent and cross-cube
+- Seventeen built-in multi-layer presets, including independent and cross-cube
   show looks.
 - Transport-independent show commands for effect and parameter changes, preset
   activation, events, blackout, tap tempo, and scene navigation.
@@ -35,7 +35,7 @@
 
 ## Verification
 
-- 124 automated tests pass on Python 3.12 after browser control, persistent user
+- 130 automated tests pass on Python 3.12 after browser control, persistent user
   looks, foot control, the show scene pack, opt-in audio capture, shared audio
   dynamics, white-channel commissioning, and the explicit RGB ceiling gate
   were integrated.
@@ -418,3 +418,29 @@ permitted/denied browser checks passed; this is not a comprehensive test of
 all network paths. QLC-002 is Done and commissioning acceptance is complete
 within the documented scope. Live output remains off; no service changes or
 additional hardware output were needed for this documentation update.
+
+## Music-driven look expansion and controller reliability — 2026-10-20
+
+Cross-Cube Blaster, Dynamic Sine Wave, and Inside-Out VU extend the catalog to
+22 registered effects. Matrix Rain, Blaster Sweep, Flame Thrower, Wave Rider,
+and Inside-Out VU extend the built-in catalog to 17 presets. The cross-fixture
+effects use one logical 24-by-4 coordinate surface and remain independent of DMX
+addresses. Inferno Rise's fire gradient was corrected so its heat source is the
+confirmed physical bottom row and its noise motion rises upward.
+
+Browser preset/scene actions previously cleared
+`global_brightness_override`, causing the master slider to jump to each preset's
+saved level. Those resets were removed, making master brightness persistent
+through manual, timed, and foot-controlled scene navigation.
+
+The Ampero reader previously returned from its worker after the first ALSA
+select/read error. It now closes and reopens the same configured device, resets
+the MIDI parser, contains command and reporting exceptions, and publishes
+connection/message/reconnect status. ALSA card renumbering still requires a
+stable udev link and remains a deployment acceptance item.
+
+Audio deep dim is explicit and disabled by default. When enabled, the operator
+can choose a 0%-25% near-black floor below the persistent manual master. A
+center-white onset visualization is also available in the browser, but it is
+preview-only: all normal frames continue to hold DMX 145-152 and 297-304 at
+zero. The complete Windows Python 3.12 suite passes 130 tests.

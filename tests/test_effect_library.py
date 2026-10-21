@@ -22,6 +22,9 @@ REQUIRED_ADVANCED_EFFECTS = {
     "sparks",
     "energy-transfer",
     "radial-pulse",
+    "cross-blaster",
+    "dynamic-wave",
+    "inside-out-vu",
 }
 
 
@@ -125,7 +128,7 @@ class EffectLibraryTests(unittest.TestCase):
         expected = {
             "flow-noise": "e08695bfb4a4d03d393072fe4cbba87dd310e9a1ab4bfb5943d254863b37c60f",
             "vortex": "3653c5e47df75a6b60fa957492f3378d99a5139453ca12db2f96ba2a18b407cb",
-            "fire": "34f2f807329a7cffc93744fbc925e511d61b5c1ad0141d6cc48d5bad5f623977",
+            "fire": "09a7d59b55ffbb0ab58d3b83db0c5b1409cb46a348779c39e3db293a6684cd02",
             "energy-transfer": "4c6425ebe8dd6f0caea2f50b98950b95367b1c63918e5f31032631d64b8eb2c3",
             "glitch": "2eea8c4428c5292f842b7b14daf4f483b8de57548ae61469c265130809691aea",
         }
@@ -155,6 +158,25 @@ class EffectLibraryTests(unittest.TestCase):
                         )
             with self.subTest(effect=effect_id):
                 self.assertEqual(hashlib.sha256(frames).hexdigest(), fingerprint)
+
+    def test_fire_is_hotter_at_physical_bottom_and_moves_upward(self) -> None:
+        effect = EFFECT_REGISTRY.get("fire")
+        parameters = EFFECT_REGISTRY.parameters("fire")
+        for animation_time in (0.0, 0.4, 0.8, 1.2):
+            rows = []
+            for y in range(4):
+                colors = [
+                    effect.sample(
+                        x, y, 12, 4, animation_time, self.fixture, parameters,
+                        self.context,
+                    )
+                    for x in range(12)
+                ]
+                rows.append(
+                    sum(c.red + c.green + c.blue for c in colors) / len(colors)
+                )
+            with self.subTest(animation_time=animation_time):
+                self.assertGreater(rows[-1], rows[0])
 
 
 if __name__ == "__main__":
