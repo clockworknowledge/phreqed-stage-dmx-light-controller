@@ -28,6 +28,13 @@ Next Pi steps: pull this branch, run the suite, visually review the five new
 presets in simulation, confirm master persistence, and complete a pedal soak
 with one controlled USB reconnect. Do not enable physical center-white output.
 
+The earlier integrated Pi bench run is valid evidence for the then-current 31
+looks: render timing, Snowball capture, and foot input all passed; capture ended
+healthy after 6,681 chunks. The current catalog has 39 looks, so it still needs
+one updated bench run. White-channel software commissioning also passes offline
+for all sixteen isolated 5% frames, but no physical Part 1-8 orientation has
+been recorded in the repository.
+
 This is the short operational handoff for a new Codex session. Read
 `AGENTS.md`, this file, and `docs/kanban.md` before taking action. The detailed
 design remains in `docs/architecture.md`, `docs/effects.md`, and

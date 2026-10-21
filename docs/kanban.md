@@ -110,9 +110,11 @@ Acceptance remaining: document sustained CPU use, analysis latency, and missed
 25 FPS frames, then tune sensitivity under rehearsal-level sound. Automatic
 scene switching and hard onset flashes remain out of scope.
 
-An integrated, socket-blocked bench mode is now available in `scripts/pi-soak.py`.
-It records capture continuity and signal peaks for every effect and preset; its
-first Raspberry Pi report remains pending.
+The first integrated, socket-blocked Raspberry Pi bench run passed all 31 looks
+in that revision. Audio remained healthy with 6,681 chunks processed, and the
+render-timing, audio-capture, and foot-control checks all reported true. Because
+the catalog now contains 22 effects and 17 presets, rerun the bench across the
+current 39 looks before final performance acceptance.
 
 ### AUDIO-001 — Audio-analysis input contract (`P1`, music)
 
@@ -151,9 +153,12 @@ Acceptance: create a stable udev link and pass a rehearsal-length USB soak.
 Bluetooth MIDI remains a separate follow-up until Pi pairing and reconnect
 behavior are characterized.
 
-The integrated soak can now require every mapped action while using a probe
-that cannot alter scenes or enable output. Its first Raspberry Pi report remains
-pending; the raw device path must still be replaced with a stable udev link.
+The integrated soak's first Pi run observed previous scene 5 times, next scene
+4 times, tap tempo 4 times, and both blackout states 3 times without allowing
+the probe to alter scenes or enable output. A later loss of pedal response led
+to the automatic reconnect fix. Repeat the current-catalog soak with one
+controlled disconnect; the raw device path must still be replaced with a stable
+udev link.
 
 ### MAP-002 — Correct LF4808 geometry to 12 x 4 (`P0`, mapping)
 
@@ -165,7 +170,7 @@ corner-only check could not distinguish the two geometries because zones 1 and
 48 have the same locations under both layouts.
 
 Acceptance: the Windows and Pi test suites pass, browser and Tk previews show
-12 x 4 RGB cells, the browser adds two disabled center strobe reference lines,
+12 x 4 RGB cells, the browser adds two preview-only center-white reference lines,
 and a low-brightness physical test confirms the zone 12-to-13 row transition
 independently on both fixtures. White-zone commissioning is tracked separately
 by HW-001 and must use its capped steady-output procedure, never a flashing sweep.
@@ -232,6 +237,10 @@ Acceptance remaining: run `scripts/white-zone-check.py` offline and live at 5%,
 record the physical order of Parts 1-8 and whether both white rows respond
 together on both fixtures, then add the verified orientation to tests before
 building pulse or strobe effects. See `docs/lf4808-white-commissioning.md`.
+
+The offline step was revalidated on Windows on 2026-10-20: all sixteen frames
+contained one isolated value of 13 on DMX 145-152 or 297-304, all other values
+were zero, and no socket was created. Only the physical live observation remains.
 
 ## Backlog
 

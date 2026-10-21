@@ -444,3 +444,11 @@ can choose a 0%-25% near-black floor below the persistent manual master. A
 center-white onset visualization is also available in the browser, but it is
 preview-only: all normal frames continue to hold DMX 145-152 and 297-304 at
 zero. The complete Windows Python 3.12 suite passes 130 tests.
+
+The operator's earlier integrated Raspberry Pi bench report passed all 31 looks
+present at that time. Its render-timing, audio-capture, and foot-control checks
+were true; the Snowball source ended healthy after 6,681 chunks, and every
+mapped pedal action was observed multiple times. This is retained as valid
+hardware evidence for that revision. The expanded 22-effect/17-preset catalog
+requires a new 39-look run, including one controlled MIDI reconnect, before
+closing the current acceptance cards.
