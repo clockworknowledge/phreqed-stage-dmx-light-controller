@@ -508,6 +508,21 @@ carrier toward a cosine variant; treble contributes a smaller secondary ripple.
 The `pulse_frequency` and `cosine_morph` parameters bound these responses, and
 quiet input returns to the sine-led baseline without changing output limits.
 
+Matrix Rain was revised after visual review showed too many simultaneously lit
+green cells and weak directional motion. It now uses a sparse per-column mask,
+bright heads, short dim tails, explicit top-to-bottom travel, and randomized
+off-screen gaps. Blaster Sweep now has a discrete firing cycle with a compact
+muzzle flare and projectile; a validated direction choice supports
+left-to-right, right-to-left, and mirrored center-out paths.
+
+The new deterministic `blinking-eye` generator draws a low-resolution almond
+sclera, coloured iris, black pupil, subtle gaze drift, and a close/reopen cycle
+on each fixture. The Watchful Eyes preset exposes the effect conservatively at
+0.40 global brightness. Together this slice expands the catalog to 24 effects,
+18 presets, and 42 soak looks without touching white channels or Art-Net. The
+144-test Windows suite, browser preview, and short socket-blocked 42-look smoke
+pass. Pi visual acceptance and the full timing gate remain.
+
 ## LF4808 white commissioning and guarded peaks — 2026-10-21
 
 The operator completed the steady 5% diagnostic and confirmed that white Parts

@@ -32,9 +32,10 @@ ceiling of 0.65.
 | `glitch` | Glitch Distortion | digital | `block_size` 1-4, `jitter` 0.5-12.0 |
 | `sparks` | Spark Trail | particle | `count` 3-24, `decay` 0.15-1.5 |
 | `energy-transfer` | Cross-Cube Energy | cross-fixture | `rate` 0.5-16, `trail` 0.5-8.0 |
-| `cross-blaster` | Cross-Cube Blaster | cross-fixture | `rate` 1-24, `trail` 1-18, `core_width` 0.25-4, `spread` 0.2-3 |
+| `cross-blaster` | Cross-Cube Blaster | cross-fixture | `direction` left-right/right-left/center-out, `rate` 1-24, `trail` 1-18, `core_width` 0.25-4, `spread` 0.2-3 |
 | `flame-jet` | Anchored Flame Jet | cross-fixture | `length` 0.45-1.25, `turbulence` 0.25-2, `strand_width` 0.18-1.2, `muzzle_size` 0.4-3 |
 | `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5, `pulse_frequency` 0-1.5, `cosine_morph` 0-1 |
+| `blinking-eye` | Blinking Eye | sprite | `blink_rate` 0.08-1.5, `blink_duration` 0.08-0.5, `iris_size` 0.16-0.65, `gaze` -0.5-0.5 |
 | `inside-out-vu` | Inside-Out VU | musical | `sensitivity` 0.25-2.5, `peak_width` 0.015-0.25 |
 | `radial-pulse` | Radial Pulse | musical | `frequency` 0.5-6.0, `sharpness` 1-6 |
 | `tunnel` | Legacy Tunnel | legacy | `ring_frequency` 0.5-6.0, `floor` 0-0.5 |
@@ -65,6 +66,20 @@ onsets temporarily increase its spatial frequency and crossfade the carrier
 toward a cosine pattern; treble adds a smaller secondary ripple. Both reactions
 are bounded and return to the sine baseline as the onset decays.
 
+`digital-rain` uses a sparse deterministic column mask. Bright pale-green heads
+move from logical row 0 toward row 3, leave short darker tails, disappear for a
+per-column gap, and then restart above the fixture. The gaps prevent a nearly
+solid field of green squares on the four-row display.
+
+`cross-blaster` fires a discrete projectile and compact source flare rather than
+drawing a continuous sweeping bar. Its direction can be left-to-right,
+right-to-left, or two mirrored pulses travelling from the shared center toward
+both outside edges.
+
+`blinking-eye` renders an almond-shaped sclera, palette-coloured iris, dark
+pupil, subtle gaze drift, and a bounded close/reopen cycle independently on each
+fixture. A closed eye leaves only a restrained lid line.
+
 ## Included presets
 
 - `psychedelic-bloom`: neon plasma plus additive concentric rings.
@@ -86,6 +101,8 @@ are bounded and return to the sine baseline as the onset decays.
 - `wave-rider`: a tempo-led sine ribbon that tightens and morphs toward cosine
   on detected musical pulses.
 - `inside-out-vu`: music energy growing from the shared centre to both outer edges.
+- `watchful-eyes`: a synchronized eye on each fixture opening, watching, and
+  blinking.
 
 All presets default below the 0.65 global safety ceiling and contain no
 strobe-channel behavior. The added show pack is capped at 0.48 global

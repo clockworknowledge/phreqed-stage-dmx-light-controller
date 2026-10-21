@@ -2,6 +2,22 @@
 
 Last updated: 2026-10-21
 
+## Latest checkpoint — Matrix, directional blaster, and blinking eyes
+
+Matrix Rain now activates a sparse deterministic subset of columns. Each bright
+pale-green head travels from logical row 0 toward row 3, leaves a short darker
+tail, pauses below the fixture, and restarts above it. Blaster Sweep now reads as
+a gun firing: a compact source flare launches a discrete pulse across the
+combined 24-by-4 surface. Its `direction` parameter supports left-to-right,
+right-to-left, and mirrored center-out travel.
+
+The new `blinking-eye` effect and Watchful Eyes preset render an almond sclera,
+coloured iris, dark pupil, subtle gaze motion, and synchronized close/reopen
+cycle on each fixture. The catalog now contains 24 effects and 18 presets, or 42
+soak looks. The 144-test Windows suite, browser preview, and a short
+socket-blocked 42-look smoke pass. Operator Pi visual acceptance and the full
+five-second-per-look timing run remain.
+
 ## Latest checkpoint — Wave Rider pulse synchronization
 
 Wave Rider keeps the shared tap-tempo animation clock as its baseline rate. Its

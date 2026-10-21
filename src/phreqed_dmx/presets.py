@@ -394,8 +394,8 @@ EXAMPLE_PRESETS = (
                     "speed": 1.05,
                     "brightness": 0.88,
                     "palette": "matrix",
-                    "density": 0.92,
-                    "trail": 2.8,
+                    "density": 0.46,
+                    "trail": 1.25,
                 },
             ),
             EffectLayerSpec(
@@ -416,7 +416,7 @@ EXAMPLE_PRESETS = (
     VisualPreset(
         "blaster-sweep",
         "Blaster Sweep",
-        "A neon energy bolt burns from the far left through both fixtures.",
+        "A compact muzzle fires a bright pulse from left to right across both fixtures.",
         (
             EffectLayerSpec(
                 "cross-blaster",
@@ -424,22 +424,11 @@ EXAMPLE_PRESETS = (
                     "speed": 0.9,
                     "brightness": 0.9,
                     "palette": "neon",
+                    "direction": "left-right",
                     "rate": 8.5,
-                    "trail": 6.0,
-                    "core_width": 1.2,
-                    "spread": 0.8,
-                },
-            ),
-            EffectLayerSpec(
-                "energy-transfer",
-                opacity=0.2,
-                blend_mode=BlendMode.LIGHTEN,
-                parameters={
-                    "speed": 0.65,
-                    "brightness": 0.38,
-                    "palette": "ocean",
-                    "rate": 5.0,
-                    "trail": 5.0,
+                    "trail": 4.5,
+                    "core_width": 1.05,
+                    "spread": 0.68,
                 },
             ),
         ),
@@ -497,6 +486,26 @@ EXAMPLE_PRESETS = (
             ),
         ),
         global_brightness=0.44,
+    ),
+    VisualPreset(
+        "watchful-eyes",
+        "Watchful Eyes",
+        "A luminous eye on each fixture opens, watches, and blinks in unison.",
+        (
+            EffectLayerSpec(
+                "blinking-eye",
+                parameters={
+                    "speed": 1.0,
+                    "brightness": 0.82,
+                    "palette": "ocean",
+                    "blink_rate": 0.3,
+                    "blink_duration": 0.24,
+                    "iris_size": 0.36,
+                    "gaze": 0.0,
+                },
+            ),
+        ),
+        global_brightness=0.4,
     ),
     VisualPreset(
         "inside-out-vu",

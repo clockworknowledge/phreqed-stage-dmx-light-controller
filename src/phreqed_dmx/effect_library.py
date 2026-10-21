@@ -308,14 +308,26 @@ def _digital_rain(
     t = _time(animation_time, parameters)
     seed = (context.seed if context else 0) + fixture.index * 211
     density = parameters.number("density")
-    if _hash01(x, 0, seed) > density:
+    column_activity = _hash01(x * 17 + 5, seed * 3 + 7, 193)
+    if column_activity > density:
         return BLACK_NORMALIZED
-    offset = _hash01(x, 1, seed) * height
-    head = (t * (1.2 + _hash01(x, 2, seed) * 2.0) + offset) % height
-    distance = (head - y) % height
+    speed = 0.85 + _hash01(x, 2, seed) * 1.35
+    gap = 2.0 + _hash01(x, 4, seed) * 3.0
+    cycle = height + gap
+    offset = _hash01(x, 1, seed) * cycle
+    # Logical y=0 is the top. Each head advances toward larger y, spends a
+    # randomized interval below the fixture, then restarts above the top.
+    head = (t * speed + offset) % cycle - 0.75
+    distance = head - y
     trail = parameters.number("trail")
-    intensity = math.exp(-distance / max(0.15, trail))
-    return _paint(0.3 + _hash01(x, 3, seed) * 0.12, intensity, parameters)
+    if distance < -0.55 or distance > trail:
+        return BLACK_NORMALIZED
+    head_glow = math.exp(-((distance / 0.34) ** 2))
+    tail_glow = math.exp(-max(0.0, distance) / max(0.15, trail)) * 0.58
+    intensity = max(head_glow, tail_glow)
+    tail_fraction = _clamp(max(0.0, distance) / max(0.15, trail))
+    color_phase = 0.96 - tail_fraction * 0.58 + _hash01(x, 3, seed) * 0.03
+    return _paint(color_phase, intensity, parameters)
 
 
 def _glitch(
@@ -388,20 +400,45 @@ def _cross_blaster(
     trail = parameters.number("trail")
     core_width = parameters.number("core_width")
     rate = parameters.number("rate")
-    head = (t * rate) % (total_width + trail + core_width) - trail
-    behind = head - global_x
-    if behind < -core_width or behind > trail:
-        return BLACK_NORMALIZED
-    if behind < 0.0:
-        horizontal = 1.0 - abs(behind) / max(0.1, core_width)
+    direction = parameters.choice("direction")
+    if direction == "left-right":
+        path_position = global_x
+        path_length = total_width - 1
+    elif direction == "right-left":
+        path_position = total_width - 1 - global_x
+        path_length = total_width - 1
     else:
-        horizontal = math.exp(-behind / max(0.1, trail * 0.42))
+        path_position = max(0.0, abs(global_x - (total_width - 1) / 2) - 0.5)
+        path_length = max(1.0, total_width / 2 - 1)
+
+    cycle_length = path_length + trail + core_width + 2.0
+    head = (t * rate) % cycle_length
+    behind = head - path_position
+    horizontal = 0.0
+    if -core_width <= behind <= trail:
+        if behind < 0.0:
+            horizontal = 1.0 - abs(behind) / max(0.1, core_width)
+        else:
+            horizontal = math.exp(-behind / max(0.1, trail * 0.42))
+
     seed = context.seed if context else 0
-    flicker = 0.72 + _value_noise(global_x * 0.7 - t * 5.0, y * 1.3, seed) * 0.28
-    center = (height - 1) / 2 + math.sin(global_x * 0.7 - t * 2.3) * 0.35
-    vertical = math.exp(-abs(y - center) / parameters.number("spread"))
-    intensity = horizontal * vertical * flicker
-    return _paint(global_x / max(1, total_width - 1) * 0.24 + t * 0.03, intensity, parameters)
+    flicker = 0.72 + _value_noise(path_position * 0.7 - t * 5.0, y * 1.3, seed) * 0.28
+    center = (height - 1) / 2 + math.sin(path_position * 0.65 - t * 2.3) * 0.24
+    spread = parameters.number("spread")
+    vertical = math.exp(-((abs(y - center) / max(0.2, spread * 1.45)) ** 2))
+    blast = horizontal * vertical * flicker
+
+    # A compact source flare makes each cycle read as a gun firing rather than
+    # a generic travelling bar. Center-out uses the shared middle as its source.
+    firing = _clamp(1.0 - head / max(0.5, core_width * 1.8))
+    muzzle = (
+        math.exp(-path_position / max(0.2, core_width * 0.7))
+        * math.exp(-((abs(y - (height - 1) / 2) / max(0.2, spread * 1.45)) ** 2))
+        * firing
+    )
+    intensity = max(blast, muzzle)
+    progress = path_position / max(1.0, path_length)
+    return _paint(0.98 - progress * 0.22 + t * 0.01, intensity, parameters)
 
 
 def _flame_jet(
@@ -521,6 +558,60 @@ def _dynamic_wave(
     distance = abs(y - line)
     intensity = math.exp(-((distance / max(0.05, thickness)) ** 2))
     return _paint(u * 0.65 - t * 0.035, intensity, parameters)
+
+
+def _blinking_eye(
+    x: int, y: int, width: int, height: int, animation_time: float,
+    fixture: FixtureIdentity, parameters: EffectParameters,
+    context: PerformanceContext | None,
+) -> NormalizedRGB:
+    del fixture, context
+    t = _time(animation_time, parameters)
+    u, v = _centered(x, y, width, height)
+    phase = (t * parameters.number("blink_rate")) % 1.0
+    blink_duration = parameters.number("blink_duration")
+    blink_center = 0.84
+    phase_distance = abs(phase - blink_center)
+    phase_distance = min(phase_distance, 1.0 - phase_distance)
+    half_blink = blink_duration / 2
+    if phase_distance >= half_blink:
+        closure = 0.0
+    else:
+        closure = 0.5 + 0.5 * math.cos(math.pi * phase_distance / half_blink)
+    openness = 1.0 - closure
+
+    almond = math.sqrt(max(0.0, 1.0 - u * u))
+    half_height = almond * openness
+    edge_softness = 0.22
+    inside = _clamp((half_height + edge_softness - abs(v)) / edge_softness)
+    brightness = parameters.number("brightness")
+
+    if inside <= 0.0:
+        # At full closure, leave a restrained coloured lid line rather than a
+        # full-frame flash or abrupt white bar.
+        lid = closure * almond * math.exp(-((abs(v) / 0.28) ** 2))
+        return palette_color(parameters.choice("palette"), 0.62).scaled(
+            brightness * lid * 0.32
+        )
+
+    gaze = parameters.number("gaze") + math.sin(t * 0.32) * 0.08
+    iris_size = parameters.number("iris_size")
+    iris_distance = abs(u - gaze)
+    vertical_iris = abs(v) / max(0.15, openness)
+    iris_radius = math.hypot(iris_distance, vertical_iris * 0.72)
+
+    if iris_radius <= iris_size * 0.42:
+        return BLACK_NORMALIZED
+    if iris_radius <= iris_size:
+        iris = palette_color(parameters.choice("palette"), 0.58 + t * 0.015)
+        iris_level = _clamp(1.15 - iris_radius / max(0.05, iris_size))
+        return iris.scaled(brightness * (0.62 + iris_level * 0.38) * inside)
+
+    edge = _clamp((abs(v) - max(0.0, half_height - 0.22)) / 0.22)
+    sclera = NormalizedRGB(0.92, 0.88, 0.72).scaled(
+        brightness * inside * (1.0 - edge * 0.35)
+    )
+    return sclera
 
 
 def _inside_out_vu(
@@ -712,6 +803,7 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("trail", "Trail", 2.8, 0.5, 8.0, 0.1, "Energy trail length"),
         )), _energy_transfer),
         ProceduralEffect(_metadata("cross-blaster", "Cross-Cube Blaster", "A hot energy or flame bolt sweeps left-to-right across both fixtures.", "cross-fixture", (
+            ParameterSpec("direction", "Direction", "left-right", "Blast travel direction", choices=("left-right", "right-left", "center-out")),
             number("rate", "Travel rate", 7.0, 1.0, 24.0, 0.5, "Horizontal cells per animation second"),
             number("trail", "Trail length", 7.0, 1.0, 18.0, 0.5, "Length of the trailing plume"),
             number("core_width", "Core width", 1.4, 0.25, 4.0, 0.05, "Width of the leading blast core"),
@@ -730,6 +822,12 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("pulse_frequency", "Pulse frequency boost", 0.75, 0.0, 1.5, 0.05, "Extra wave cycles at maximum onset"),
             number("cosine_morph", "Cosine hit morph", 0.9, 0.0, 1.0, 0.05, "Sine-to-cosine morph strength on onset"),
         ), brightness=0.64), _dynamic_wave),
+        ProceduralEffect(_metadata("blinking-eye", "Blinking Eye", "A stylized eye opens, watches, and blinks on each fixture.", "sprite", (
+            number("blink_rate", "Blink rate", 0.32, 0.08, 1.5, 0.02, "Complete blink cycles per animation second"),
+            number("blink_duration", "Blink duration", 0.22, 0.08, 0.5, 0.01, "Fraction of the cycle spent closing and reopening"),
+            number("iris_size", "Iris size", 0.34, 0.16, 0.65, 0.01, "Iris radius within the eye"),
+            number("gaze", "Gaze", 0.0, -0.5, 0.5, 0.05, "Horizontal iris position"),
+        ), brightness=0.58), _blinking_eye),
         ProceduralEffect(_metadata("inside-out-vu", "Inside-Out VU", "Audio level expands from the shared centre toward both outer edges.", "musical", (
             number("sensitivity", "VU sensitivity", 1.15, 0.25, 2.5, 0.05, "Audio level gain"),
             number("peak_width", "Peak width", 0.055, 0.015, 0.25, 0.005, "Width of the bright level marker"),

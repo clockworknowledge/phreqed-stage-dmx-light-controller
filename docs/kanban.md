@@ -111,6 +111,15 @@ source and cross-cube strands, and a short socket-blocked 40-look smoke reports
 zero missed slots, zero over-budget frames, zero reserved-channel output, and a
 zero shutdown blackout. Operator review on the Pi remains the visual authority.
 
+Matrix Rain now uses sparse columns with bright heads, short dim tails, explicit
+top-to-bottom movement, and randomized blank gaps. Blaster Sweep now fires a
+compact muzzle/projectile cycle and exposes left-to-right, right-to-left, and
+center-out direction choices. The new Watchful Eyes preset adds a synchronized
+opening/blinking eye to each fixture. These additions bring the catalog to 24
+effects, 18 presets, and 42 soak looks. The 144-test Windows suite, browser
+preview, and short socket-blocked 42-look smoke pass; Pi visual acceptance and
+the full five-second-per-look timing gate remain.
+
 The current 39-look Pi bench passed render timing at 25 FPS with zero reported
 missed slots, zero reserved-channel output, and successful shutdown blackout.
 Flame Thrower was the heaviest reported preset at 16.182 ms maximum render time,

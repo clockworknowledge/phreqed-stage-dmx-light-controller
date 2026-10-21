@@ -42,6 +42,7 @@ class SceneEngineTests(unittest.TestCase):
             "blaster-sweep",
             "flame-thrower",
             "wave-rider",
+            "watchful-eyes",
             "inside-out-vu",
         }
         identifiers = [preset.preset_id for preset in EXAMPLE_PRESETS]

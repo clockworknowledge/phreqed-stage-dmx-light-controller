@@ -26,6 +26,7 @@ REQUIRED_ADVANCED_EFFECTS = {
     "cross-blaster",
     "flame-jet",
     "dynamic-wave",
+    "blinking-eye",
     "inside-out-vu",
 }
 
@@ -235,6 +236,106 @@ class EffectLibraryTests(unittest.TestCase):
 
         self.assertEqual(frame(quiet), frame(quiet))
         self.assertNotEqual(frame(quiet), frame(pulse))
+
+    def test_digital_rain_is_sparse_and_heads_move_downward(self) -> None:
+        effect = EFFECT_REGISTRY.get("digital-rain")
+        parameters = EFFECT_REGISTRY.parameters(
+            "digital-rain",
+            {"density": 0.46, "trail": 1.25, "palette": "matrix"},
+        )
+        fixture = FixtureIdentity("Cube A", 0, 2)
+
+        lit_counts = []
+        brightest_rows: dict[int, list[int]] = {x: [] for x in range(12)}
+        for animation_time in tuple(index * 0.12 for index in range(80)):
+            frame = [
+                [
+                    effect.sample(
+                        x, y, 12, 4, animation_time, fixture, parameters,
+                        self.context,
+                    )
+                    for x in range(12)
+                ]
+                for y in range(4)
+            ]
+            lit_counts.append(sum(color.green > 0.01 for row in frame for color in row))
+            for x in range(12):
+                column = [frame[y][x].green for y in range(4)]
+                if max(column) > 0.2:
+                    row = max(range(4), key=column.__getitem__)
+                    if not brightest_rows[x] or brightest_rows[x][-1] != row:
+                        brightest_rows[x].append(row)
+
+        self.assertLess(max(lit_counts), 24)
+        progressions = [rows for rows in brightest_rows.values() if len(rows) >= 3]
+        self.assertTrue(progressions)
+        self.assertTrue(
+            any(
+                all(right == (left + 1) % 4 for left, right in zip(rows, rows[1:]))
+                for rows in progressions
+            )
+        )
+
+    def test_blaster_supports_mirrored_and_center_out_directions(self) -> None:
+        effect = EFFECT_REGISTRY.get("cross-blaster")
+        left_parameters = EFFECT_REGISTRY.parameters(
+            "cross-blaster", {"direction": "left-right"}
+        )
+        right_parameters = EFFECT_REGISTRY.parameters(
+            "cross-blaster", {"direction": "right-left"}
+        )
+        center_parameters = EFFECT_REGISTRY.parameters(
+            "cross-blaster", {"direction": "center-out"}
+        )
+
+        def combined(parameters, animation_time: float) -> tuple[NormalizedRGB, ...]:
+            pixels = []
+            for fixture_index in range(2):
+                fixture = FixtureIdentity(f"Cube {fixture_index}", fixture_index, 2)
+                pixels.extend(
+                    effect.sample(
+                        x, 1, 12, 4, animation_time, fixture, parameters,
+                        self.context,
+                    )
+                    for x in range(12)
+                )
+            return tuple(pixels)
+
+        left = combined(left_parameters, 0.45)
+        right = combined(right_parameters, 0.45)
+        self.assertEqual(left, tuple(reversed(right)))
+        center = combined(center_parameters, 0.0)
+        self.assertEqual(center, tuple(reversed(center)))
+        self.assertGreater(
+            center[11].red + center[11].green + center[11].blue, 0.0
+        )
+        self.assertGreater(
+            center[12].red + center[12].green + center[12].blue, 0.0
+        )
+
+    def test_blinking_eye_closes_and_reopens_deterministically(self) -> None:
+        effect = EFFECT_REGISTRY.get("blinking-eye")
+        parameters = EFFECT_REGISTRY.parameters("blinking-eye")
+        fixture = FixtureIdentity("Cube A", 0, 2)
+
+        def energy(animation_time: float) -> float:
+            return sum(
+                color.red + color.green + color.blue
+                for y in range(4)
+                for x in range(12)
+                for color in (
+                    effect.sample(
+                        x, y, 12, 4, animation_time, fixture, parameters,
+                        self.context,
+                    ),
+                )
+            )
+
+        open_energy = energy(0.0)
+        closed_time = 0.84 / parameters.number("blink_rate")
+        closed_energy = energy(closed_time)
+        self.assertGreater(open_energy, closed_energy * 2.0)
+        self.assertEqual(closed_energy, energy(closed_time))
 
 
 if __name__ == "__main__":
