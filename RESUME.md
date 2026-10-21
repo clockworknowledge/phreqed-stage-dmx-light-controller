@@ -2,6 +2,27 @@
 
 Last updated: 2026-10-21
 
+## Latest checkpoint — Ampero reconnect characterized; recovery sprint deferred
+
+The controlled 2026-10-21 USB reconnect test detected `Errno 19`, reopened the
+same raw-MIDI path, and reported one successful reconnect, but received zero
+messages and no pedal actions. Direct `amidi` and `aseqdump` were also silent.
+Reinitializing the bank with the iOS app restored MIDI output. An open ALSA node
+therefore proves transport availability, not a functionally programmed pedal;
+a valid mapped event is required after startup or reconnect before show-ready
+status.
+
+Automated Ampero configuration inspection and recovery is now deferred to
+kanban card `CONTROL-002`. Static inspection of Hotone's official Android app
+found Flutter/`flutter_blue`, preset request/send/acknowledgement strings,
+SysEx, CRC32, and custom GATT services. The downloaded vendor archive was not
+added to the repository; its SHA-256 is
+`3F8645221B4C6B8386211FFC914F751B79D6C54379E189464CE766EDFF5D6192`.
+The proposed future interface is `ampero inspect`, `ampero verify`, and a gated
+`ampero restore`; writes remain prohibited until read-only discovery, protocol
+decoding, backup, dry-run, exact firmware checks, and read-back validation pass.
+See `docs/ampero-control.md`.
+
 ## Latest checkpoint — center whites commissioned and guarded output added
 
 On 2026-10-21 the operator completed the steady 5% physical test: white Parts
@@ -44,9 +65,9 @@ blackout immediately available before considering any higher white level.
 The earlier integrated Pi bench run is valid evidence for the then-current 31
 looks: render timing, Snowball capture, and foot input all passed; capture ended
 healthy after 6,681 chunks. The current catalog has 39 looks, so it still needs
-one updated bench run. White-channel software commissioning also passes offline
-for all sixteen isolated 5% frames, but no physical Part 1-8 orientation has
-been recorded in the repository.
+one updated bench run. White-channel software commissioning passes offline for
+all sixteen isolated 5% frames, and the physical Part 1-8 orientation is now
+recorded as right-to-left with both rows moving together on both fixtures.
 
 The Pi soak foot gate now treats a recovered disconnect/reconnect as a lifecycle
 event instead of an automatic failure. It still fails when the final MIDI state
@@ -155,7 +176,7 @@ serialized cue and blackout commands. USB is the initial supported transport;
 Bluetooth MIDI remains pending Pi pairing and reconnect characterization.
 
 The adapter is disabled unless `--foot-midi-device` is supplied and cannot
-enable Art-Net. On 2026-10-20 the operator updated the pedal to firmware 1.1.8,
+enable Art-Net. On 2026-10-20 the operator updated the pedal to firmware 1.13,
 configured the documented bank, and captured the expected raw USB messages on
 `/dev/snd/midiC3D0`: notes 60, 61, and 62 at velocity 127, plus CC 23 values
 127 and 0. The operator then confirmed previous/next scene, tap tempo, and
@@ -520,35 +541,52 @@ the backup until the committed file and runtime configuration are verified.
 
 ## Next actions, in order
 
-1. Finish and review `fix/lf4808-12x4`; run the complete Windows suite and
-   verify both local previews contain four rows of twelve cells.
-2. Merge the reviewed mapping correction, push `main`, and update the Pi only
-   through `bash scripts/pi-update.sh`.
-3. Confirm the runtime workspace still matches the committed master:
+1. On the Pi, disconnect the iPhone app and verify that the pedal is currently
+   emitting the expected messages before starting the soak:
 
    ```bash
-   cmp /home/mmorley/phreqed-stage-dmx-light-controller/config/qlc/phreqed_qlc_workspace.qxw \
-     /home/mmorley/.qlcplus/autostart.qxw
+   timeout 15s amidi -d -p hw:3,0,0
    ```
 
-4. Run the complete test suite on the Pi after updating the package, then check
-   that browser simulation renders two 12-by-4 previews.
-5. With separate operator authorization and QLC+ blackout available, run only
-   the low-brightness zone 12/13 row-boundary diagnostic on each fixture.
-6. Validate browser-controlled live output separately, only with QLC+ blackout
-   available and the fixtures safely positioned; confirm the five-second lost-
-   browser lease blackouts the output.
-7. Do not repeat completed installation, soak, reboot, or recovery checks
-   unless a relevant code, configuration, or environment change justifies it.
-8. Update the service's allowed subnet and recheck network access before moving
-   the Pi to another network. Live output still requires explicit selection.
+   Expected input is Note On 60, 61, and 62 plus CC 23 values 127 and 0.
+2. Resume the current 39-look integrated simulation bench without deliberately
+   disconnecting the pedal:
+
+   ```bash
+   .venv/bin/python scripts/pi-soak.py \
+     --seconds-per-look 5 \
+     --audio-device plughw:CARD=Snowball,DEV=0 \
+     --foot-midi-device /dev/snd/midiC3D0 \
+     --require-foot-actions \
+     --output /tmp/phreqed-full-bench-current-2.json
+   ```
+
+   During the run, press FS1 and FS2 at least once, FS3 at least twice, and FS4
+   through both on and off. Repeating the set once provides better evidence.
+   The soak blocks sockets and Art-Net transmission.
+3. Inspect the report's `passed`, `checks`, `foot_actions`, `foot_events`,
+   `foot_errors`, `foot_final_status`, and `audio_final_status` fields. Do not
+   count an ALSA reconnect with zero messages as functional recovery.
+4. In browser simulation, visually review the five newest presets, confirm
+   Inferno Rise moves upward, verify master brightness persists through scene
+   changes, and exercise audio deep dim.
+5. With fixtures secured and QLC+ blackout immediately available, validate
+   `HW-002` at its default 5% and confirm blackout, Stop output, and browser
+   lease loss each disarm physical-white peak output.
+6. Defer another deliberate pedal disconnect and all configuration writes to
+   the `CONTROL-002` sprint. Keep browser control available as the show backup.
+7. Validate the optional elevated RGB ceiling under `SAFE-002` only after the
+   default-level live sequence passes.
 
 ## Safety invariants
 
 - Simulation remains the default; live transmission requires the literal
   `live` command.
-- Never probe or activate fixture channels 145-152. In the 512-channel universe
-  these are 145-152 for Cube A and 297-304 for Cube B.
+- Ordinary rendering must keep fixture channels 145-152 and 297-304 at zero.
+  The commissioned white parts may be activated only through the guarded
+  browser-live control: separately armed, 5% default, 10% maximum, pulses no
+  longer than 0.10 seconds and no faster than 4 Hz, with all stop paths
+  disarming it.
 - Cube A remains at A001 and Cube B at A153, both in 152-channel mode.
 - Keep the software brightness ceiling at 0.65 and begin hardware validation at
   0.25 or lower.
@@ -561,9 +599,10 @@ the backup until the committed file and runtime configuration are verified.
 
 ```text
 Read AGENTS.md, RESUME.md, and docs/kanban.md completely. Verify git status and
-the Python test environment before changing anything. Continue MAP-002 from
-the first incomplete item in RESUME.md. The LF4808 front view is 12 columns by
-4 rows; the preserved reconstructed baseline's 8-by-6 assumption is obsolete.
-Do not start live Art-Net or modify the baseline. A physical zone 12/13 test
-requires explicit operator authorization and immediate QLC+ blackout access.
+the Python test environment before changing anything. Continue the current Pi
+bench sequence from "Next actions, in order" on `feat/audio-context`. Treat an
+open Ampero MIDI device as transport health only; a mapped event is required
+for functional readiness. `CONTROL-002` is a deferred protocol-research sprint,
+so do not send configuration writes or add vendor binaries. Do not start live
+Art-Net or modify the preserved baseline without explicit authorization.
 ```

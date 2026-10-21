@@ -94,13 +94,23 @@ preset IDs, conservative global levels, independent fixture targeting,
 deterministic rendering, complete DMX frames, and zero output on channels
 145–152 and 297–304.
 
-The operator updated the Hotone Ampero Control to firmware 1.1.8 and observed
+The operator updated the Hotone Ampero Control to firmware 1.13 and observed
 the documented USB MIDI messages on `/dev/snd/midiC3D0`. Previous/next scene,
 tap tempo, and explicit blackout toggling worked in trusted-LAN simulation;
 the subsequent guarded browser-live check was also reported working correctly.
 This is an initial functional acceptance, not the planned rehearsal-length USB
 soak. Automatic audio capture remains deferred until the visual scene vocabulary
 and manual tempo behavior are accepted.
+
+On 2026-10-21 a controlled USB reconnect showed a second failure mode: the
+reader correctly detected device removal and reopened the raw-MIDI path, but no
+messages or mapped actions followed. Direct ALSA tools were also silent until
+the bank was reinitialized with the iOS app. Reopening the node is now treated
+as transport recovery only; a valid mapped event is required for functional
+readiness. Protocol research and a possible read-only inspect/verify plus gated
+restore tool are deferred to `CONTROL-002`, with no vendor application binary
+stored in the repository and no unknown write commands permitted during normal
+testing.
 
 ## Audio-analysis contract — 2026-10-20
 
@@ -452,8 +462,10 @@ present at that time. Its render-timing, audio-capture, and foot-control checks
 were true; the Snowball source ended healthy after 6,681 chunks, and every
 mapped pedal action was observed multiple times. This is retained as valid
 hardware evidence for that revision. The expanded 22-effect/17-preset catalog
-requires a new 39-look run, including one controlled MIDI reconnect, before
-closing the current acceptance cards.
+requires a new 39-look run under ordinary connected operation before closing
+the current visual, audio, and pedal acceptance cards. Deliberate MIDI recovery
+is separated into `CONTROL-002` because ALSA reconnection alone did not restore
+pedal output in the 2026-10-21 test.
 
 The soak harness originally classified every MIDI reporting callback as a fatal
 error, including the expected disconnect and reconnected messages from a

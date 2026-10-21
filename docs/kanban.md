@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-10-20
+Last reviewed: 2026-10-21
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -69,9 +69,17 @@ state is connected and all required pedal actions were observed; missing
 actions, a lost device, or a command error still fails the gate.
 
 Acceptance remaining: deploy to the Pi, verify brightness through repeated
-scene navigation, then perform a rehearsal-length pedal soak including one
-controlled USB disconnect/reconnect. A stable udev path is still required to
-survive ALSA card renumbering.
+scene navigation, then perform a rehearsal-length pedal soak without forced
+disconnects. Deliberate disconnect/recovery acceptance follows CONTROL-002. A
+stable raw-MIDI udev path is still required to survive ALSA card renumbering.
+
+The 2026-10-21 controlled reconnect test proved that reopening the ALSA node is
+not sufficient evidence of a healthy pedal. The reader detected removal,
+reopened `/dev/snd/midiC3D0`, and reported connected, but received zero messages;
+direct `amidi` and `aseqdump` were also silent until the bank was reinitialized
+with the iOS app. Treat a valid mapped MIDI event after startup or reconnect as
+the functional readiness gate. Configuration inspection and recovery are
+deferred to CONTROL-002 rather than expanding this reliability fix in place.
 
 ### EFFECT-003 — Music-driven stage look expansion (`P1`, visuals)
 
@@ -161,23 +169,23 @@ a deliberate low-brightness Pi check before promoting the pack to Done.
 ### CONTROL-001 — Hotone Ampero foot-controller adapter (`P1`, performance control)
 
 The dependency-free USB MIDI parser and explicit raw-device adapter are
-implemented. The operator updated the pedal to firmware 1.1.8, verified notes
+implemented. The operator updated the pedal to firmware 1.13, verified notes
 60–62 and CC 23 values 127/0 from `/dev/snd/midiC3D0`, and confirmed scene
 navigation, tap tempo, and blackout in browser simulation. Guarded browser-live
 operation was subsequently reported working correctly. Same-path automatic
 reconnect and browser connection counters now prevent a transient device error
 from silently ending the reader thread.
 
-Acceptance: create a stable udev link and pass a rehearsal-length USB soak.
-Bluetooth MIDI remains a separate follow-up until Pi pairing and reconnect
-behavior are characterized.
+Acceptance: create a stable raw-MIDI udev link and pass a rehearsal-length USB
+soak. Deliberate USB recovery is deferred to CONTROL-002. Bluetooth MIDI remains
+a separate follow-up until Pi pairing and reconnect behavior are characterized.
 
 The integrated soak's first Pi run observed previous scene 5 times, next scene
 4 times, tap tempo 4 times, and both blackout states 3 times without allowing
 the probe to alter scenes or enable output. A later loss of pedal response led
 to the automatic reconnect fix. Repeat the current-catalog soak with one
-controlled disconnect; the raw device path must still be replaced with a stable
-udev link.
+ordinary operation; the raw device path must still be replaced with a stable
+raw-MIDI udev link.
 
 ### MAP-002 — Correct LF4808 geometry to 12 x 4 (`P0`, mapping)
 
@@ -245,6 +253,41 @@ available, follow `docs/pi-script-import.md`: copy it into a new dated directory
 hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
+
+### CONTROL-002 — Ampero configuration inspection and recovery (`P1`, reliability)
+
+Build a separately scoped tool for detecting, inspecting, verifying, backing
+up, and eventually restoring the known Phreqed bank on the Hotone Ampero
+Control. The motivating 2026-10-21 test showed that Linux can reopen the USB
+MIDI node while the pedal remains functionally silent; reinitializing it with
+the iOS app restored the expected messages. Do not treat an open descriptor or
+ALSA enumeration as proof that the programmed bank is active.
+
+Initial static research used the official firmware-1.13 Android application
+archive without committing the vendor binary. The archive SHA-256 is
+`3F8645221B4C6B8386211FFC914F751B79D6C54379E189464CE766EDFF5D6192`.
+It is a Flutter application using `flutter_blue`; strings identify preset
+request/send/acknowledgement paths, SysEx, CRC32, and custom GATT services. This
+makes controlled backup and recovery plausible, but the framing, checksum,
+firmware compatibility, and read-back behavior are not yet understood.
+
+Proposed interface: `phreqed-dmx ampero inspect` performs read-only discovery;
+`ampero verify config/ampero/light-control.toml` compares the observed bank to
+the expected mapping; and `ampero restore ...` remains unavailable until the
+write protocol is proven. Execute this as a dedicated sprint: static protocol
+extraction, read-only Pi GATT enumeration, characteristic identification,
+differential capture of configurations that differ by one value, framing/CRC
+decoding, read-only inspection, and only then an explicitly confirmed,
+single-bank write experiment.
+
+Acceptance: fake-transport tests never access hardware by default; inspect and
+verify are read-only; the exact device and firmware are checked; a restorable
+backup and dry-run exist; writes require explicit confirmation and are limited
+to one bank; every write is followed by read-back and round-trip validation;
+power-loss and partial-write behavior are understood; firmware-update endpoints
+are excluded; and failure leaves the live controller usable through its browser
+backup. Never commit the vendor APK or attempt writes during ordinary bench
+testing. See `docs/ampero-control.md`.
 
 ### WEAR-001 — Performer-safe wearable lighting prototype (`P2`, visual output)
 
