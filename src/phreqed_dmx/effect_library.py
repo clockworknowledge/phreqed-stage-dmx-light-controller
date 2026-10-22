@@ -477,30 +477,67 @@ def _flame_jet(
         y * 1.7 + math.sin(t * 0.7),
         seed + 911,
     )
-    flow = 0.58 + flow_noise * 0.42
-    downstream_width = strand_width * (0.78 + u * 0.52)
+    flow = 0.52 + flow_noise * 0.48
+    downstream_width = strand_width * (0.70 + u * 0.68)
 
-    # Three coherent filaments share one origin and diverge into distinct,
-    # continuously moving flame strands. Their phases are deliberately
-    # different so the four-row fixture still shows gaps and forked tips.
+    # Five filaments share the muzzle but diverge, narrow, swell, and break up
+    # independently downstream.  The low breakup floor keeps the jet legible
+    # across the fixture seam while avoiding long, uniform horizontal bars.
     strands = 0.0
     strand_shapes = (
-        (0.0, 0.42, 0.58, 1.0, 0.0),
-        (-0.48, 0.34, 0.83, 0.72, 1.9),
-        (0.48, 0.31, 0.71, 0.68, 4.2),
+        (0.0, 0.38, 0.53, 1.00, 0.0),
+        (-0.34, 0.31, 0.79, 0.82, 1.4),
+        (0.34, 0.34, 0.67, 0.78, 3.1),
+        (-0.66, 0.25, 1.03, 0.58, 4.7),
+        (0.66, 0.23, 0.91, 0.54, 5.8),
     )
-    for offset, amplitude, frequency, weight, phase in strand_shapes:
+    for strand_index, (offset, amplitude, frequency, weight, phase) in enumerate(
+        strand_shapes
+    ):
         divergence = offset * (0.18 + u * 1.55)
         wave = math.sin(
             global_x * frequency * turbulence
             - t * (2.8 + frequency)
             + phase
         )
-        ripple = math.sin(global_x * 1.31 + t * 1.9 + phase * 0.7) * 0.12
-        line = center + divergence + (wave * amplitude + ripple) * (0.2 + u)
+        ripple = math.sin(
+            global_x * (1.17 + strand_index * 0.09)
+            + t * (1.55 + strand_index * 0.17)
+            + phase * 0.7
+        ) * 0.15
+        line = center + divergence + (wave * amplitude + ripple) * (0.18 + u)
         distance = abs(y - line)
-        filament = math.exp(-((distance / max(0.08, downstream_width)) ** 2))
-        strands = max(strands, filament * weight)
+        width_noise = _value_noise(
+            global_x * 0.71 - t * (2.1 + strand_index * 0.23),
+            strand_index * 2.37 + y * 0.13,
+            seed + 1201 + strand_index * 37,
+        )
+        local_width = downstream_width * (0.34 + width_noise * 0.78)
+        filament = math.exp(-((distance / max(0.07, local_width)) ** 2))
+        breakup_noise = _value_noise(
+            global_x * (0.83 + strand_index * 0.07)
+            - t * (3.0 + strand_index * 0.31),
+            strand_index * 1.91 + y * 0.21,
+            seed + 1607 + strand_index * 53,
+        )
+        breakup = 0.08 + 0.92 * _clamp((breakup_noise - 0.22) / 0.62)
+        strand_pulse = 0.32 + 0.68 * (
+            0.5
+            + 0.5
+            * math.sin(
+                t * (3.7 + strand_index * 0.41)
+                - global_x * (0.42 + strand_index * 0.035)
+                + phase
+            )
+        )
+        strands = max(strands, filament * weight * breakup * strand_pulse)
+
+    # A narrow, dim pilot flame prevents an accidental hard discontinuity at
+    # the A/B seam without filling the deliberate gaps in the brighter strands.
+    pilot_line = center + math.sin(global_x * 0.43 - t * 3.1) * (0.05 + u * 0.24)
+    pilot_width = strand_width * (0.23 + u * 0.17)
+    pilot = math.exp(-((abs(y - pilot_line) / max(0.05, pilot_width)) ** 2))
+    strands = max(strands, pilot * (0.10 + flow_noise * 0.12))
 
     horizontal = (0.42 + 0.58 * math.exp(-u * 1.35)) * tip_fade
     jet = strands * horizontal * flow
@@ -530,34 +567,82 @@ def _dynamic_wave(
     total_width = width * fixture.count
     global_x = x + fixture.index * width
     u = global_x / max(1, total_width - 1)
+    energy = 0.0
     onset = 0.0
-    treble = 0.0
     if context and context.audio is not None:
-        onset = context.audio.onset
-        treble = context.audio.bands.treble
+        audio = context.audio
+        onset = audio.onset
+        energy = _clamp(
+            audio.loudness * 0.5
+            + audio.bands.bass * 0.25
+            + audio.bands.mid * 0.15
+            + audio.bands.treble * 0.1
+        )
 
-    # The controller's shared animation clock already integrates tap tempo and
-    # smoothed music energy into t. Onset adds a local spatial contraction so a
-    # drum hit visibly increases frequency without replacing the tempo baseline.
-    cycles = parameters.number("cycles") * (
-        1.0 + onset * parameters.number("pulse_frequency")
+    # The shared clock changes travel velocity around the tap-tempo baseline.
+    # Audio only nudges phase here: spatial frequency and carrier shape remain
+    # stable, so musical hits cannot turn the ribbon into a noisy tangle.
+    cycles = parameters.number("cycles")
+    phase_nudge = (
+        (energy - 0.45) * parameters.number("pulse_frequency") * 0.45
+        + onset * parameters.number("cosine_morph") * 0.28
     )
     amplitude = parameters.number("amplitude")
     spatial_phase = u * cycles * TAU
-    sine_shape = math.sin(spatial_phase - t * 2.1)
-    cosine_shape = math.cos(spatial_phase * 1.18 + t * 1.65)
-    morph = _clamp(onset * parameters.number("cosine_morph"))
-    carrier = _lerp(sine_shape, cosine_shape, morph)
-    secondary = 0.16 + treble * 0.26
-    line = (
-        (height - 1) / 2
-        + carrier * amplitude
-        + math.cos(u * (cycles * 0.5 + 0.35) * TAU + t * 1.3) * secondary
-    )
+    carrier = math.sin(spatial_phase - t * 2.1 - phase_nudge)
+    line = (height - 1) / 2 + carrier * amplitude
     thickness = parameters.number("thickness")
     distance = abs(y - line)
     intensity = math.exp(-((distance / max(0.05, thickness)) ** 2))
     return _paint(u * 0.65 - t * 0.035, intensity, parameters)
+
+
+def _pacman_chase(
+    x: int, y: int, width: int, height: int, animation_time: float,
+    fixture: FixtureIdentity, parameters: EffectParameters,
+    context: PerformanceContext | None,
+) -> NormalizedRGB:
+    """Render one continuous Pac-Man chase across the combined fixture width."""
+    del context
+    t = _time(animation_time, parameters)
+    total_width = width * fixture.count
+    global_x = x + fixture.index * width
+    radius = parameters.number("radius")
+    travel_rate = parameters.number("travel_rate")
+    direction = parameters.choice("direction")
+    path_length = total_width + radius * 2.0 + 2.0
+    progress = (t * travel_rate) % path_length - radius - 1.0
+    facing = 1.0
+    center_x = progress
+    if direction == "right-left":
+        facing = -1.0
+        center_x = total_width - 1 - progress
+
+    center_y = (height - 1) / 2
+    dx = (global_x - center_x) * facing
+    dy = y - center_y
+    distance = math.hypot(dx, dy)
+    mouth_phase = abs(math.sin(t * parameters.number("mouth_rate") * TAU))
+    mouth_half_angle = 0.08 + mouth_phase * 0.63
+    angle = abs(math.atan2(dy, max(0.0001, dx)))
+    in_mouth = dx > 0.0 and angle < mouth_half_angle
+
+    # A single dark eye remains visible even at this deliberately tiny pixel
+    # resolution.  The hot end of the Ember palette reads yellow, while the
+    # dotted path remains visibly dimmer than the main character.
+    eye_x = center_x + facing * radius * 0.20
+    eye_y = center_y - radius * 0.42
+    in_eye = math.hypot(global_x - eye_x, y - eye_y) < 0.42
+    if distance <= radius and not in_mouth and not in_eye:
+        edge = _clamp((radius + 0.45 - distance) / 0.45)
+        return _paint(0.92, edge, parameters)
+
+    ahead = (global_x - center_x) * facing
+    dot_spacing = parameters.number("dot_spacing")
+    dot_phase = abs((ahead % dot_spacing) - dot_spacing / 2.0)
+    if ahead > radius + 0.35 and dot_phase < 0.36 and abs(dy) < 0.42:
+        return _paint(0.92, 0.38, parameters)
+    return BLACK_NORMALIZED
 
 
 def _blinking_eye(
@@ -809,19 +894,26 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("core_width", "Core width", 1.4, 0.25, 4.0, 0.05, "Width of the leading blast core"),
             number("spread", "Vertical spread", 1.0, 0.2, 3.0, 0.05, "Vertical plume spread"),
         ), brightness=0.62), _cross_blaster),
-        ProceduralEffect(_metadata("flame-jet", "Anchored Flame Jet", "A fixed left-side muzzle fires turbulent flame strands across both fixtures.", "cross-fixture", (
+        ProceduralEffect(_metadata("flame-jet", "Anchored Flame Jet", "A fixed left-side muzzle fires independently varying flame strands across both fixtures.", "cross-fixture", (
             number("length", "Jet length", 1.08, 0.45, 1.25, 0.01, "Fraction of the combined display reached by the flame"),
             number("turbulence", "Turbulence", 1.0, 0.25, 2.0, 0.05, "Motion and curl of the flame strands"),
             number("strand_width", "Strand width", 0.5, 0.18, 1.2, 0.02, "Soft width of each flame filament"),
             number("muzzle_size", "Muzzle size", 1.15, 0.4, 3.0, 0.05, "Size of the hot source at the far left"),
         ), brightness=0.68), _flame_jet),
-        ProceduralEffect(_metadata("dynamic-wave", "Dynamic Sine Wave", "A continuous sine/cosine light ribbon drifts across both fixtures.", "musical", (
+        ProceduralEffect(_metadata("dynamic-wave", "Dynamic Sine Wave", "A stable sine ribbon changes travel velocity around the tempo baseline.", "musical", (
             number("cycles", "Wave cycles", 2.2, 0.5, 6.0, 0.1, "Cycles across the combined display"),
             number("amplitude", "Amplitude", 1.15, 0.1, 1.8, 0.05, "Vertical wave travel"),
             number("thickness", "Line thickness", 0.52, 0.12, 1.5, 0.02, "Soft line width"),
-            number("pulse_frequency", "Pulse frequency boost", 0.75, 0.0, 1.5, 0.05, "Extra wave cycles at maximum onset"),
-            number("cosine_morph", "Cosine hit morph", 0.9, 0.0, 1.0, 0.05, "Sine-to-cosine morph strength on onset"),
+            number("pulse_frequency", "Music velocity", 0.35, 0.0, 1.5, 0.05, "Dynamic phase movement without changing wave frequency"),
+            number("cosine_morph", "Hit push", 0.2, 0.0, 1.0, 0.05, "Short forward phase push on musical onsets"),
         ), brightness=0.64), _dynamic_wave),
+        ProceduralEffect(_metadata("pacman", "Pac-Man Chase", "A chomping character follows a dotted path across both fixtures.", "sprite", (
+            ParameterSpec("direction", "Direction", "left-right", "Chase travel direction", choices=("left-right", "right-left")),
+            number("travel_rate", "Travel rate", 3.2, 0.5, 10.0, 0.1, "Horizontal cells per animation second"),
+            number("radius", "Character size", 1.75, 1.1, 2.2, 0.05, "Radius of the Pac-Man character"),
+            number("mouth_rate", "Chomp rate", 1.6, 0.3, 4.0, 0.1, "Mouth cycles per animation second"),
+            number("dot_spacing", "Dot spacing", 3.0, 2.0, 6.0, 0.25, "Distance between path dots"),
+        ), brightness=0.72), _pacman_chase),
         ProceduralEffect(_metadata("blinking-eye", "Blinking Eye", "A stylized eye opens, watches, and blinks on each fixture.", "sprite", (
             number("blink_rate", "Blink rate", 0.32, 0.08, 1.5, 0.02, "Complete blink cycles per animation second"),
             number("blink_duration", "Blink duration", 0.22, 0.08, 0.5, 0.01, "Fraction of the cycle spent closing and reopening"),

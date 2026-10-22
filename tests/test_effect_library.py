@@ -26,6 +26,7 @@ REQUIRED_ADVANCED_EFFECTS = {
     "cross-blaster",
     "flame-jet",
     "dynamic-wave",
+    "pacman",
     "blinking-eye",
     "inside-out-vu",
 }
@@ -210,7 +211,38 @@ class EffectLibraryTests(unittest.TestCase):
                 self.assertGreater(right_seam, 0.05)
                 self.assertGreater(far_tip, 0.01)
 
-    def test_dynamic_wave_morphs_and_contracts_on_music_pulse(self) -> None:
+    def test_flame_jet_strands_vary_across_space_and_time(self) -> None:
+        effect = EFFECT_REGISTRY.get("flame-jet")
+        parameters = EFFECT_REGISTRY.parameters("flame-jet")
+
+        def combined(animation_time: float) -> tuple[float, ...]:
+            columns = []
+            for global_x in range(24):
+                fixture = FixtureIdentity(
+                    "Cube A" if global_x < 12 else "Cube B", global_x // 12, 2
+                )
+                x = global_x % 12
+                columns.append(sum(
+                    sum((color.red, color.green, color.blue))
+                    for y in range(4)
+                    for color in (
+                        effect.sample(
+                            x, y, 12, 4, animation_time, fixture, parameters,
+                            self.context,
+                        ),
+                    )
+                ))
+            return tuple(columns)
+
+        first = combined(0.35)
+        second = combined(0.73)
+        downstream = first[3:21]
+        self.assertGreater(max(downstream) - min(downstream), 0.25)
+        self.assertGreater(
+            sum(abs(left - right) for left, right in zip(first, second)), 0.5
+        )
+
+    def test_dynamic_wave_keeps_stable_sine_geometry_on_music_pulse(self) -> None:
         effect = EFFECT_REGISTRY.get("dynamic-wave")
         parameters = EFFECT_REGISTRY.parameters("dynamic-wave")
         quiet = PerformanceContext(audio=AudioAnalysis())
@@ -236,6 +268,56 @@ class EffectLibraryTests(unittest.TestCase):
 
         self.assertEqual(frame(quiet), frame(quiet))
         self.assertNotEqual(frame(quiet), frame(pulse))
+
+        for context in (quiet, pulse):
+            brightest_rows = []
+            for global_x in range(24):
+                fixture = FixtureIdentity(
+                    "Cube A" if global_x < 12 else "Cube B", global_x // 12, 2
+                )
+                column = [
+                    effect.sample(
+                        global_x % 12, y, 12, 4, 0.75, fixture, parameters,
+                        context,
+                    )
+                    for y in range(4)
+                ]
+                brightest_rows.append(max(
+                    range(4),
+                    key=lambda row: sum((
+                        column[row].red, column[row].green, column[row].blue
+                    )),
+                ))
+            self.assertTrue(all(
+                abs(left - right) <= 2
+                for left, right in zip(brightest_rows, brightest_rows[1:])
+            ))
+
+    def test_pacman_moves_continuously_across_combined_fixture_surface(self) -> None:
+        effect = EFFECT_REGISTRY.get("pacman")
+        parameters = EFFECT_REGISTRY.parameters("pacman", {
+            "palette": "ember", "direction": "left-right",
+        })
+
+        def bright_centroid(animation_time: float) -> float:
+            weighted_x = 0.0
+            total = 0.0
+            for global_x in range(24):
+                fixture = FixtureIdentity(
+                    "Cube A" if global_x < 12 else "Cube B", global_x // 12, 2
+                )
+                for y in range(4):
+                    color = effect.sample(
+                        global_x % 12, y, 12, 4, animation_time, fixture,
+                        parameters, self.context,
+                    )
+                    weight = max(color.red, color.green, color.blue)
+                    if weight > 0.45:
+                        weighted_x += global_x * weight
+                        total += weight
+            return weighted_x / total
+
+        self.assertLess(bright_centroid(1.2), bright_centroid(2.0))
 
     def test_digital_rain_is_sparse_and_heads_move_downward(self) -> None:
         effect = EFFECT_REGISTRY.get("digital-rain")
