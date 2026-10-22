@@ -201,6 +201,13 @@ Do this only after checking QLC+, fixture modes, addresses, physical safety, and
 the operator blackout control. On handled shutdown, the app sends a best-effort
 blackout. See [Raspberry Pi deployment](docs/raspberry-pi-deployment.md).
 
+For unattended shows, the repository now includes a systemd boot sequence that
+starts headless QLC+ and then the browser controller while leaving lighting
+output stopped. The recommended control layout uses the USB Ampero as the
+offline performance control and a private, internet-independent stage LAN for
+the phone interface. See
+[Headless show control](docs/headless-show-control.md).
+
 Commands accept `--brightness` and `--speed`. The RGB ceiling defaults to 0.65.
 For a physically checked show rig, a higher temporary ceiling requires all of
 the following explicit live options:

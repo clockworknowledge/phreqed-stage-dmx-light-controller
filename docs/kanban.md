@@ -41,6 +41,31 @@ safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
 
+### OPS-003 — Unattended show startup and private control LAN (`P0`, deployment)
+
+A separate `phreqed-dmx.service` now starts after headless QLC+ without waiting
+for internet or venue Wi-Fi. It exposes browser-live capability but leaves
+Art-Net stopped until the operator explicitly selects **Start live**. The
+service restarts after application failure, tolerates an absent Ampero through
+the existing reconnect worker, and starts without audio rather than losing the
+browser when the Snowball is absent. Safe settings live outside Git in
+`/etc/default/phreqed-dmx`.
+
+The browser boundary now accepts a comma-separated list of specific trusted
+IPv4 networks. The commissioned home LAN and reserved private stage LAN
+`10.42.0.0/24` are permitted by both application and systemd filters. A
+dedicated private router with Pi Ethernet is the recommended production path;
+a Pi-hosted access point remains a separately provisioned alternative so an
+installation cannot unexpectedly replace the active SSH network.
+
+Acceptance remaining: deploy both updated systemd units on the Pi, validate
+them with `systemd-analyze verify`, reboot once with external Wi-Fi unavailable,
+and confirm QLC+ plus port 8080 recover while fixtures stay dark. Confirm the
+browser from the selected private LAN, then attach the Ampero and Snowball and
+verify pedal reconnect plus the documented no-audio startup behavior. A fixed
+Pi address or router DHCP reservation and private SSID/key must be recorded
+outside Git before show use.
+
 ### HW-002 — Guarded audio peak output for commissioned whites (`P0`, safety)
 
 Browser live can now separately arm audio-onset accents across all eight white

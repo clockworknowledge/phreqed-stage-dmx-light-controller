@@ -16,7 +16,12 @@ from phreqed_dmx.config import load_config
 from phreqed_dmx.engine import SceneEngine
 from phreqed_dmx.library import Cue, preset_data
 from phreqed_dmx.presets import PRESETS
-from phreqed_dmx.web_control import BrowserControl, BrowserFootCommands, ControlHandler
+from phreqed_dmx.web_control import (
+    BrowserControl,
+    BrowserFootCommands,
+    ControlHandler,
+    ControlServer,
+)
 
 
 class BrowserControlTests(unittest.TestCase):
@@ -407,6 +412,25 @@ class BrowserControlTests(unittest.TestCase):
 
 
 class HttpBoundaryTests(unittest.TestCase):
+    def test_server_accepts_multiple_specific_trusted_networks(self):
+        server = ControlServer(
+            ('127.0.0.1', 0),
+            Mock(),
+            '192.168.1.0/24, 10.42.0.0/24',
+        )
+        try:
+            self.assertTrue(server.verify_request(Mock(), ('127.0.0.1', 1)))
+            self.assertTrue(server.verify_request(Mock(), ('192.168.1.50', 1)))
+            self.assertTrue(server.verify_request(Mock(), ('10.42.0.8', 1)))
+            self.assertFalse(server.verify_request(Mock(), ('10.43.0.8', 1)))
+        finally:
+            server.server_close()
+
+    def test_server_rejects_empty_or_overly_broad_network_lists(self):
+        for networks in ('', ',', '0.0.0.0/0', '10.0.0.0/7'):
+            with self.subTest(networks=networks), self.assertRaises(ValueError):
+                ControlServer(('127.0.0.1', 0), Mock(), networks)
+
     def handler(self, body, *, token='expected', origin='http://127.0.0.1:8080', host='127.0.0.1:8080'):
         handler = object.__new__(ControlHandler)
         handler.server = SimpleNamespace(token='expected', control=Mock())

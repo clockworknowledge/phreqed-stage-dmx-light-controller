@@ -277,7 +277,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--web", action="store_true", help="browser control for explicit live mode")
     parser.add_argument("--host", default="127.0.0.1", help="browser listen address")
     parser.add_argument("--port", type=int, default=8080, help="browser port (default 8080)")
-    parser.add_argument("--allow-network", default="192.168.1.0/24", help="trusted IPv4 browser network")
+    parser.add_argument(
+        "--allow-network",
+        default="192.168.1.0/24",
+        help="comma-separated trusted IPv4 browser networks",
+    )
     parser.add_argument("--library", type=Path, default=Path.home() / ".local/share/phreqed-dmx/library.json",
                         help="user preset and scene JSON file")
     parser.add_argument(

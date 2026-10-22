@@ -22,6 +22,9 @@ The installer requires Python 3.11 or newer, creates `.venv`, installs the
 package, and runs the complete hardware-free test suite. It stops immediately
 if installation or a test fails.
 
+For unattended boot and phone/foot control without venue Wi-Fi, see
+[`headless-show-control.md`](headless-show-control.md).
+
 Tkinter is needed only for local simulation. If it is absent on Debian, install
 the distribution's `python3-tk` package. Live mode itself does not use Tkinter.
 
@@ -79,8 +82,9 @@ Verify HTTP 200 from `http://127.0.0.1:9999` and recheck blackout in the web UI.
 
 This command enables unauthenticated web access and listens on wildcard
 addresses. The service now filters QLC+ IP traffic using `IPAddressDeny=any`
-with exceptions for localhost (IPv4/IPv6) and `192.168.1.0/24`. Update the
-allowed subnet before moving to another network. The filter requires cgroup
+with exceptions for localhost (IPv4/IPv6), `192.168.1.0/24`, and the reserved
+private stage subnet `10.42.0.0/24`. Update the allowed subnets before moving
+to another network. The filter requires cgroup
 BPF support; check startup logs and permitted/denied requests after installation.
 It does not change SSH or the host-wide firewall. Localhost and LAN HTTP
 returned 200 on this Pi; its own global IPv6 HTTP probe timed out. The operator
@@ -125,6 +129,28 @@ Press Ctrl+C for a handled shutdown. The sender requests one full-universe
 blackout before closing, but abrupt termination, power failure, or network
 failure cannot guarantee it. Configure an operational blackout procedure in
 QLC+ as the final safety layer.
+
+## Unattended boot sequence
+
+After the regular Pi installation and QLC+ commissioning pass, install the
+Phreqed service with safe defaults:
+
+```bash
+cd ~/phreqed-stage-dmx-light-controller
+bash scripts/pi-install-show-service.sh
+sudoedit /etc/default/phreqed-dmx
+sudo reboot
+```
+
+The service starts after QLC+, restarts on application failure, and does not
+wait for external internet or venue Wi-Fi. It serves the browser with output
+stopped; the browser's explicit **Start live** action is still required. Use
+`bash scripts/pi-install-show-service.sh --start` only when a safe immediate
+service start has been planned. The environment file is preserved on later
+installer runs. The installer also synchronizes the repository's headless QLC+
+unit so it no longer waits for an external network; it preserves the previous
+installed unit once as `qlcplus.service.before-show-sequence`. It does not
+replace the commissioned QLC+ workspace.
 
 ## Browser show control
 

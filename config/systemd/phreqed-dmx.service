@@ -1,0 +1,35 @@
+[Unit]
+Description=Phreqed Stage DMX browser controller
+Wants=sound.target qlcplus.service
+After=network.target sound.target qlcplus.service
+ConditionPathExists=/home/mmorley/phreqed-stage-dmx-light-controller/.venv/bin/phreqed-dmx
+StartLimitIntervalSec=60
+StartLimitBurst=6
+
+[Service]
+Type=simple
+User=mmorley
+Environment=HOME=/home/mmorley
+EnvironmentFile=-/etc/default/phreqed-dmx
+WorkingDirectory=/home/mmorley/phreqed-stage-dmx-light-controller
+ExecStartPre=/bin/sleep 5
+ExecStart=/home/mmorley/phreqed-stage-dmx-light-controller/scripts/run-show-controller.sh
+Restart=always
+RestartSec=5
+TimeoutStopSec=20
+KillSignal=SIGTERM
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+# Permit the commissioned home LAN and the reserved Phreqed stage LAN.
+IPAddressDeny=any
+IPAddressAllow=localhost
+IPAddressAllow=192.168.1.0/24
+IPAddressAllow=10.42.0.0/24
+
+[Install]
+WantedBy=multi-user.target

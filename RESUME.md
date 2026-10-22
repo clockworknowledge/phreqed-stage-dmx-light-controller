@@ -2,6 +2,32 @@
 
 Last updated: 2026-10-22
 
+## Latest checkpoint -- unattended show startup
+
+Headless show startup is prepared for Pi validation. The new
+`phreqed-dmx.service` orders the browser controller after `qlcplus.service`,
+restarts it after failure, and does not wait for external internet or venue
+Wi-Fi. Startup provides live capability but keeps output stopped until the
+browser's explicit **Start live** action. Runtime settings are read from
+`/etc/default/phreqed-dmx`; the installer preserves an existing local file.
+
+The launcher checks for the configured Snowball name. A missing optional mic
+now produces a warning and starts the browser without audio instead of taking
+down control. A missing Ampero remains visible and recoverable through the
+existing raw-MIDI retry worker. The controller accepts comma-separated trusted
+IPv4 networks, and service filters include both the current home LAN and the
+reserved private stage LAN `10.42.0.0/24`.
+
+The recommended production topology is Ampero-over-USB for no-screen show
+commands plus a dedicated private router for the phone interface, with the Pi
+on Ethernet and no internet dependency. A Pi-hosted access point is documented
+as an alternative but is not provisioned automatically because changing the
+active Wi-Fi profile could interrupt SSH. Windows Python 3.12 passes all 161
+tests; both launcher scripts pass `bash -n`, and missing optional/required audio
+launcher paths were exercised with a non-networking fake executable. Pi
+systemd verification, reboot-darkness observation, and private-LAN acceptance
+remain under OPS-003.
+
 ## Latest checkpoint -- adaptive audio headroom and visual refinements
 
 Sustained loud microphone input can no longer leave normalized analysis pinned

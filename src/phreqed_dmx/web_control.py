@@ -489,16 +489,30 @@ class ControlServer(ThreadingHTTPServer):
     allow_reuse_address = True
 
     def __init__(self, address: tuple[str, int], control: BrowserControl, allow_network: str) -> None:
-        self.network = ipaddress.ip_network(allow_network, strict=True)
-        if self.network.version != 4 or self.network.prefixlen < 8:
-            raise ValueError('allow-network must be a specific trusted IPv4 network')
+        network_names = [
+            name.strip() for name in allow_network.split(',') if name.strip()
+        ]
+        if not network_names:
+            raise ValueError('allow-network must contain a trusted IPv4 network')
+        self.networks = tuple(
+            ipaddress.ip_network(name, strict=True) for name in network_names
+        )
+        if any(
+            network.version != 4 or network.prefixlen < 8
+            for network in self.networks
+        ):
+            raise ValueError(
+                'allow-network must contain specific trusted IPv4 networks'
+            )
         self.control = control
         self.token = secrets.token_urlsafe(32)
         super().__init__(address, ControlHandler)
 
     def verify_request(self, request: object, client_address: tuple) -> bool:
         address = ipaddress.ip_address(client_address[0])
-        return address.is_loopback or address in self.network
+        return address.is_loopback or any(
+            address in network for network in self.networks
+        )
 
 
 class ControlHandler(BaseHTTPRequestHandler):
