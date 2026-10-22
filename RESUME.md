@@ -2,6 +2,37 @@
 
 Last updated: 2026-10-22
 
+## Pause checkpoint -- successful live band test
+
+The unattended Pi deployment and first live band test were operator-confirmed
+working on 2026-10-22. After reboot, `qlcplus.service` started at 21:14:10 and
+`phreqed-dmx.service` followed five seconds later. QLC+ loaded the commissioned
+workspace, the Snowball capture process was active, and Phreqed advertised
+simulation with output stopped until the operator explicitly started live
+output. The browser, two LF4808 fixtures, audio-reactive operation, scene
+control, and Ampero controls were subsequently reported working together with
+the band.
+
+The Ampero changed from `/dev/snd/midiC3D0` to `midiC2D0` at that boot. Commit
+`55701dd` adds the USB-identity-based `/dev/snd/phreqed-ampero-midi` udev link
+and updates the service installer. The operator reported the resulting live
+system working, but the resolved-link output and an explicit unplug/replug or
+second-reboot observation were not captured in chat; retain those as validation
+rather than inferring them.
+
+Current development branch and remote are `feat/audio-context` at `55701dd`.
+Do not use the main-only `scripts/pi-update.sh` until this branch is merged;
+feature-branch deployments use `git pull --ff-only origin feat/audio-context`,
+`scripts/pi-install.sh`, and `scripts/pi-install-show-service.sh`. The Windows
+checkout still contains four unrelated user-staged Playwright YAML/PNG
+artifacts; preserve them.
+
+Next priorities after the pause are: verify the stable MIDI link across a
+reboot and USB reconnect, choose and validate the private stage LAN, perform a
+longer band-volume resource/pedal soak, continue CONTROL-002 pedal-bank recovery
+research, and complete the deliberately guarded center-white acceptance tests.
+The Pi can remain powered off while this work is paused.
+
 ## Latest checkpoint -- stable Ampero raw-MIDI identity
 
 The first unattended boot succeeded for QLC+ and Phreqed, with browser output

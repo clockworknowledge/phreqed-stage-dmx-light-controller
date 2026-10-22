@@ -58,13 +58,18 @@ dedicated private router with Pi Ethernet is the recommended production path;
 a Pi-hosted access point remains a separately provisioned alternative so an
 installation cannot unexpectedly replace the active SSH network.
 
-Acceptance remaining: deploy both updated systemd units on the Pi, validate
-them with `systemd-analyze verify`, reboot once with external Wi-Fi unavailable,
-and confirm QLC+ plus port 8080 recover while fixtures stay dark. Confirm the
-browser from the selected private LAN, then attach the Ampero and Snowball and
-verify pedal reconnect plus the documented no-audio startup behavior. A fixed
-Pi address or router DHCP reservation and private SSID/key must be recorded
-outside Git before show use.
+Pi evidence on 2026-10-22: both enabled services survived an unattended reboot.
+QLC+ started first and Phreqed followed five seconds later; the browser logged
+`simulation active; output stopped`, Snowball capture was active, and the
+operator subsequently reported the full browser, audio, pedal, and two-fixture
+live path working with the band. The unsupported `curl -I` response on port
+8080 was only an HTTP HEAD limitation; the documented state check now uses GET.
+
+Acceptance remaining: repeat boot once with external Wi-Fi unavailable and
+confirm QLC+ plus port 8080 recover while fixtures stay dark. Confirm the
+browser from the selected private LAN and verify the documented no-audio
+startup behavior. A fixed Pi address or router DHCP reservation and private
+SSID/key must be recorded outside Git before show use.
 
 ### HW-002 — Guarded audio peak output for commissioned whites (`P0`, safety)
 
@@ -98,10 +103,11 @@ genuine action errors. A recovered reconnect can pass only when the final device
 state is connected and all required pedal actions were observed; missing
 actions, a lost device, or a command error still fails the gate.
 
-Acceptance remaining: deploy to the Pi, verify brightness through repeated
-scene navigation, then perform a rehearsal-length pedal soak without forced
-disconnects. Deliberate disconnect/recovery acceptance follows CONTROL-002. A
-stable raw-MIDI udev path is still required to survive ALSA card renumbering.
+Acceptance remaining: perform a measured rehearsal-length pedal soak without
+forced disconnects and record brightness persistence through repeated scene
+navigation. Deliberate disconnect/recovery acceptance follows CONTROL-002. The
+stable raw-MIDI udev path is implemented; its reboot and unplug/replug behavior
+still needs explicit captured verification.
 
 The 2026-10-21 controlled reconnect test proved that reopening the ALSA node is
 not sufficient evidence of a healthy pedal. The reader detected removal,
@@ -166,6 +172,11 @@ missed slots, zero reserved-channel output, and successful shutdown blackout.
 Flame Thrower was the heaviest reported preset at 16.182 ms maximum render time,
 leaving more than 23 ms within the 40 ms frame budget.
 
+On 2026-10-22 the operator reported the current browser-controlled two-fixture
+show working well during a live band test. Detailed per-look visual acceptance
+and a current 44-look timing report remain open rather than being inferred from
+that overall result.
+
 ### SAFE-002 — Explicit show-time RGB ceiling (`P0`, safety)
 
 The default 0.65 RGB ceiling remains unchanged. A higher process-local ceiling
@@ -200,6 +211,10 @@ soak before calling the dynamics model performance-ready.
 
 The 2026-10-21 current-catalog bench confirmed 25 FPS timing across all 39
 looks. Visual response and rehearsal-level curve tuning remain open.
+
+The 2026-10-22 live band test exercised the Snowball-driven show at actual band
+volume and was reported working well. A longer measured run and recorded
+response-curve observations remain before this card is performance-complete.
 
 ### AUDIO-002 — Real-time audio synchronization (`P1`, music)
 
@@ -267,12 +282,16 @@ targets `/dev/snd/phreqed-ampero-midi`; the show-service installer deploys and
 reloads it. Pi verification across unplug/replug and reboot remains before this
 part of acceptance is closed.
 
+The operator reported scene control and the overall live system working during
+the 2026-10-22 band test after the card-renumbering repair. Because the resolved
+symlink and reconnect counters were not captured, retain explicit stable-link
+and rehearsal-duration evidence as the remaining gate.
+
 The integrated soak's first Pi run observed previous scene 5 times, next scene
 4 times, tap tempo 4 times, and both blackout states 3 times without allowing
 the probe to alter scenes or enable output. A later loss of pedal response led
 to the automatic reconnect fix. Repeat the current-catalog soak with one
-ordinary operation; the raw device path must still be replaced with a stable
-raw-MIDI udev link.
+ordinary operation using the stable raw-MIDI udev link.
 
 ### MAP-002 — Correct LF4808 geometry to 12 x 4 (`P0`, mapping)
 
