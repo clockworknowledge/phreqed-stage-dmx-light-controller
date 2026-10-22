@@ -91,8 +91,10 @@ browser controller's existing serialized command path so cue navigation,
 blackout, and safety state remain consistent. Its worker reopens the same raw
 MIDI path after transient read/device errors and publishes connection and
 reconnect status. Initial path absence starts the same waiting loop instead of
-terminating browser control. The worker retries only the explicit path; a stable
-udev link is still needed if ALSA renumbers the card.
+terminating browser control. The worker retries only the explicit path. Pi
+deployment therefore selects `/dev/snd/phreqed-ampero-midi`, created by a udev
+rule matching the commissioned pedal's USB identity, instead of a numbered
+ALSA card path.
 
 ## Future projector output
 

@@ -180,6 +180,8 @@ If USB MIDI drops temporarily, the reader closes and reopens the configured
 device instead of silently terminating. The browser reports connection state,
 message count, and reconnect count. A stable udev path is still required before
 unattended stage use because `/dev/snd/midiC3D0` can change after re-enumeration.
+The show-service installer now provides `/dev/snd/phreqed-ampero-midi`, matched
+to the commissioned Hotone USB identity, for this purpose.
 If the explicitly selected node is absent at startup, the browser controller now
 stays available and reports that MIDI is waiting while retrying that same path;
 it never guesses at or binds another MIDI device.

@@ -1,0 +1,3 @@
+# Stable raw-MIDI link for the commissioned Hotone Ampero Control (84ef:0029).
+# ATTRS walks the sound device's USB parents; other raw-MIDI devices are ignored.
+SUBSYSTEM=="sound", KERNEL=="midiC*D*", ATTRS{idVendor}=="84ef", ATTRS{idProduct}=="0029", SYMLINK+="snd/phreqed-ampero-midi"

@@ -53,6 +53,10 @@ missing at boot, its reader waits and reconnects when the raw-MIDI device
 appears. If the Snowball is missing, the browser starts without audio rather
 than becoming unavailable.
 
+The installer creates `/dev/snd/phreqed-ampero-midi` from the Ampero's USB
+identity, avoiding ALSA card-number changes such as `midiC3D0` becoming
+`midiC2D0` after a reboot.
+
 Install the controller service on the commissioned Pi:
 
 ```bash

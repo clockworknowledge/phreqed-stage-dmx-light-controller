@@ -451,8 +451,9 @@ through manual, timed, and foot-controlled scene navigation.
 The Ampero reader previously returned from its worker after the first ALSA
 select/read error. It now closes and reopens the same configured device, resets
 the MIDI parser, contains command and reporting exceptions, and publishes
-connection/message/reconnect status. ALSA card renumbering still requires a
-stable udev link and remains a deployment acceptance item.
+connection/message/reconnect status. The deployment now includes a stable
+raw-MIDI udev link matched to the commissioned pedal's USB identity; Pi
+unplug/replug and reboot verification remain deployment acceptance items.
 
 Audio deep dim is explicit and disabled by default. When enabled, the operator
 can choose a 0%-25% near-black floor below the persistent manual master. A

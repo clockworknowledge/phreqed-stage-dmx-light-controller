@@ -261,6 +261,12 @@ Acceptance: create a stable raw-MIDI udev link and pass a rehearsal-length USB
 soak. Deliberate USB recovery is deferred to CONTROL-002. Bluetooth MIDI remains
 a separate follow-up until Pi pairing and reconnect behavior are characterized.
 
+The stable-link implementation is now in
+`config/udev/70-phreqed-ampero.rules`. It matches USB identity `84ef:0029` and
+targets `/dev/snd/phreqed-ampero-midi`; the show-service installer deploys and
+reloads it. Pi verification across unplug/replug and reboot remains before this
+part of acceptance is closed.
+
 The integrated soak's first Pi run observed previous scene 5 times, next scene
 4 times, tap tempo 4 times, and both blackout states 3 times without allowing
 the probe to alter scenes or enable output. A later loss of pedal response led

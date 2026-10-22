@@ -46,6 +46,26 @@ Do not guess the path in a stage service: record the path reported for the
 Ampero Control. ALSA card numbers can change when other USB audio/MIDI devices
 are connected, so a stable udev link is required before unattended use.
 
+The repository supplies that link through
+`config/udev/70-phreqed-ampero.rules`. The show-service installer installs and
+reloads the rule. It matches only the commissioned Hotone USB vendor/product
+identity `84ef:0029` and creates:
+
+```text
+/dev/snd/phreqed-ampero-midi
+```
+
+Verify it after installation or after reconnecting the pedal:
+
+```bash
+ls -l /dev/snd/phreqed-ampero-midi
+udevadm info -q property -n /dev/snd/phreqed-ampero-midi | grep -E 'ID_VENDOR_ID|ID_MODEL_ID|ID_MODEL='
+```
+
+Set `PHREQED_FOOT_MIDI_DEVICE=/dev/snd/phreqed-ampero-midi` in
+`/etc/default/phreqed-dmx`. This solves ALSA card-number changes; it does not
+prove that the pedal retained its programmed MIDI bank.
+
 ## Hardware-free and pedal-only test
 
 The automated parser and mapping tests run without MIDI or DMX hardware:
@@ -58,7 +78,7 @@ For a pedal test with no Art-Net output, use browser simulation and the actual
 raw-MIDI path:
 
 ```bash
-phreqed-dmx web --foot-midi-device /dev/snd/midiC3D0
+phreqed-dmx web --foot-midi-device /dev/snd/phreqed-ampero-midi
 ```
 
 The browser should show `Preview · no output`. Confirm previous/next scene, tap
@@ -67,7 +87,7 @@ tempo, blackout on, and blackout off before testing live output.
 Live browser control remains a separate, explicit choice:
 
 ```bash
-phreqed-dmx live --web --foot-midi-device /dev/snd/midiC3D0
+phreqed-dmx live --web --foot-midi-device /dev/snd/phreqed-ampero-midi
 ```
 
 The pedal cannot start Art-Net transmission. Browser live confirmation and its
@@ -78,8 +98,8 @@ read, select, or device-disconnect error. A malformed command or UI-reporting
 failure is contained and cannot terminate the input thread. Browser control
 shows whether MIDI is connected, how many messages were received, and how many
 disconnect cycles occurred. This addresses transient USB/ALSA failures, but it
-does not solve Linux assigning the pedal a different card number. Use a stable
-udev symlink for unattended stage operation.
+does not solve Linux assigning the pedal a different card number unless the
+service selects the repository's stable udev symlink.
 
 The integrated soak report records all reconnect messages under `foot_events`,
 only mapped-action failures under `foot_errors`, and the pre-shutdown device
@@ -96,8 +116,8 @@ On 2026-10-20 the operator observed `90 3C 7F`, `90 3D 7F`, `90 3E 7F`,
 trusted-LAN browser simulation, and guarded browser-live operation was reported
 working. A later loss of pedal response exposed a reader thread that exited on
 the first device error; automatic same-path reconnect and status reporting are
-now implemented. A rehearsal-length USB soak and stable udev link remain
-pending.
+now implemented. The udev rule is implemented; Pi enumeration and a
+rehearsal-length USB soak remain pending.
 
 ## Deferred configuration recovery sprint
 
@@ -129,8 +149,8 @@ support page: <https://www.hotone.com/support/3>.
 
 The existing `/dev/snd/by-id/usb-HOTONE_Ampero_Control-00` link resolves to the
 ALSA control node (`controlC3`), not the raw MIDI node, so it cannot be passed to
-`--foot-midi-device`. Creating a stable raw-MIDI udev link remains separate
-deployment work.
+`--foot-midi-device`. The repository-specific udev rule instead links the
+matching raw MIDI child device directly.
 
 The intended command surface is:
 

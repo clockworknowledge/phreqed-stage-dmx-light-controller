@@ -2,6 +2,21 @@
 
 Last updated: 2026-10-22
 
+## Latest checkpoint -- stable Ampero raw-MIDI identity
+
+The first unattended boot succeeded for QLC+ and Phreqed, with browser output
+stopped and Snowball capture active. The Ampero enumerated as
+`/dev/snd/midiC2D0` rather than the configured `midiC3D0`, confirming that a
+numbered ALSA path cannot be used for unattended deployment.
+
+`config/udev/70-phreqed-ampero.rules` now matches the commissioned Hotone USB
+identity `84ef:0029` and creates `/dev/snd/phreqed-ampero-midi`. The show-service
+installer deploys and reloads the rule, reports the resolved target, warns when
+an existing environment file still uses a numbered path, and now verifies the
+browser with GET rather than unsupported HTTP HEAD. Pi unplug/replug and reboot
+verification remain pending; this does not address loss of the pedal's internal
+bank programming, which remains CONTROL-002.
+
 ## Latest checkpoint -- unattended show startup
 
 Headless show startup is prepared for Pi validation. The new

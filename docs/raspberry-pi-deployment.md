@@ -261,7 +261,7 @@ use this shorter initial run:
 .venv/bin/python scripts/pi-soak.py \
   --seconds-per-look 5 \
   --audio-device plughw:CARD=Snowball,DEV=0 \
-  --foot-midi-device /dev/snd/midiC3D0 \
+  --foot-midi-device /dev/snd/phreqed-ampero-midi \
   --require-foot-actions \
   --output /tmp/phreqed-full-bench.json
 ```
@@ -270,8 +270,8 @@ While it runs, press FS1 once, FS2 once, FS3 at least twice, and toggle FS4 on
 and off. The pedal is only probed in this harness: its events are counted but
 cannot change the rendered scene, remove blackout, or start output. The report
 fails if capture stops, an expected pedal action is missing, a MIDI read error
-occurs, or a rendering/safety check fails. Raw `/dev/snd/midiC*D*` numbers can
-change after a reboot, so confirm the current path with `amidi -l` first.
+occurs, or a rendering/safety check fails. Confirm the stable link resolves to
+the Ampero first with `ls -l /dev/snd/phreqed-ampero-midi`.
 
 The JSON report records achieved FPS, missed schedule slots, render time,
 process CPU use relative to one core, Linux resident memory, CPU temperature,
