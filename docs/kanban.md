@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-10-21
+Last reviewed: 2026-10-22
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -92,18 +92,25 @@ the run ended connected after 62 messages, every required action was observed,
 and no action errors occurred. This validates the reader recovery path when the
 pedal retains its programmed bank, while the silent-pedal case remains open.
 
+A post-move launch found the explicit `/dev/snd/midiC3D0` path absent and
+previously crashed before the reconnect thread started. Initial open failure is
+now recoverable: browser/audio control stays running, disconnected status is
+visible, and the worker retries only the operator-selected path. A changed ALSA
+card number still requires the operator to select the current node or complete
+the stable udev-link acceptance item.
+
 ### EFFECT-003 — Music-driven stage look expansion (`P1`, visuals)
 
-Four deterministic effects and five presets add Matrix Rain, a cross-fixture
-blaster, a fixed-source flame jet, a dynamics-driven sine/cosine ribbon, and an
-inside-out VU. Flame Thrower now has a compact hot muzzle at the far left of
-Cube A and several turbulent strands crossing continuously into Cube B instead
-of reusing the travelling bolt. Wave Rider keeps tempo as its baseline velocity;
-audio onsets briefly raise spatial frequency and morph its sine carrier toward
-cosine while treble supplies a smaller ripple. Inferno Rise places its heat source on logical
+The expanded deterministic scene pack includes Matrix Rain, a cross-fixture
+blaster, a fixed-source flame jet, a dynamics-driven sine ribbon, Pac-Man,
+Watchful Eyes, and an inside-out VU. Flame Thrower now has a compact hot muzzle
+at the far left of Cube A and five independently varying strands crossing
+continuously into Cube B instead of reading as uniform bars. Wave Rider keeps a
+stable sine carrier and lets bounded music dynamics vary travel velocity around
+the tapped-tempo baseline without changing spatial frequency. Inferno Rise places its heat source on logical
 row 3 (the confirmed physical bottom) and advects turbulence upward. Automated
 tests cover geometry, determinism, fixture independence, RGB ranges, directional
-flame continuity, and zero white-channel output.
+flame continuity and variation, Pac-Man travel, and zero white-channel output.
 
 Acceptance remaining: review all five looks in browser simulation, confirm the
 revised Flame Thrower reads as a left-origin jet across both fixtures, confirm
@@ -121,9 +128,13 @@ top-to-bottom movement, and randomized blank gaps. Blaster Sweep now fires a
 compact muzzle/projectile cycle and exposes left-to-right, right-to-left, and
 center-out direction choices. The new Watchful Eyes preset adds a synchronized
 opening/blinking eye to each fixture. These additions bring the catalog to 24
-effects, 18 presets, and 42 soak looks. The 144-test Windows suite, browser
-preview, and short socket-blocked 42-look smoke pass; Pi visual acceptance and
-the full five-second-per-look timing gate remain.
+effects and 18 presets. Pac-Man Chase adds one cross-fixture sprite effect and
+preset, bringing the current catalog to 25 effects, 19 presets, and 44 soak
+looks. The 159-test Windows suite passes. Browser simulation confirms the stable
+Wave Rider curve and visibly broken-up Flame Thrower strands, and a short
+socket-blocked 44-look smoke reports zero missed/over-budget frames, zero
+reserved-channel output, and zero shutdown blackout. Pi visual acceptance and
+the full five-second-per-look timing gate remain authoritative.
 
 The current 39-look Pi bench passed render timing at 25 FPS with zero reported
 missed slots, zero reserved-channel output, and successful shutdown blackout.
@@ -148,11 +159,15 @@ the physically secured show rig with QLC+ blackout immediately available.
 
 All registered effects now use a shared continuous animation clock. Tap tempo
 sets the baseline rate, `--speed` remains an operator trim, and smoothed music
-dynamics provide a bounded 1.0x-2.0x motion multiplier. Audio also modulates
+dynamics provide a bounded 0.7x-1.5x motion multiplier. Audio also modulates
 output from 55%-100% of the manual master without raising the RGB ceiling.
 The browser exposes both live multipliers and an opt-in deep-dim mode with an
-adjustable 0%-25% quiet floor. Silence preserves tempo-driven motion. No new
-runtime dependency was added.
+adjustable 0%-25% quiet floor. Slow automatic input leveling now restores
+analysis headroom when sustained venue volume pins loudness or a frequency band;
+the browser exposes its state and current gain. A hue-preserving compositor
+contrast control restores visual depth in fill-heavy looks without raising the
+master or RGB ceiling. Silence preserves tempo-driven motion. No new runtime
+dependency was added.
 
 Acceptance remaining: visually validate every preset with rehearsal-level
 Snowball input, tune the response curves, and confirm 25 FPS timing in the Pi
@@ -164,7 +179,7 @@ looks. Visual response and rehearsal-level curve tuning remain open.
 ### AUDIO-002 — Real-time audio synchronization (`P1`, music)
 
 Explicit `arecord` mono capture, deterministic PCM analysis, adaptive ambient
-noise handling, capture health, browser meters, and silence-on-input-loss are
+noise handling and auto-leveling, capture health, browser meters, and silence-on-input-loss are
 implemented without a new dependency. The Blue Snowball hardware name and raw
 input levels have been verified on the Pi. Capture remains off unless an ALSA
 device is explicitly supplied and cannot select or enable Art-Net output.

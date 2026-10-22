@@ -52,6 +52,11 @@ the rendered scene below it and cannot alter the ceiling. Browser preset and
 scene selection preserve the active manual master override rather than
 reapplying each preset's stored global brightness.
 
+The compositor's optional 1.0x-3.0x contrast curve shapes normalized pixel
+intensity before the manual master is applied. It preserves hue and expands
+separation between dim and bright pixels, but it cannot raise a channel above
+the configured RGB ceiling.
+
 Commissioned center-white output has an independent process-local ceiling. It
 defaults to 0.10. A value above 0.10 can enter `BrowserControl` only from the
 CLI's explicit `live --web` path with `--white-ceiling` and
@@ -62,7 +67,7 @@ limit, the 4 Hz limiter, blackout, live-stop, failure, or lease-loss behavior.
 
 `AudioReactiveClock` integrates a continuous animation time shared by every
 effect. Tempo establishes the baseline rate, `--speed` is the operator trim,
-and smoothed audio energy provides a bounded 1.0x-2.0x motion multiplier.
+and smoothed audio energy provides a bounded 0.7x-1.5x motion multiplier.
 Audio also supplies a bounded 55%-100% brightness multiplier below the manual
 master. An explicit deep-dim setting can replace the 55% floor with an
 operator-selected 0%-25% floor. With no audio source, both multipliers remain
@@ -73,7 +78,10 @@ plus a small `AudioAnalysisSource` boundary. Manual and recorded sources are
 dependency-free and deterministic. `audio_capture.py` optionally runs explicit
 ALSA capture and PCM analysis on a worker outside the render deadline. With no
 source configured, the capture module is not imported and rendering follows the
-existing non-audio path unchanged.
+existing non-audio path unchanged. Capture auto-leveling is enabled by default:
+it slowly calibrates against the strongest normalized analysis feature to
+restore headroom when sustained venue volume would otherwise clamp meters at
+1.0. It never changes compositor or DMX safety ceilings.
 
 `foot_control.py` parses standard MIDI channel messages without a third-party
 runtime dependency and maps an explicitly selected Hotone Ampero Control input
@@ -82,7 +90,9 @@ cannot enable live output. Browser-mode pedal actions are routed through the
 browser controller's existing serialized command path so cue navigation,
 blackout, and safety state remain consistent. Its worker reopens the same raw
 MIDI path after transient read/device errors and publishes connection and
-reconnect status; a stable udev link is still needed if ALSA renumbers the card.
+reconnect status. Initial path absence starts the same waiting loop instead of
+terminating browser control. The worker retries only the explicit path; a stable
+udev link is still needed if ALSA renumbers the card.
 
 ## Future projector output
 

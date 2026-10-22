@@ -12,17 +12,17 @@ To continue deployment or development in a fresh Codex session, start with the
 
 The reconstructed conversation baseline is preserved unchanged under
 `phreqed-stage-dmx-baseline/`. The package retains its plasma, tunnel, pulse,
-chase, and cross-cube chase while adding eighteen advanced effects. These
+chase, and cross-cube chase while adding twenty-one advanced effects. These
 snapshots are not direct Pi exports; see the [baseline inventory](docs/baseline-inventory.md)
 and [Pi comparison checklist](docs/pi-script-import.md).
 
 ## Phase 2 capabilities
 
-- 22 registered effects with validated metadata and deterministic output
+- 25 registered effects with validated metadata and deterministic output
 - spectrum, magma, ocean, neon, ember, monochrome, and matrix palettes
 - alpha, additive, and lighten layers with opacity and masks
 - independent per-cube effects or continuous cross-cube effects
-- seventeen built-in multi-layer presets, including independent and cross-cube show looks
+- nineteen built-in presets, including independent and cross-cube show looks
 - conservative global brightness ceiling and frame-rise limiter
 - transport-independent blackout, preset, event, tap-tempo, and navigation APIs
 - normalized, replayable audio analysis with explicit opt-in Blue Snowball/ALSA
@@ -93,6 +93,7 @@ phreqed-dmx simulate --preset matrix-rain
 phreqed-dmx simulate --preset blaster-sweep
 phreqed-dmx simulate --preset flame-thrower
 phreqed-dmx simulate --preset wave-rider
+phreqed-dmx simulate --preset pacman-chase
 phreqed-dmx simulate --preset inside-out-vu
 ```
 
@@ -146,13 +147,19 @@ This command is still browser simulation and cannot transmit Art-Net. The page
 shows loudness, onset, bass, mid, and treble meters. If response is too weak or
 too sensitive, add `--audio-sensitivity 8` (valid range `0.1..40`, default
 `12`). Tempo establishes the base animation rate for every effect. Smoothed
-music dynamics then vary motion from 1.0x to 2.0x and brightness from 55% to
-100% of the manual master; they never raise the RGB ceiling. Input loss clears
+music dynamics then vary motion from 0.7x to 1.5x around that baseline and
+brightness from 55% to 100% of the manual master; they never raise the RGB
+ceiling. Automatic microphone leveling is on by default and slowly reduces
+analysis gain when sustained venue volume would otherwise pin a meter; it can
+be toggled in the browser or disabled with `--no-audio-auto-level`. Input loss clears
 the analysis to silence without stopping controls or tempo-driven movement.
 Enable **Deep dim on quiet passages** in the browser to replace the normal 55%
 floor with an adjustable 0%-25% near-black floor. The setting changes only the
 audio multiplier; the master slider remains the persistent peak level when
 presets or scenes change.
+The browser's **Visual contrast** control (1.0x-3.0x) expands separation between
+dim and bright pixels without increasing the master or RGB ceiling. This is
+particularly useful for fill-heavy looks at higher master settings.
 See [Audio synchronization](docs/audio-synchronization.md) for limitations and
 the remaining Raspberry Pi timing gate.
 
@@ -173,6 +180,9 @@ If USB MIDI drops temporarily, the reader closes and reopens the configured
 device instead of silently terminating. The browser reports connection state,
 message count, and reconnect count. A stable udev path is still required before
 unattended stage use because `/dev/snd/midiC3D0` can change after re-enumeration.
+If the explicitly selected node is absent at startup, the browser controller now
+stays available and reports that MIDI is waiting while retrying that same path;
+it never guesses at or binds another MIDI device.
 
 ## Run live on the Raspberry Pi
 
@@ -209,6 +219,10 @@ for manual mode, with `--mode mirror|complementary|independent` and
 `--second-effect` where needed. Run `phreqed-dmx --help` for the complete effect
 and preset lists. With no command, the CLI defaults to simulation; network
 output can only be selected with the literal `live` command.
+
+The acknowledged ceiling may be set as high as `1.0` when full RGB range is
+required for a physically checked show. Treat that as available headroom, not a
+recommended starting level; the browser still starts at 25% or lower.
 
 Browser-controlled lighting requires both the explicit live command and web
 option. It still starts with output stopped and requires confirmation in the

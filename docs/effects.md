@@ -34,7 +34,8 @@ ceiling of 0.65.
 | `energy-transfer` | Cross-Cube Energy | cross-fixture | `rate` 0.5-16, `trail` 0.5-8.0 |
 | `cross-blaster` | Cross-Cube Blaster | cross-fixture | `direction` left-right/right-left/center-out, `rate` 1-24, `trail` 1-18, `core_width` 0.25-4, `spread` 0.2-3 |
 | `flame-jet` | Anchored Flame Jet | cross-fixture | `length` 0.45-1.25, `turbulence` 0.25-2, `strand_width` 0.18-1.2, `muzzle_size` 0.4-3 |
-| `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5, `pulse_frequency` 0-1.5, `cosine_morph` 0-1 |
+| `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5, `pulse_frequency` 0-1.5 (music velocity), `cosine_morph` 0-1 (legacy key; onset phase push) |
+| `pacman` | Pac-Man Chase | sprite | `direction` left-right/right-left, `travel_rate` 0.5-10, `radius` 1.1-2.2, `mouth_rate` 0.3-4, `dot_spacing` 2-6 |
 | `blinking-eye` | Blinking Eye | sprite | `blink_rate` 0.08-1.5, `blink_duration` 0.08-0.5, `iris_size` 0.16-0.65, `gaze` -0.5-0.5 |
 | `inside-out-vu` | Inside-Out VU | musical | `sensitivity` 0.25-2.5, `peak_width` 0.015-0.25 |
 | `radial-pulse` | Radial Pulse | musical | `frequency` 0.5-6.0, `sharpness` 1-6 |
@@ -49,8 +50,10 @@ adds a limited accent, and bass/treble balance supplies a small hue offset. With
 no audio frame, its established tempo-aware rendering remains unchanged.
 
 `flame-jet` anchors a compact white-hot source at the far left of Cube A and
-forks a persistent ember jet across Cube A, the fixture boundary, and Cube B.
-Audio dynamics make its reach and motion breathe without reversing its fixed
+forks five ember filaments across Cube A, the fixture boundary, and Cube B.
+Each filament has independent width, vertical drift, pulse, and moving breakup
+pockets, while a restrained floor preserves continuity across the seam. Audio
+dynamics make its reach and motion breathe without reversing its fixed
 left-to-right direction.
 
 `inside-out-vu` uses normalized audio energy when present and expands from the
@@ -60,11 +63,14 @@ still passes through the shared tempo and dynamics clock. The `fire` gradient
 is hottest at logical row 3, the physical bottom row; turbulence advects upward
 toward row 0. Fixtures should remain upright with their printed text readable.
 
-`dynamic-wave` remains a sine-led ribbon in quiet passages. Tap tempo and the
-shared smoothed dynamics clock establish its baseline phase velocity. Music
-onsets temporarily increase its spatial frequency and crossfade the carrier
-toward a cosine pattern; treble adds a smaller secondary ripple. Both reactions
-are bounded and return to the sine baseline as the onset decays.
+`dynamic-wave` always remains a single stable sine ribbon. Tap tempo establishes
+its baseline phase velocity; smoothed music dynamics move the shared clock
+between 0.7x and 1.5x and add only a small phase push. Audio never changes the
+wave's spatial frequency or morphs its carrier, so the shape remains readable.
+
+`pacman` treats both fixtures as one 24-by-4 sprite surface. A yellow character
+opens and closes its mouth while following a dim dotted path across the fixture
+seam. Direction and travel/chomp rates remain deterministic and editable.
 
 `digital-rain` uses a sparse deterministic column mask. Bright pale-green heads
 move from logical row 0 toward row 3, leave short darker tails, disappear for a
@@ -98,8 +104,9 @@ fixture. A closed eye leaves only a restrained lid line.
 - `blaster-sweep`: a neon bolt travelling left-to-right across both fixtures.
 - `flame-thrower`: a fixed far-left muzzle firing long, turbulent ember strands
   across the full combined display.
-- `wave-rider`: a tempo-led sine ribbon that tightens and morphs toward cosine
-  on detected musical pulses.
+- `wave-rider`: a stable tempo-led sine ribbon whose travel velocity follows
+  restrained musical dynamics.
+- `pacman-chase`: a yellow chomping character following a dotted cross-fixture path.
 - `inside-out-vu`: music energy growing from the shared centre to both outer edges.
 - `watchful-eyes`: a synchronized eye on each fixture opening, watching, and
   blinking.
@@ -107,5 +114,5 @@ fixture. A closed eye leaves only a restrained lid line.
 All presets default below the 0.65 global safety ceiling and contain no
 strobe-channel behavior. The added show pack is capped at 0.48 global
 brightness and avoids hard full-frame flashing. `acid-mirrors`, `split-signal`,
-and `crossfire` deliberately render different material on each fixture. All five
-new musical looks keep the center-white DMX channels at zero.
+and `crossfire` deliberately render different material on each fixture. All
+normal RGB looks keep the center-white DMX channels at zero.

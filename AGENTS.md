@@ -103,6 +103,9 @@ not effect code, converts those coordinates to physical zone order.
   an active heartbeat lease; losing the lease must stop with blackout.
 - Foot control is disabled unless an explicit raw-MIDI device path is supplied.
   MIDI input must not enable live output or bypass the browser live gate.
+  Initial absence or later loss of that path must not stop browser/audio
+  control; retry only the explicit path and report disconnected status rather
+  than scanning for another MIDI device.
 - Audio capture must remain disabled unless an explicit device is supplied.
   Audio analysis may modulate bounded effect parameters but must not enable live
   output, bypass blackout, or introduce unrestricted full-frame flashes.
@@ -124,6 +127,11 @@ not effect code, converts those coordinates to physical zone order.
 - Route tempo and audio dynamics through the shared bounded animation clock so
   every effect receives the same continuous time base. Audio brightness is a
   multiplier below the manual master and must never raise an output ceiling.
+- Keep capture auto-leveling bounded and independent of output ceilings. It may
+  restore analysis headroom after sustained clipping but must not create DMX
+  gain or replace the operator's persistent master control.
+- Apply visual contrast in normalized RGB space before the master/ceiling. It
+  must preserve hue, clamp all channels, and never expand the safety ceiling.
 - Treat the browser master brightness as a persistent operator override; preset
   and scene navigation must not silently clear or replace it.
 - Effects implement the standardized per-pixel interface, declare complete

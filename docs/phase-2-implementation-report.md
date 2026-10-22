@@ -543,3 +543,43 @@ a persistent warning and cannot request more than that value. Blackout, Stop
 output, rendering failure, and browser-lease loss disarm the feature in every
 mode. Simulation and all default output paths keep DMX 145-152 and 297-304 at
 zero.
+
+## Adaptive headroom and visual refinement -- 2026-10-22
+
+Rehearsal preparation identified two related readability problems: sustained
+microphone levels could clamp normalized analysis, and fill-heavy looks could
+lose visible brightness separation as the manual master increased. The capture
+analyzer now defaults to a bounded automatic level reference. It measures the
+strongest broadband or band feature, reduces analysis gain over sustained loud
+input, and releases slowly during quieter passages. The browser exposes its
+enabled state and current gain, and the CLI can opt out with
+`--no-audio-auto-level`. This gain exists only at the analysis boundary and
+cannot raise output ceilings.
+
+The normalized compositor adds a 1.0x-3.0x hue-preserving intensity curve before
+the existing master/ceiling stage. Its browser control can increase contrast in
+dense looks without increasing maximum output. The default remains 1.0x, so
+existing render output is unchanged unless the operator selects more contrast.
+
+Wave Rider now renders a single stable sine carrier. Audio moves its velocity
+around the tapped-tempo baseline within the shared 0.7x-1.5x clock range and
+adds only a small phase push; it no longer changes spatial frequency or morphs
+to a second carrier. Flame Thrower's five strands independently vary width,
+drift, breakup, and pulse across the combined fixture surface while retaining a
+continuous left-origin jet. The new deterministic Pac-Man generator adds a
+chomping cross-fixture character and dotted path. The resulting catalog contains
+25 effects and 19 presets, for 44 effect/preset soak looks. Pi visual and timing
+acceptance for this revision remain pending.
+
+The complete Windows suite passes 159 tests. A short socket-blocked smoke covers
+all 25 effects and 19 presets (44 looks) with zero missed slots, zero frames over
+the 40 ms budget, zero reserved-channel output, and zero shutdown blackout.
+Browser simulation visually confirms the stable Wave Rider carrier and stronger
+spatial/temporal breakup of the Flame Thrower strands.
+
+The rig's first post-move launch also exposed a startup reliability gap: an
+absent explicit `/dev/snd/midiC3D0` path raised `FileNotFoundError` before the
+existing reconnect worker began. Initial open failure is now recoverable. The
+browser and audio controller remain running, publish a waiting/disconnected
+MIDI status, and retry only the explicitly selected path rather than scanning
+for an arbitrary MIDI device.

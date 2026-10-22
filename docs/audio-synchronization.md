@@ -24,9 +24,9 @@ performance control and is not treated as measured loudness.
 
 `AudioReactiveClock` is the shared consumer for every effect. Tap tempo/BPM sets
 the baseline clock rate (120 BPM is 1.0x), and the manual `--speed` value is an
-additional operator trim. Smoothed loudness, onset, and band energy raise the
-motion multiplier from 1.0x to at most 2.0x. Silence therefore retains steady
-tempo-driven motion instead of freezing the stage.
+additional operator trim. Smoothed loudness, onset, and band energy move the
+motion multiplier from 0.7x to at most 1.5x around that baseline. Quiet passages
+therefore relax without freezing, while loud passages advance faster.
 
 The operator's master brightness remains the peak level. With an audio source,
 smoothed dynamics modulate visual output between 55% and 100% of that master;
@@ -52,8 +52,10 @@ timing validation. `audio_capture.py` provides:
    render loop;
 3. a deterministic, standard-library analyzer with smoothed loudness, bounded
    onset, and lightweight bass/mid/treble crossover filters;
-4. adaptive ambient-noise-floor tracking and adjustable input sensitivity;
-5. capture health plus five analysis meters in browser control; and
+4. adaptive ambient-noise-floor tracking, adjustable input sensitivity, and
+   slow automatic gain reduction when sustained input would pin any meter;
+5. capture health, current automatic gain, and five analysis meters in browser
+   control; and
 6. silence-on-EOF/error behavior, leaving render, blackout, and browser control
    running if the microphone disappears.
 
@@ -89,6 +91,13 @@ the resulting shared motion and brightness multipliers below the five analysis
 meters. Tempo supplies the base motion rate for every effect; audio dynamics
 modulate that rate and scale brightness below the manual master. Microphone
 analysis cannot raise a configured show-time ceiling.
+
+Automatic microphone leveling is enabled by default. It adapts downward quickly
+enough to restore headroom during sustained loud input and releases slowly to
+avoid pumping during musical gaps. The browser toggle changes it while running;
+`--no-audio-auto-level` starts with fixed analysis gain when deliberate manual
+calibration is preferred. This control changes analysis only and cannot raise
+RGB or center-white output ceilings.
 
 ## Acceptance gates
 

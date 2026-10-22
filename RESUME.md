@@ -1,6 +1,44 @@
 # Codex Resume: Audio Contract, Ampero Control, and Show Scene Pack
 
-Last updated: 2026-10-21
+Last updated: 2026-10-22
+
+## Latest checkpoint -- adaptive audio headroom and visual refinements
+
+Sustained loud microphone input can no longer leave normalized analysis pinned
+indefinitely. `Pcm16MonoAnalyzer` now defaults to a slow bounded auto-level that
+calibrates against the strongest of loudness/bass/mid/treble, attacks in roughly
+one second, releases slowly, and publishes its current gain. The browser exposes
+an Auto-level microphone toggle and gain readout. It remains analysis-only and
+cannot raise an RGB or center-white ceiling.
+
+The compositor now offers a persistent 1.0x-3.0x hue-preserving Visual contrast
+control. It darkens intermediate intensities before master brightness, restoring
+separation in fill-heavy looks while remaining downstream-limited. Full RGB
+range remains available only through explicit live startup with
+`--rgb-ceiling 1.0 --acknowledge-high-output`; default safety behavior is
+unchanged.
+
+Wave Rider is restored to one stable sine carrier. Tempo remains the baseline,
+while music moves the shared clock only between 0.7x and 1.5x and adds a small
+phase push; audio no longer changes wavelength or morphs the carrier. Flame
+Thrower now uses five independently varying strands with spatial width changes,
+vertical drift, moving breakup pockets, and separate pulses while retaining
+cross-seam continuity. A new deterministic `pacman` effect and Pac-Man Chase
+preset traverse the combined 24-by-4 display with a chomping character and dim
+dotted path. The catalog is now 25 effects and 19 presets (44 soak looks).
+
+The full Windows suite passes 159 tests. A socket-blocked 44-look smoke passes
+with zero missed slots, zero over-budget frames, zero reserved-channel output,
+and zero shutdown blackout. Browser simulation visually confirms the stable
+Wave Rider curve and the Flame Thrower strand breakup; Pi visual authority and
+full-duration timing remain pending.
+
+After the rig was shut down and moved, startup failed because the explicit
+`/dev/snd/midiC3D0` node did not exist. `RawMidiFootController.start()` now
+treats initial absence like a recoverable disconnect: browser/audio control
+continues, status reports that MIDI is waiting, and the worker retries only the
+operator-selected path. Reconnect or identify the current node with `amidi -l`
+and `ls -l /dev/snd/midiC*D*`; a stable udev raw-MIDI link remains outstanding.
 
 ## Latest checkpoint — guarded high-output center whites
 
