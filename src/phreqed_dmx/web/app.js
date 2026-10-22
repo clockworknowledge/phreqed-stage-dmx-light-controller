@@ -69,6 +69,8 @@ function renderState(s) {
     ? `HIGH-OUTPUT MODE: the RGB ceiling is ${Math.round(s.brightness_ceiling*100)}%. Confirm the fixtures are safely positioned, people nearby are warned, and QLC+ blackout is available. Output still starts at 25% brightness or lower.`
     : 'Confirm the fixtures are safely positioned, people nearby are warned, and QLC+ blackout is available. Output starts at 25% brightness or lower.';
   if (document.activeElement !== $('master')) { $('master').value = s.brightness; $('master-value').textContent = `${Math.round(s.brightness*100)}%`; }
+  if (document.activeElement !== $('contrast')) $('contrast').value = s.contrast ?? 1;
+  $('contrast-value').textContent = `${(s.contrast ?? 1).toFixed(2)}x`;
   if (document.activeElement !== $('quick-preset')) $('quick-preset').value = s.preset_id;
   $('bpm').textContent = Math.round(s.tempo);
   $('blackout-status').textContent = s.blackout ? 'Blackout is active.' : s.live ? 'Fixture output is live.' : 'Simulation. Fixtures are off.';
@@ -80,12 +82,17 @@ function renderState(s) {
   $('sequence-status').textContent = s.playing ? 'Running timed scene list.' : cue ? 'Holding this scene.' : 'Select a scene or start the list.';
   $('play').disabled = !cues.length || s.playing || s.blackout; $('pause').disabled = !s.playing;
   $('next').disabled = $('prev').disabled = !cues.length;
-  const audio = s.audio || {enabled:false,running:false,healthy:false,message:'Audio input disabled',loudness:0,onset:0,bass:0,mid:0,treble:0};
+  const audio = s.audio || {enabled:false,running:false,healthy:false,message:'Audio input disabled',loudness:0,onset:0,bass:0,mid:0,treble:0,auto_level_available:false,auto_level_enabled:false,gain_multiplier:1};
   $('audio-status').textContent = !audio.enabled ? 'Disabled' : audio.healthy ? 'Microphone active' : 'Input unavailable';
   $('audio-detail').textContent = audio.message;
   for (const key of ['loudness','onset','bass','mid','treble']) $(`audio-${key}`).value = audio[key] || 0;
   $('audio-motion').textContent = `${(audio.motion_multiplier ?? 1).toFixed(2)}x`;
   $('audio-brightness').textContent = `${Math.round((audio.brightness_multiplier ?? 1)*100)}%`;
+  $('audio-auto-level').checked = Boolean(audio.auto_level_enabled);
+  $('audio-auto-level').disabled = !audio.auto_level_available;
+  $('audio-gain').textContent = audio.auto_level_available
+    ? `Input gain ${(audio.gain_multiplier ?? 1).toFixed(2)}x · adapts slowly to sustained venue level`
+    : 'Auto-level requires an explicitly configured microphone input.';
   $('deep-dim').checked = Boolean(audio.deep_dim_enabled);
   if (document.activeElement !== $('quiet-floor')) $('quiet-floor').value = audio.quiet_floor ?? 0.03;
   $('quiet-floor-value').textContent = `${Math.round((audio.quiet_floor ?? 0.03)*100)}%`;
@@ -178,6 +185,9 @@ function renderCues() {
 $('quick-preset').addEventListener('change',e=>act('preset',{value:e.target.value}));
 $('master').addEventListener('input',e=>{$('master-value').textContent=`${Math.round(e.target.value*100)}%`;});
 $('master').addEventListener('change',e=>act('brightness',{value:Number(e.target.value)}));
+$('contrast').addEventListener('input',e=>{$('contrast-value').textContent=`${Number(e.target.value).toFixed(2)}x`;});
+$('contrast').addEventListener('change',e=>act('contrast',{value:Number(e.target.value)}));
+$('audio-auto-level').addEventListener('change',e=>act('audio_auto_level',{enabled:e.target.checked}));
 function updateAudioDimming(){act('audio_dimming',{enabled:$('deep-dim').checked,floor:Number($('quiet-floor').value)});}
 $('deep-dim').addEventListener('change',updateAudioDimming);
 $('quiet-floor').addEventListener('input',e=>{$('quiet-floor-value').textContent=`${Math.round(e.target.value*100)}%`;});

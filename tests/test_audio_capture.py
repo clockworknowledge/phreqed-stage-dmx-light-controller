@@ -99,6 +99,35 @@ class PcmAnalysisTests(unittest.TestCase):
             ArecordAudioSource("")
         with self.assertRaises(ValueError):
             ArecordAudioSource("default", chunk_frames=64)
+        with self.assertRaises(TypeError):
+            Pcm16MonoAnalyzer(auto_level=1)  # type: ignore[arg-type]
+
+    def test_auto_level_restores_headroom_after_sustained_loud_input(self) -> None:
+        pcm = tone(100.0, amplitude=12_000, frames=1_024)
+        automatic = Pcm16MonoAnalyzer(auto_level=True)
+        fixed = Pcm16MonoAnalyzer(auto_level=False)
+
+        for _ in range(220):
+            automatic_result = automatic.process(pcm)
+            fixed_result = fixed.process(pcm)
+
+        self.assertLess(automatic.gain_multiplier, 0.5)
+        self.assertLess(automatic_result.loudness, 0.9)
+        self.assertLess(automatic_result.bands.bass, 0.9)
+        self.assertGreater(fixed_result.loudness, 0.99)
+        self.assertEqual(fixed.gain_multiplier, 1.0)
+
+    def test_auto_level_can_be_toggled_without_restarting_capture(self) -> None:
+        analyzer = Pcm16MonoAnalyzer(auto_level=True)
+        pcm = tone(100.0, amplitude=12_000, frames=1_024)
+        for _ in range(120):
+            analyzer.process(pcm)
+        self.assertLess(analyzer.gain_multiplier, 1.0)
+        analyzer.configure_auto_level(False)
+        self.assertFalse(analyzer.auto_level_enabled)
+        self.assertEqual(analyzer.gain_multiplier, 1.0)
+        with self.assertRaises(TypeError):
+            analyzer.configure_auto_level(1)  # type: ignore[arg-type]
 
 
 class ArecordSourceTests(unittest.TestCase):

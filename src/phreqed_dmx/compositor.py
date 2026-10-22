@@ -4,6 +4,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+import math
 from typing import Mapping, Protocol
 
 from .color import BLACK_NORMALIZED, NormalizedGrid, NormalizedRGB
@@ -59,17 +60,32 @@ class Layer:
 
 class Compositor:
     def __init__(
-        self, *, global_brightness: float = 0.5, maximum_brightness: float = 0.65
+        self,
+        *,
+        global_brightness: float = 0.5,
+        maximum_brightness: float = 0.65,
+        contrast: float = 1.0,
     ) -> None:
         if not 0.0 <= maximum_brightness <= 1.0:
             raise ValueError("maximum_brightness must be between 0.0 and 1.0")
         self.maximum_brightness = maximum_brightness
+        self.set_contrast(contrast)
         self.set_global_brightness(global_brightness)
 
     def set_global_brightness(self, value: float) -> None:
         if not 0.0 <= value <= 1.0:
             raise ValueError("global brightness must be between 0.0 and 1.0")
         self.global_brightness = value
+
+    def set_contrast(self, value: float) -> None:
+        if (
+            isinstance(value, bool)
+            or not isinstance(value, (int, float))
+            or not math.isfinite(value)
+            or not 1.0 <= value <= 3.0
+        ):
+            raise ValueError("contrast must be between 1.0 and 3.0")
+        self.contrast = float(value)
 
     def compose(self, geometry: Geometry, layers: tuple[Layer, ...]) -> Scene:
         output = {
@@ -82,7 +98,14 @@ class Compositor:
         for grid in output.values():
             for y in range(grid.height):
                 for x in range(grid.width):
-                    grid[x, y] = grid[x, y].scaled(level)
+                    color = grid[x, y]
+                    peak = max(color.red, color.green, color.blue)
+                    contrast_scale = (
+                        0.0
+                        if peak <= 0.0
+                        else (peak ** self.contrast) / peak
+                    )
+                    grid[x, y] = color.scaled(contrast_scale * level)
         return output
 
     def transition(

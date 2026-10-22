@@ -125,6 +125,8 @@ class BrowserControl:
                     enabled=False, running=False, healthy=False,
                     message='Audio input disabled', loudness=0.0, onset=0.0,
                     bass=0.0, mid=0.0, treble=0.0,
+                    auto_level_available=False, auto_level_enabled=False,
+                    gain_multiplier=1.0,
                 )
             else:
                 analysis = source.sample(self.elapsed())
@@ -140,6 +142,13 @@ class BrowserControl:
                     bass=analysis.bands.bass,
                     mid=analysis.bands.mid,
                     treble=analysis.bands.treble,
+                    auto_level_available=callable(
+                        getattr(source, 'configure_auto_level', None)
+                    ),
+                    auto_level_enabled=getattr(
+                        status, 'auto_level_enabled', False
+                    ),
+                    gain_multiplier=getattr(status, 'gain_multiplier', 1.0),
                 )
             audio['motion_multiplier'] = self.controller.audio_motion_multiplier
             audio['brightness_multiplier'] = (
@@ -166,6 +175,7 @@ class BrowserControl:
                             self.engine.compositor.maximum_brightness,
                         ),
                         brightness_ceiling=self.engine.compositor.maximum_brightness,
+                        contrast=self.engine.compositor.contrast,
                         audio=audio,
                         white_preview=dict(
                             enabled=self.white_peak_preview,
@@ -285,6 +295,10 @@ class BrowserControl:
                     data.get('value'), 'brightness', 0,
                     self.engine.compositor.maximum_brightness,
                 ))
+            elif action == 'contrast':
+                self.engine.compositor.set_contrast(number(
+                    data.get('value'), 'contrast', 1.0, 3.0,
+                ))
             elif action == 'audio_dimming':
                 enabled = data.get('enabled')
                 if not isinstance(enabled, bool):
@@ -293,6 +307,16 @@ class BrowserControl:
                 self.controller.configure_audio_dimming(
                     enabled=enabled, quiet_floor=floor
                 )
+            elif action == 'audio_auto_level':
+                enabled = data.get('enabled')
+                if not isinstance(enabled, bool):
+                    raise ValueError('audio auto level enabled must be boolean')
+                configure = getattr(
+                    self.controller.audio_source, 'configure_auto_level', None
+                )
+                if not callable(configure):
+                    raise ValueError('audio auto level requires a capture source')
+                configure(enabled)
             elif action == 'white_preview':
                 enabled = data.get('enabled')
                 if not isinstance(enabled, bool):

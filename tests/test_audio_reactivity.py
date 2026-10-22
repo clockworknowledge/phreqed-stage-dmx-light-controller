@@ -33,8 +33,9 @@ class AudioReactiveClockTests(unittest.TestCase):
         loud = clock.advance(1.0, tempo_bpm=120.0, speed=1.0, audio=LOUD)
         self.assertGreaterEqual(quiet.brightness_multiplier, 0.55)
         self.assertLess(quiet.brightness_multiplier, 1.0)
+        self.assertLess(quiet.motion_multiplier, 1.0)
         self.assertGreater(loud.motion_multiplier, 1.0)
-        self.assertLessEqual(loud.motion_multiplier, 2.0)
+        self.assertLessEqual(loud.motion_multiplier, 1.5)
         self.assertGreater(loud.brightness_multiplier, quiet.brightness_multiplier)
         self.assertLessEqual(loud.brightness_multiplier, 1.0)
 

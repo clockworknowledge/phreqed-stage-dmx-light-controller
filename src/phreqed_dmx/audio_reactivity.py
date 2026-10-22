@@ -95,7 +95,10 @@ class AudioReactiveClock:
             + audio.bands.mid * 0.12
             + audio.bands.treble * 0.08,
         )
-        motion = min(2.0, 1.0 + energy * 0.75 + audio.onset * 0.25)
+        # Dynamics move animation on both sides of the tap-tempo baseline:
+        # quieter passages relax below 1x while loud sections and hits push it
+        # forward.  The narrow range keeps geometric effects recognizable.
+        motion = min(1.5, max(0.7, 0.72 + energy * 0.55 + audio.onset * 0.18))
         intensity = min(
             1.0,
             audio.loudness * 0.65

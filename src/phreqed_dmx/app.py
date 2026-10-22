@@ -161,6 +161,13 @@ def _positive(value: str) -> float:
     return parsed
 
 
+def _contrast(value: str) -> float:
+    parsed = float(value)
+    if not math.isfinite(parsed) or not 1.0 <= parsed <= 3.0:
+        raise argparse.ArgumentTypeError("contrast must be between 1.0 and 3.0")
+    return parsed
+
+
 def _audio_sensitivity(value: str) -> float:
     parsed = float(value)
     if not 0.1 <= parsed <= 40.0:
@@ -258,6 +265,13 @@ def build_parser() -> argparse.ArgumentParser:
         help="operator animation trim applied to the tempo and audio-driven clock",
     )
     parser.add_argument(
+        "--contrast",
+        type=_contrast,
+        default=1.0,
+        metavar="1.0-3.0",
+        help="preserve highlight separation at high master brightness (default 1.0)",
+    )
+    parser.add_argument(
         "--duration", type=_positive, help="optional live-mode run time in seconds"
     )
     parser.add_argument("--web", action="store_true", help="browser control for explicit live mode")
@@ -290,6 +304,12 @@ def build_parser() -> argparse.ArgumentParser:
         help="microphone analysis gain (default 12.0; requires --audio-device)",
     )
     parser.add_argument(
+        "--audio-auto-level",
+        action=argparse.BooleanOptionalAction,
+        default=True,
+        help="adapt microphone gain to avoid sustained pinned analysis (default on)",
+    )
+    parser.add_argument(
         "--audio-deep-dim",
         action="store_true",
         help="allow quiet audio to dim near black instead of the default 55%% floor",
@@ -307,7 +327,10 @@ def build_parser() -> argparse.ArgumentParser:
 def _configure_engine(args: argparse.Namespace, config: ControllerConfig) -> SceneEngine:
     engine = SceneEngine(
         config.fixtures,
-        compositor=Compositor(maximum_brightness=args.rgb_ceiling),
+        compositor=Compositor(
+            maximum_brightness=args.rgb_ceiling,
+            contrast=args.contrast,
+        ),
     )
     engine.activate_preset(args.preset)
     if args.brightness is not None:
@@ -393,7 +416,9 @@ def main(argv: list[str] | None = None) -> int:
         from .audio_capture import ArecordAudioSource
 
         audio_source = ArecordAudioSource(
-            args.audio_device, sensitivity=args.audio_sensitivity or 12.0
+            args.audio_device,
+            sensitivity=args.audio_sensitivity or 12.0,
+            auto_level=args.audio_auto_level,
         )
     controller = Controller(
         config,

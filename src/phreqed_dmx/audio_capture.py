@@ -51,7 +51,13 @@ class Pcm16MonoAnalyzer:
     for a given sequence of PCM chunks.
     """
 
-    def __init__(self, sample_rate: int = 44_100, *, sensitivity: float = 12.0) -> None:
+    def __init__(
+        self,
+        sample_rate: int = 44_100,
+        *,
+        sensitivity: float = 12.0,
+        auto_level: bool = True,
+    ) -> None:
         if isinstance(sample_rate, bool) or not isinstance(sample_rate, int):
             raise TypeError("sample_rate must be an integer")
         if sample_rate < 8_000:
@@ -60,8 +66,11 @@ class Pcm16MonoAnalyzer:
             raise TypeError("sensitivity must be numeric")
         if not math.isfinite(sensitivity) or not 0.1 <= sensitivity <= 40.0:
             raise ValueError("sensitivity must be between 0.1 and 40.0")
+        if not isinstance(auto_level, bool):
+            raise TypeError("auto_level must be boolean")
         self.sample_rate = sample_rate
         self.sensitivity = float(sensitivity)
+        self.auto_level_enabled = auto_level
         self._low_alpha = 1.0 - math.exp(-2.0 * math.pi * 250.0 / sample_rate)
         self._mid_alpha = 1.0 - math.exp(-2.0 * math.pi * 2_000.0 / sample_rate)
         self._low_state = 0.0
@@ -73,6 +82,25 @@ class Pcm16MonoAnalyzer:
         self._treble = 0.0
         self._onset = 0.0
         self._previous_target = 0.0
+        self._auto_reference = 0.78
+        self._gain_multiplier = 1.0
+        self._last_raw_level = 0.0
+
+    @property
+    def gain_multiplier(self) -> float:
+        return self._gain_multiplier
+
+    def configure_auto_level(self, enabled: bool) -> None:
+        if not isinstance(enabled, bool):
+            raise TypeError("auto level enabled must be boolean")
+        self.auto_level_enabled = enabled
+        if enabled:
+            self._auto_reference = max(0.78, self._last_raw_level)
+            self._gain_multiplier = min(
+                4.0, max(0.10, 0.78 / self._auto_reference)
+            )
+        else:
+            self._gain_multiplier = 1.0
 
     def process(self, pcm: bytes) -> AudioAnalysis:
         """Analyze one non-empty, complete PCM chunk."""
@@ -111,22 +139,45 @@ class Pcm16MonoAnalyzer:
         self._noise_floor += (rms - self._noise_floor) * _coefficient(duration, floor_tau)
         floor = self._noise_floor * 1.15
 
-        target = _clamp(max(0.0, rms - floor) * self.sensitivity)
-        bass_target = _clamp(
+        raw_target = max(0.0, rms - floor) * self.sensitivity
+        raw_bass = (
             max(0.0, math.sqrt(bass_energy / count) - floor * 0.45)
             * self.sensitivity
             * 1.8
         )
-        mid_target = _clamp(
+        raw_mid = (
             max(0.0, math.sqrt(mid_energy / count) - floor * 0.35)
             * self.sensitivity
             * 1.4
         )
-        treble_target = _clamp(
+        raw_treble = (
             max(0.0, math.sqrt(treble_energy / count) - floor * 0.25)
             * self.sensitivity
             * 1.2
         )
+        # Calibrate against the strongest feature, not only broadband
+        # loudness.  A bass-heavy stage mix must not leave an individual band
+        # pinned at 1.0 even when overall loudness still appears variable.
+        level_for_gain = max(raw_target, raw_bass, raw_mid, raw_treble)
+        self._last_raw_level = level_for_gain
+        if self.auto_level_enabled:
+            # Sustained loud input reduces gain within roughly a second; gain
+            # returns slowly so quiet gaps do not cause visible pumping.
+            reference_tau = 0.8 if level_for_gain > self._auto_reference else 8.0
+            self._auto_reference += (
+                level_for_gain - self._auto_reference
+            ) * _coefficient(duration, reference_tau)
+            self._auto_reference = max(0.05, self._auto_reference)
+            self._gain_multiplier = min(
+                4.0, max(0.10, 0.78 / self._auto_reference)
+            )
+        else:
+            self._gain_multiplier = 1.0
+
+        target = _clamp(raw_target * self._gain_multiplier)
+        bass_target = _clamp(raw_bass * self._gain_multiplier)
+        mid_target = _clamp(raw_mid * self._gain_multiplier)
+        treble_target = _clamp(raw_treble * self._gain_multiplier)
 
         onset_target = _clamp(max(0.0, target - self._previous_target) * 6.0)
         self._previous_target = target
@@ -158,6 +209,8 @@ class AudioCaptureStatus:
     healthy: bool = False
     message: str = "disabled"
     chunks_processed: int = 0
+    auto_level_enabled: bool = False
+    gain_multiplier: float = 1.0
 
 
 ProcessFactory = Callable[..., subprocess.Popen[bytes]]
@@ -173,6 +226,7 @@ class ArecordAudioSource:
         sample_rate: int = 44_100,
         chunk_frames: int = 1_024,
         sensitivity: float = 12.0,
+        auto_level: bool = True,
         executable: str = "arecord",
         process_factory: ProcessFactory = subprocess.Popen,
     ) -> None:
@@ -187,13 +241,19 @@ class ArecordAudioSource:
         self.device = device
         self.sample_rate = sample_rate
         self.chunk_frames = chunk_frames
-        self.analyzer = Pcm16MonoAnalyzer(sample_rate, sensitivity=sensitivity)
+        self.analyzer = Pcm16MonoAnalyzer(
+            sample_rate, sensitivity=sensitivity, auto_level=auto_level
+        )
         self.executable = executable
         self._process_factory = process_factory
         self._latest = ManualAudioAnalysisSource()
         self._stop_event = threading.Event()
         self._lock = threading.Lock()
-        self._status = AudioCaptureStatus(message="configured; not started")
+        self._status = AudioCaptureStatus(
+            message="configured; not started",
+            auto_level_enabled=self.analyzer.auto_level_enabled,
+            gain_multiplier=self.analyzer.gain_multiplier,
+        )
         self._process: subprocess.Popen[bytes] | None = None
         self._thread: threading.Thread | None = None
 
@@ -231,7 +291,22 @@ class ArecordAudioSource:
                 chunks_processed=int(
                     changes.get("chunks_processed", current.chunks_processed)
                 ),
+                auto_level_enabled=bool(
+                    changes.get(
+                        "auto_level_enabled", current.auto_level_enabled
+                    )
+                ),
+                gain_multiplier=float(
+                    changes.get("gain_multiplier", current.gain_multiplier)
+                ),
             )
+
+    def configure_auto_level(self, enabled: bool) -> None:
+        self.analyzer.configure_auto_level(enabled)
+        self._set_status(
+            auto_level_enabled=self.analyzer.auto_level_enabled,
+            gain_multiplier=self.analyzer.gain_multiplier,
+        )
 
     def start(self) -> None:
         if self._process is not None:
@@ -278,6 +353,8 @@ class ArecordAudioSource:
                         healthy=True,
                         message="capturing",
                         chunks_processed=chunks,
+                        auto_level_enabled=self.analyzer.auto_level_enabled,
+                        gain_multiplier=self.analyzer.gain_multiplier,
                     )
         except (OSError, ValueError) as exc:
             message = f"capture error: {exc}"

@@ -10,6 +10,7 @@ from unittest.mock import Mock, patch
 
 from phreqed_dmx.app import Controller, main
 from phreqed_dmx.audio_analysis import AudioAnalysis, FrequencyBands, ManualAudioAnalysisSource
+from phreqed_dmx.audio_capture import ArecordAudioSource
 from phreqed_dmx.compositor import Compositor
 from phreqed_dmx.config import load_config
 from phreqed_dmx.engine import SceneEngine
@@ -92,6 +93,35 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn('id="audio-motion"', html)
         self.assertIn('id="audio-brightness"', html)
 
+    def test_browser_controls_auto_level_and_visual_contrast(self):
+        source = ArecordAudioSource('default')
+        control = BrowserControl(
+            Controller(load_config(), audio_source=source), self.path
+        )
+        self.addCleanup(control.close)
+
+        self.assertTrue(control.state()['audio']['auto_level_available'])
+        self.assertTrue(control.state()['audio']['auto_level_enabled'])
+        control.command(dict(action='audio_auto_level', enabled=False))
+        control.command(dict(action='contrast', value=2.2))
+        state = control.state()
+        self.assertFalse(state['audio']['auto_level_enabled'])
+        self.assertEqual(state['audio']['gain_multiplier'], 1.0)
+        self.assertEqual(state['contrast'], 2.2)
+
+        html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
+        script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
+        self.assertIn('id="audio-auto-level"', html)
+        self.assertIn('id="audio-gain"', html)
+        self.assertIn('id="contrast"', html)
+        self.assertIn("act('audio_auto_level'", script)
+        self.assertIn("act('contrast'", script)
+
+        with self.assertRaises(ValueError):
+            self.control.command(dict(action='audio_auto_level', enabled=True))
+        with self.assertRaises(ValueError):
+            self.control.command(dict(action='contrast', value=3.1))
+
     def test_preset_and_scene_storage_survives_new_controller_without_autoplay(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
         cues = [dict(name='Night', preset_id='user-test', hold_seconds=7, fade_seconds=1)]
@@ -131,6 +161,8 @@ class BrowserControlTests(unittest.TestCase):
                         dict(action='select_scene', index=True),
                         dict(action='audio_dimming', enabled='yes', floor=0.02),
                         dict(action='audio_dimming', enabled=True, floor=0.5),
+                        dict(action='contrast', value=0.5),
+                        dict(action='audio_auto_level', enabled='yes'),
                         dict(action='white_preview', enabled=True, threshold=0.0, level=0.8),
                         dict(action='white_preview', enabled=True, threshold=0.65, level=2.0),
                         dict(action='white_output', enabled=True, level=0.05),

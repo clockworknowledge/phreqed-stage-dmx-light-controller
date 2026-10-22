@@ -32,6 +32,8 @@ class ConfigurationTests(unittest.TestCase):
         self.assertFalse(args.acknowledge_high_output_whites)
         self.assertFalse(args.audio_deep_dim)
         self.assertEqual(args.audio_quiet_floor, 0.03)
+        self.assertTrue(args.audio_auto_level)
+        self.assertEqual(args.contrast, 1.0)
 
     def test_command_line_help_renders_literal_percentages(self) -> None:
         help_text = build_parser().format_help()
@@ -99,12 +101,23 @@ class ConfigurationTests(unittest.TestCase):
 
         sender.assert_not_called()
         capture.assert_called_once_with(
-            "plughw:CARD=Snowball,DEV=0", sensitivity=9.5
+            "plughw:CARD=Snowball,DEV=0", sensitivity=9.5, auto_level=True
         )
         capture.return_value.start.assert_called_once_with()
         capture.return_value.close.assert_called_once_with()
         simulator.assert_called_once()
         simulator.return_value.run.assert_called_once_with()
+
+    def test_audio_auto_level_can_be_explicitly_disabled(self) -> None:
+        with (
+            patch("phreqed_dmx.audio_capture.ArecordAudioSource") as capture,
+            patch("phreqed_dmx.simulator.TkSimulator"),
+        ):
+            self.assertEqual(main([
+                "simulate", "--audio-device", "default",
+                "--no-audio-auto-level", "--contrast", "2.0",
+            ]), 0)
+        self.assertEqual(capture.call_args.kwargs["auto_level"], False)
 
     def test_audio_sensitivity_requires_explicit_device(self) -> None:
         with self.assertRaises(SystemExit):
