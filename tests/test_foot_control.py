@@ -114,6 +114,40 @@ class AmperoControlTests(unittest.TestCase):
         self.assertIn("add a scene first", errors[0])
         self.assertEqual(commands.calls, [("tap_tempo", None)])
 
+    def test_missing_device_at_start_waits_and_reconnects_without_crashing(self) -> None:
+        errors: list[str] = []
+        controller = RawMidiFootController(
+            "/dev/snd/midiC3D0",
+            FakeCommands(),
+            on_error=errors.append,
+            reconnect_interval=0.001,
+        )
+
+        def select_device(readers, writers, errors_list, timeout):
+            controller._stop.set()
+            return (), (), ()
+
+        with (
+            patch(
+                "phreqed_dmx.foot_control.os.open",
+                side_effect=(FileNotFoundError("not enumerated"), 11),
+            ) as opened,
+            patch("phreqed_dmx.foot_control.os.close"),
+            patch("phreqed_dmx.foot_control.select.select", side_effect=select_device),
+        ):
+            controller.start()
+            self.assertTrue(controller.status().running)
+            deadline = time.monotonic() + 1.0
+            while controller._thread is not None and controller._thread.is_alive():
+                if time.monotonic() >= deadline:
+                    self.fail("MIDI startup reconnect thread did not finish")
+                time.sleep(0.005)
+            self.assertEqual(opened.call_count, 2)
+            self.assertTrue(controller.status().connected)
+            self.assertTrue(any("unavailable at startup" in item for item in errors))
+            self.assertTrue(any("reconnected" in item for item in errors))
+            controller.close()
+
     def test_device_disconnect_reopens_input_instead_of_ending_thread(self) -> None:
         errors: list[str] = []
         commands = FakeCommands()

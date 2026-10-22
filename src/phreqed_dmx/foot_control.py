@@ -202,9 +202,25 @@ class RawMidiFootController:
         if self._thread is not None:
             raise RuntimeError("foot controller is already running")
         flags = os.O_RDONLY | getattr(os, "O_NONBLOCK", 0)
-        self._file_descriptor = os.open(self.device, flags)
         self._stop.clear()
-        self._set_status(running=True, connected=True, message="MIDI connected")
+        try:
+            self._file_descriptor = os.open(self.device, flags)
+        except OSError as exc:
+            # The browser and lighting controller remain useful when a pedal
+            # was unplugged during transport or has not enumerated yet.  Keep
+            # retrying only the explicit operator-selected path; never guess at
+            # another MIDI node that might control unrelated equipment.
+            self._file_descriptor = None
+            self._set_status(
+                running=True,
+                connected=False,
+                message=f"Waiting for MIDI device: {exc}",
+            )
+            self._report(
+                f"Foot controller unavailable at startup; reconnecting: {exc}"
+            )
+        else:
+            self._set_status(running=True, connected=True, message="MIDI connected")
         self._thread = threading.Thread(
             target=self._run, name="phreqed-foot-control", daemon=True
         )
