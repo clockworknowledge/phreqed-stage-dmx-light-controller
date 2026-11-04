@@ -77,7 +77,7 @@ and shutdown stop the timeline without automatic resume. A restart defaults to
 Manual mode, no active timeline, and output stopped. Recovery is documented in
 [`setlist-performance.md`](setlist-performance.md).
 
-Windows validation passes all 202 tests, including deterministic selection,
+Windows validation passes all 203 tests, including deterministic selection,
 explicit start/stop, no-next-song autostart, blackout cancellation, lease-loss
 cancellation, reboot-safe defaults, Manual-mode compatibility, serialized foot
 commands, and no Art-Net construction in simulation. Chromium validation

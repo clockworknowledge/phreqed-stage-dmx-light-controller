@@ -366,6 +366,15 @@ class BrowserControlTests(unittest.TestCase):
         ):
             self.assertIn(f'<option value="{style}">', html)
 
+    def test_stage_monitor_brightness_is_browser_only_and_persistent(self):
+        html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
+        script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
+        self.assertIn('id="monitor-brightness"', html)
+        self.assertIn('id="monitor-brightness-value"', html)
+        self.assertIn("'phreqed-monitor-brightness'", script)
+        self.assertIn('channel*monitorBrightness', script)
+        self.assertNotIn("act('monitor_brightness'", script)
+
     def test_deletion_rejects_referenced_presets_and_builtins(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
         self.control.command(dict(action='save_scenes', scenes=[dict(

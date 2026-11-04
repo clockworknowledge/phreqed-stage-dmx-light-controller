@@ -130,6 +130,10 @@ simulation-only `web` command:
 ```
 
 This opens only the browser HTTP server; it cannot enable Art-Net output.
+The Stage Monitor has a browser-only display-brightness slider, defaulting to
+2x, so quiet audio-reactive patterns remain visible. Its value is stored only
+in that browser and never changes rendered frames, master brightness, Art-Net,
+or any fixture safety ceiling.
 
 ### Preview microphone response
 

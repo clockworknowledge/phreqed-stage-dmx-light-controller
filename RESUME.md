@@ -31,10 +31,15 @@ and it refuses to drop an SSH session routed over the same Wi-Fi interface.
 The iPhone joins that SSID directly and opens `http://10.42.0.1:8080`; no venue
 Wi-Fi or internet is required. Secrets remain outside Git.
 
-Windows Python 3.12 now passes 202 tests and all changed shell/Python scripts
+Windows Python 3.12 now passes 203 tests and all changed shell/Python scripts
 pass syntax compilation. The three cards remain in Validation because the Pi
 hotspot, duplicate Ampero banks, offline boot, complete setlist run, browser
 lease loss, and low-brightness fixture sequence require operator hardware.
+
+The Stage Monitor now defaults to a browser-only 2x display brightness and
+offers a persistent 1x-5x slider. It scales only canvas pixels so dim patterns
+remain readable; DMX frames, master brightness, audio dynamics, and output
+ceilings are unchanged.
 
 `SONG-001`, `SONG-002`, and the software portion of `SHOW-004` are now
 implemented. The browser **Songs** tab can

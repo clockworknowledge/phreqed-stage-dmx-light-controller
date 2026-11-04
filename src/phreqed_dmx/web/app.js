@@ -5,6 +5,12 @@ let queue = Promise.resolve();
 let editingCue = null;
 let editingSongId = null, editingSongCueIndex = null, selectedSongId = null, selectedSetlistId = null;
 const copy = value => JSON.parse(JSON.stringify(value));
+const MONITOR_BRIGHTNESS_KEY = 'phreqed-monitor-brightness';
+function savedMonitorBrightness() {
+  try { const value=Number(localStorage.getItem(MONITOR_BRIGHTNESS_KEY)); return value>=1&&value<=5 ? value : 2; }
+  catch (_) { return 2; }
+}
+let monitorBrightness = savedMonitorBrightness();
 function node(tag, text, className) { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (className) e.className = className; return e; }
 function notify(text, error = false) { $('message').textContent = text; $('message').classList.toggle('error', error); }
 async function request(path, options) { const response = await fetch(path, {cache:'no-store', ...options}); const result = await response.json(); if (!response.ok) throw new Error(result.error || 'Controller request failed'); return result; }
@@ -53,7 +59,8 @@ function draw(canvas, rows, whiteLevel = 0) {
   const left = (canvas.width-width*cell)/2, top = (canvas.height-(height*cell+centerGap))/2;
   rows.forEach((row,y) => row.forEach((rgb,x) => {
     const rowTop = top+y*cell+(centerGap && y>=height/2 ? centerGap : 0);
-    ctx.fillStyle = `rgb(${rgb.join(',')})`;
+    const previewRgb = rgb.map(channel => Math.min(255,Math.round(channel*monitorBrightness)));
+    ctx.fillStyle = `rgb(${previewRgb.join(',')})`;
     ctx.fillRect(left+x*cell+pad,rowTop+pad,cell-pad*2,cell-pad*2);
   }));
   if (centerGap) {
@@ -344,6 +351,10 @@ $('master').addEventListener('input',e=>{$('master-value').textContent=`${Math.r
 $('master').addEventListener('change',e=>act('brightness',{value:Number(e.target.value)}));
 $('contrast').addEventListener('input',e=>{$('contrast-value').textContent=`${Number(e.target.value).toFixed(2)}x`;});
 $('contrast').addEventListener('change',e=>act('contrast',{value:Number(e.target.value)}));
+const monitorBrightnessControl=$('monitor-brightness');
+monitorBrightnessControl.value=monitorBrightness;$('monitor-brightness-value').textContent=`${monitorBrightness.toFixed(2)}x`;
+monitorBrightnessControl.addEventListener('input',e=>{monitorBrightness=Number(e.target.value);$('monitor-brightness-value').textContent=`${monitorBrightness.toFixed(2)}x`;});
+monitorBrightnessControl.addEventListener('change',()=>{try{localStorage.setItem(MONITOR_BRIGHTNESS_KEY,String(monitorBrightness));}catch(_){}});
 $('audio-auto-level').addEventListener('change',e=>act('audio_auto_level',{enabled:e.target.checked}));
 function updateAudioDimming(){act('audio_dimming',{enabled:$('deep-dim').checked,floor:Number($('quiet-floor').value)});}
 $('deep-dim').addEventListener('change',updateAudioDimming);
