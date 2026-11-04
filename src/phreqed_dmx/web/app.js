@@ -250,9 +250,11 @@ function deleteSong(song){
 function renderTimeline(){
   const song=selectedSongId?songById(selectedSongId):null;$('timeline-editor').hidden=!song;if(!song)return;
   $('timeline-title').textContent=song.title;const sheet=timelineSheet(song),editable=Boolean(sheet&&!sheet.published);
-  $('apply-style-default').textContent=song.style&&song.style!=='unspecified'?`Apply ${songStyleName(song)} default`:'Choose a song style first';$('apply-style-default').disabled=!song.style||song.style==='unspecified';
+  const styled=Boolean(song.style&&song.style!=='unspecified'),styleName=songStyleName(song);
+  $('apply-style-default').textContent=!styled?'Choose a song style first':editable?`Replace draft with ${styleName}`:sheet?.published?`Create ${styleName} revision`:`Create ${styleName} draft`;$('apply-style-default').disabled=!styled;
+  $('new-cue-draft').textContent=sheet?.published?'Copy published revision':'New manual draft';
   $('new-cue-draft').hidden=editable;$('publish-cue-sheet').hidden=!editable;$('song-cue-editor').hidden=!editable;$('song-cue-list').replaceChildren();
-  $('timeline-status').textContent=!sheet?'No cue sheet yet. Create the first draft.':sheet.published?`Published revision ${sheet.revision}. Create a new revision to edit.`:`Draft revision ${sheet.revision}. Add cues, preview them, then publish.`;
+  $('timeline-status').textContent=!sheet?`Style: ${styleName}. Create a style-based or manual draft.`:sheet.published?`Style: ${styleName}. Published revision ${sheet.revision} remains active. Create a ${styleName} revision to generate new cues, or copy the published revision for manual edits.`:`Style: ${styleName}. Draft revision ${sheet.revision} is editable but not active. Replace it with the style default if required, then preview and publish it.`;
   if(!sheet)return;
   sheet.cues.forEach((cue,index)=>{
     const card=node('article',undefined,'cue'),info=node('div');const preset=catalog.presets.find(item=>item.preset_id===cue.preset_id);
@@ -269,7 +271,7 @@ function newCueDraft(){
   document.cue_sheets.push(draftSheet);
   // A draft needs its first zero-second cue before it can pass the schema.
   if(!active)draftSheet.cues=[{at_seconds:0,preset_id:catalog.presets[0].preset_id,transition_seconds:0.5}];
-  saveSongDocument(document,'Cue-sheet draft created.',clearSongCueEdit);
+  saveSongDocument(document,active?'Published cues copied into a new editable revision.':'Manual cue-sheet draft created.',clearSongCueEdit);
 }
 function applyStyleDefault(){
   const song=songById(selectedSongId);if(!song||!song.style||song.style==='unspecified'){notify('Edit the song and choose a song style first.',true);return;}
@@ -306,7 +308,8 @@ $('song-editor').addEventListener('submit',event=>{
   if(!existing&&document.songs.some(song=>song.song_id===songId)){notify('That song ID already exists.',true);return;}
   const song={song_id:songId,title:$('song-title').value.trim(),artist:$('song-artist').value.trim(),duration_seconds:Number($('song-duration').value),notes:$('song-notes').value.trim(),source:existing?.source||'manual',active_cue_sheet_id:existing?.active_cue_sheet_id||null,style:$('song-style').value};
   if(existing)document.songs[document.songs.indexOf(existing)]=song;else document.songs.push(song);
-  saveSongDocument(document,'Song saved.',()=>{$('song-editor').hidden=true;editingSongId=null;selectedSongId=song.song_id;renderSongs();});
+  const oldStyle=existing?.style||'unspecified',styleChanged=Boolean(existing&&oldStyle!==song.style),message=styleChanged?`Song saved as ${songStyleName(song)}. Use Create ${songStyleName(song)} revision to generate a new style timeline.`:'Song saved.';
+  saveSongDocument(document,message,()=>{$('song-editor').hidden=true;editingSongId=null;selectedSongId=song.song_id;renderSongs();});
 });
 function clearSongCueEdit(){editingSongCueIndex=null;$('song-cue-time').value='';$('song-cue-transition').value=0.5;$('save-song-cue').textContent='+ Add cue';$('cancel-song-cue').hidden=true;}
 $('cancel-song-cue').addEventListener('click',clearSongCueEdit);

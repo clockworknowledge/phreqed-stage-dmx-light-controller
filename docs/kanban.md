@@ -641,8 +641,10 @@ times so performers can browse looks and reviewers can spot visual changes.
 Songs can now be tagged Punk, Rock, Mellow, Funk, Metal, Alternative, Blues,
 Reggae, or Electronic. Each style has a distinct,
 deterministic sequence of safe existing looks with proportional cue positions
-and style-appropriate transitions. **Apply style default** creates a new
-unpublished revision, or replaces an existing draft only after confirmation;
+and style-appropriate transitions. **Create [style] revision** creates a new
+unpublished style-generated revision, or **Replace draft with [style]** replaces
+an existing draft only after confirmation. **Copy published revision** remains
+the separate manual-editing path and intentionally preserves the prior cues;
 published revisions remain immutable and active until a new draft is reviewed
 and explicitly published.
 

@@ -66,6 +66,11 @@ Song authoring now supports Punk, Rock, Mellow, Funk, Metal, Alternative,
 Blues, Reggae, and Electronic styles.
 Applying the selected style in the timeline editor generates a deterministic,
 duration-scaled unpublished draft while retaining every published revision.
+The timeline UI now distinguishes this generated path from a manual copy:
+**Create Alternative revision** (or **Replace draft with Alternative**) rebuilds
+the cues from the selected style, while **Copy published revision** deliberately
+keeps the existing cues. Changing a song's style alone never mutates or
+publishes its active timeline.
 Existing Pi `songs.json` files without a style remain valid and display as
 Unspecified. Browser simulation validation completed the Rock workflow with
 zero console errors and no live-output activation.

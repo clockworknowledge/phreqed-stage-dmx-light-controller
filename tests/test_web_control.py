@@ -265,6 +265,27 @@ class BrowserControlTests(unittest.TestCase):
         ))
         self.assertFalse(self.control.song_library.cue_sheets[draft['cue_sheet_id']].published)
 
+        punk_cues = tuple(
+            cue.preset_id
+            for cue in self.control.song_library.cue_sheets[draft['cue_sheet_id']].cues
+        )
+        changed = self.control.catalog()['song_library']
+        changed['songs'][0]['style'] = 'alternative'
+        self.control.command(dict(action='save_song_library', song_library=changed))
+        self.control.command(dict(
+            action='apply_song_style', song_id='song-test', replace=True
+        ))
+        replacement = self.control.song_library.cue_sheets[draft['cue_sheet_id']]
+        self.assertEqual(replacement.revision, 2)
+        self.assertFalse(replacement.published)
+        self.assertNotEqual(
+            punk_cues, tuple(cue.preset_id for cue in replacement.cues)
+        )
+        self.assertEqual(
+            self.control.song_library.songs['song-test'].active_cue_sheet_id,
+            'cue-test-v1',
+        )
+
     def test_setlist_mode_requires_explicit_start_and_never_autostarts_next_song(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
         self.control.command(dict(
@@ -358,6 +379,8 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn("act('preview_song_cue'", script)
         self.assertIn("act('performance_mode'", script)
         self.assertIn("command('apply_song_style'", script)
+        self.assertIn('Create ${styleName} revision', script)
+        self.assertIn('Copy published revision', html)
         self.assertIn("act(state?.performance?.running?'stop_song':'start_song')", script)
         self.assertIn('Published cue-sheet versions are immutable', html)
         for style in (
