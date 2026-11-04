@@ -31,4 +31,21 @@ echo "Fetching and fast-forwarding origin/main"
 git fetch origin main
 git merge --ff-only origin/main
 
-exec bash "${REPO_ROOT}/scripts/pi-install.sh"
+bash "${REPO_ROOT}/scripts/pi-install.sh"
+
+# An editable install updates files on disk, but a running Python process keeps
+# its already-imported modules. Restart the managed controller only after the
+# complete hardware-free test suite succeeds. systemd sends SIGTERM, allowing
+# the existing process to request blackout before it exits.
+if systemctl cat phreqed-dmx.service >/dev/null 2>&1; then
+    echo "Restarting the managed Phreqed controller"
+    sudo systemctl restart phreqed-dmx.service
+    if ! sudo systemctl is-active --quiet phreqed-dmx.service; then
+        echo "ERROR: phreqed-dmx.service did not become active after update." >&2
+        sudo systemctl status phreqed-dmx.service --no-pager >&2 || true
+        exit 1
+    fi
+    sudo systemctl status phreqed-dmx.service --no-pager -n 12
+else
+    echo "No phreqed-dmx.service is installed; no running controller was restarted."
+fi

@@ -244,7 +244,8 @@ For show operation and recovery, see
 The Pi deployment is terminal-only and does not require Codex or VS Code. After
 cloning the repository, `bash scripts/pi-install.sh` creates the environment,
 installs the controller, and runs its tests. Later clean deployments use
-`bash scripts/pi-update.sh`.
+`bash scripts/pi-update.sh`, which restarts and verifies the managed controller
+service after the tests pass. Do not update during a performance.
 
 Live network output requires the explicit flag:
 

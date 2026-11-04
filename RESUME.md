@@ -48,6 +48,11 @@ Existing Pi `songs.json` files without a style remain valid and display as
 Unspecified. Browser simulation validation completed the Rock workflow with
 zero console errors and no live-output activation.
 
+The first Pi style deployment exposed an updater lifecycle gap: editable source
+and static browser assets changed on disk, but the running service retained its
+old imported Python backend. `pi-update.sh` now restarts and verifies an
+installed `phreqed-dmx.service` only after the complete test suite succeeds.
+
 The next authoring sequence is `ANALYSIS-001`/`ANALYSIS-002`. AI analysis is an
 offline workflow using either an authorized MP3 upload or an explicitly started
 rehearsal microphone capture.

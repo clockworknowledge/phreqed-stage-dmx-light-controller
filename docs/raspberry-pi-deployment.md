@@ -43,6 +43,13 @@ and reruns installation and all tests. This protects Pi-only diagnostic scripts
 from accidental replacement. Preserve any such files outside the checkout or
 follow `docs/pi-script-import.md` before updating.
 
+After the tests pass, the updater restarts an installed
+`phreqed-dmx.service` and verifies that it becomes active. This is required even
+with the editable Python installation: static browser files are read from disk
+for each request, while an already-running Python process retains its previously
+imported backend modules. The managed SIGTERM path requests blackout before the
+service restarts. Do not update during a performance.
+
 ## Prepared headless QLC+ service
 
 `config/qlc/qlcplus.service` uses the observed working offscreen command, runs
