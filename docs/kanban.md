@@ -412,6 +412,21 @@ hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
 
+### SONG-003 - Search songs when adding to a setlist (`P2`, authoring UX)
+
+Add a search/filter field to the Setlist Builder's **Add song** control so a
+large song library can be narrowed by title and artist before insertion. The
+filtered result must remain distinct from the ordered songs already in the
+setlist, and choosing a result must not modify the setlist until the operator
+explicitly adds it.
+
+Acceptance: matching is case-insensitive and updates without losing unsaved
+setlist edits; clearing the query restores the full library; empty and no-match
+states are obvious; keyboard and touch operation remain accessible; repeated
+songs are still permitted for encores; search never changes playback, active
+song, or output state; and automated plus Chromium tests cover filtering and
+insertion into a long representative library.
+
 ### CONTROL-002 — Ampero configuration backup and inspection (`P2`, reliability)
 
 Build a separately scoped tool for detecting, inspecting, verifying, backing
