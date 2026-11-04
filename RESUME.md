@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-04
 
-## Current checkpoint -- Song Builder authoring complete
+## Current checkpoint -- Setlist performance software complete
 
 The 2026-10-22 unattended live-band checkpoint remains the current physical
 baseline: headless QLC+, browser control, two fixtures, Snowball audio response,
@@ -20,19 +20,30 @@ reachable performance bank safe or disable bank navigation if the supported
 configuration allows it. `CONTROL-002` is reduced to optional backup/inspection
 research.
 
-`SONG-001` and `SONG-002` are now implemented. The browser **Songs** tab can
+`SONG-001`, `SONG-002`, and the software portion of `SHOW-004` are now
+implemented. The browser **Songs** tab can
 create and edit song metadata, create draft cue-sheet revisions, preview cues
 only in simulation, publish immutable versions, and assemble/reorder setlists.
 The metadata is atomically stored in `songs.json` beside the user look/scene
 library. A Chromium end-to-end check completed the authoring flow with zero
-console errors, and the full Windows Python 3.12 suite passes 185 tests.
+console errors.
 
-The implementation sequence now continues with `SHOW-004` Setlist performance
-mode. The approved product direction is: manual scene mode remains unchanged;
-Setlist mode selects previous/next song
-and requires an explicit start/stop; song completion may arm the next song but
-never auto-starts it. AI analysis is an offline authoring workflow using either
-an authorized MP3 upload or an explicitly started rehearsal microphone capture.
+The **Perform** tab now has explicit Manual and Setlist modes. Setlist mode
+shows current/next song and timing, routes FS1/FS2 to previous/next song and FS3
+to explicit start/stop, and keeps FS4 as global blackout. Completion arms but
+never starts the next song. Blackout, Stop output, browser-lease loss, render
+failure, and shutdown stop the timeline without resume. Restart defaults to
+Manual mode, no active timeline, and output stopped. Chromium validation passed
+the arm/start/stop/manual workflow with zero console errors, and the complete
+Windows Python 3.12 suite passes 193 tests.
+
+`SHOW-004` now sits in Validation pending Pi startup, Ampero disconnect/reconnect,
+multi-song completion, browser-loss, and low-brightness fixture acceptance. The
+operating and recovery procedure is in `docs/setlist-performance.md`.
+
+The next authoring sequence is `ANALYSIS-001`/`ANALYSIS-002`. AI analysis is an
+offline workflow using either an authorized MP3 upload or an explicitly started
+rehearsal microphone capture.
 Both produce the same derived song-structure contract. During the show, the
 prepared cue sheet supplies baseline scene selection while the existing
 microphone dynamics continue to modulate the active scene. Streaming links are
@@ -43,8 +54,9 @@ not part of the initial workflow. See
 strict versioned models and atomic metadata persistence for songs, cue sheets,
 and setlists; `song_timeline.py` provides injected-clock playback with explicit
 start/stop, blackout cancellation, deterministic skipped-time cue deadlines,
-and arm-next-without-autostart behavior. Performance-mode integration remains
-SHOW-004; MP3/rehearsal analysis and AI proposals remain later authoring sprints.
+and arm-next-without-autostart behavior. `performance.py` owns Manual/Setlist
+mode and performer command routing without transport imports. MP3/rehearsal
+analysis and AI proposals remain later authoring sprints.
 
 Generated Playwright artifacts remain ignored local validation output. They are
 not project source or deployment inputs.

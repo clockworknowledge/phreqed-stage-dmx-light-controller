@@ -56,6 +56,19 @@ class SongTimelineRunner:
             return None
         return self.library.cue_sheets.get(song.active_cue_sheet_id)
 
+    @property
+    def position_seconds(self) -> float:
+        """Current deterministic position; stopped and armed songs are at zero."""
+
+        song = self.song
+        if song is None:
+            return 0.0
+        if self.state is TimelineState.COMPLETE:
+            return song.duration_seconds
+        if self.state is not TimelineState.RUNNING or self.started_at is None:
+            return 0.0
+        return min(song.duration_seconds, max(0.0, self._time() - self.started_at))
+
     def _time(self) -> float:
         now = self.clock()
         if (isinstance(now, bool) or not isinstance(now, (int, float))

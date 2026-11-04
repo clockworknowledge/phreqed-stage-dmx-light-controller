@@ -63,6 +63,34 @@ safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
 
+### SHOW-004 - Manual/setlist performance modes (`P1`, performance control)
+
+The browser now has an explicit Manual/Setlist selector and a large Setlist
+Performance view with current/next song, position, state, previous/next, and
+start/stop. `PerformanceController` keeps mode and performer commands separate
+from rendering and transport. Setlist selection only arms a song; start is
+explicit, and completion may arm the next song but never starts it.
+
+Ampero commands are routed by active mode: FS1/FS2 select scenes in Manual mode
+or songs in Setlist mode, FS3 is tap tempo or song start/stop, and FS4 remains
+the global blackout. Blackout, Stop output, browser-lease loss, render failure,
+and shutdown stop the timeline without automatic resume. A restart defaults to
+Manual mode, no active timeline, and output stopped. Recovery is documented in
+[`setlist-performance.md`](setlist-performance.md).
+
+Windows validation passes all 193 tests, including deterministic selection,
+explicit start/stop, no-next-song autostart, blackout cancellation, lease-loss
+cancellation, reboot-safe defaults, Manual-mode compatibility, serialized foot
+commands, and no Art-Net construction in simulation. Chromium validation
+completed mode selection, arm, start, position advance, stop, and return to
+Manual mode with zero console errors or warnings.
+
+Acceptance remaining: deploy to the Pi and validate startup defaults, USB pedal
+disconnect/reconnect, song skipping, a complete multi-song setlist, browser
+loss, and recovery in simulation. Then perform a low-brightness live fixture
+check with QLC+ blackout immediately available. Do not infer pedal readiness
+from device enumeration; require a mapped event from the intended Ampero bank.
+
 ### OPS-003 — Unattended show startup and private control LAN (`P0`, deployment)
 
 A separate `phreqed-dmx.service` now starts after headless QLC+ without waiting
@@ -420,19 +448,6 @@ are excluded; and failure leaves the live controller usable through its browser
 backup. Never commit the vendor APK or attempt writes during ordinary bench
 testing. See `docs/ampero-control.md`.
 
-### SHOW-004 - Manual/setlist performance modes (`P1`, performance control)
-
-Add an explicit mode selector and a large Performance View with current/next
-song, position, state, previous/next, start/stop, and blackout. In Setlist mode,
-map FS1/FS2 to previous/next song and FS3 to start/stop while FS4 remains the
-global explicit blackout. The application, not Ampero banks, owns the song
-index.
-
-Acceptance: switching modes cannot enable output; end of song may arm the next
-selection but never starts it; missing pedal/browser/media leaves blackout and
-Stop output available; reboot and mid-set recovery are documented and tested;
-and Manual mode remains backward compatible. See the roadmap, Sprint 3.
-
 ### ANALYSIS-001 - Rights-safe offline song analysis (`P1`, authoring)
 
 Accept user-owned/licensed MP3 files with rights attestation and an explicit
@@ -612,7 +627,8 @@ malformed writes, preset references, published-version immutability, and
 simulation-only preview; a real Chromium workflow created a song, added and
 previewed cues, published a revision, and created a setlist with zero console
 errors. The complete suite passes 185 tests. Runtime performance mode remains
-SHOW-004. See [`song-setlist-roadmap.md`](song-setlist-roadmap.md), Sprint 2.
+separate under SHOW-004, which is now implemented and awaiting Pi validation.
+See [`song-setlist-roadmap.md`](song-setlist-roadmap.md), Sprint 2.
 
 ### SONG-001 — Song library and deterministic cue timeline (`P1`, show control)
 
@@ -628,7 +644,7 @@ Acceptance passed on Windows Python 3.12: eighteen focused tests cover atomic
 failure preservation, corrupt input, schema and preset boundaries, application
 restart, cue timing, callback failure, blackout priority, completion, and
 network isolation. Browser authoring is now complete under SONG-002; runtime
-integration remains SHOW-004. See
+integration is implemented under SHOW-004 and awaiting Pi validation. See
 [`song-setlist-roadmap.md`](song-setlist-roadmap.md), Sprint 1.
 
 ### HW-001 — Commission LF4808 white-zone mapping (`P0`, safety)

@@ -30,6 +30,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
   metadata storage; it never stores audio media.
 - `src/phreqed_dmx/song_timeline.py`: transport-independent, injected-clock
   setlist playback with explicit start/stop and no automatic next-song start.
+- `src/phreqed_dmx/performance.py`: transport-independent Manual/Setlist mode,
+  song selection, and performer command routing around `SongTimelineRunner`.
 - `src/phreqed_dmx/fixtures.py`: fixture geometry and logical-pixel-to-DMX mapping.
 - `src/phreqed_dmx/render.py`: composes logical grids into one DMX universe.
 - `src/phreqed_dmx/artnet.py`: ArtDMX packet construction and UDP transmission.
@@ -37,8 +39,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/sprites.py`: small bitmap sprites and grid drawing helpers.
 - `src/phreqed_dmx/simulator.py`: local Tkinter preview; never opens a UDP socket.
 - `src/phreqed_dmx/web_control.py`: dependency-free browser preview/control with
-  explicit live enablement, a disconnect watchdog, and simulation-only song
-  cue authoring/preview backed by `SongLibrary`.
+  explicit live enablement, a disconnect watchdog, performance-mode controls,
+  and simulation-only song cue authoring/preview backed by `SongLibrary`.
 - `src/phreqed_dmx/app.py`: application controller, timing, and mode selection.
 - `config/fixtures.toml`: hardware and controller configuration.
 - `tests/`: hardware-free unit tests.

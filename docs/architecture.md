@@ -33,6 +33,13 @@ network, media, or GUI imports. Start/stop is explicit; blackout stops playback
 without automatic resume; song completion arms the next selection without
 starting it; and the final song holds a complete state.
 
+`PerformanceController` owns the deliberate Manual/Setlist mode boundary and
+wraps `SongTimelineRunner` with previous/next/select/start/stop commands. It
+does not import Art-Net or construct output. In Setlist mode the browser and
+Ampero commands route through this controller; in Manual mode the existing
+scene/tap-tempo behavior remains unchanged. Entering Setlist mode or selecting
+a song only arms it. Neither action starts a timeline or enables fixture output.
+
 `BrowserControl` serializes access to one controller from an HTTP server and a
 25 FPS render thread. The `web` command is simulation-only and cannot create an
 Art-Net sender. `live --web` merely makes live activation available; the user
@@ -42,6 +49,8 @@ default and limits non-loopback clients to an explicit trusted IPv4 network.
 It also exposes manual song/cue-sheet/setlist authoring backed by `SongLibrary`.
 Cue audition is rejected whenever a live Art-Net sender exists; authoring does
 not activate the deterministic timeline or change performance mode.
+Browser lease loss, blackout, Stop output, render failure, and controller close
+all stop any running song timeline without automatic resume.
 
 `VisualEngine` preserves the four formulas from the reconstructed v2 baseline:
 plasma, tunnel, pulse, and chase. It also treats both cubes as one logical 24x4

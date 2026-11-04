@@ -86,6 +86,7 @@ class SongTimelineTests(unittest.TestCase):
             ('digital-storm', 107.0),
         ])
         self.assertEqual(self.runner.state, TimelineState.RUNNING)
+        self.assertEqual(self.runner.position_seconds, 7.5)
 
     def test_completion_arms_next_song_without_starting_it(self):
         self.runner.start()
@@ -94,6 +95,7 @@ class SongTimelineTests(unittest.TestCase):
         self.assertEqual(self.runner.song.song_id, 'song-two')
         self.assertEqual(self.runner.state, TimelineState.ARMED)
         self.assertIsNone(self.runner.started_at)
+        self.assertEqual(self.runner.position_seconds, 0.0)
         count = len(self.activations)
         self.clock.now = 20.0
         self.runner.update()

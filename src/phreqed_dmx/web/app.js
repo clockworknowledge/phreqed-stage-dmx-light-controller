@@ -26,6 +26,10 @@ function fillPresets(select, selected) { select.replaceChildren(); for (const p 
 async function loadCatalog() { catalog = await request('/api/catalog'); renderCatalog(); }
 function renderCatalog() {
   fillPresets($('quick-preset'), state?.preset_id); fillPresets($('cue-preset'), $('cue-preset').value);
+  const performanceSetlist=$('performance-setlist'),selectedPerformanceSetlist=state?.performance?.setlist_id||performanceSetlist.value;
+  performanceSetlist.replaceChildren();for(const setlist of catalog.song_library.setlists)option(performanceSetlist,setlist.setlist_id,setlist.name);
+  if(selectedPerformanceSetlist)performanceSetlist.value=selectedPerformanceSetlist;
+  performanceSetlist.disabled=!catalog.song_library.setlists.length;
   $('preset-grid').replaceChildren();
   for (const p of catalog.presets.filter(p => p.builtin || catalog.library.presets.some(u => u.preset_id === p.preset_id))) {
     const card = node('article', undefined, 'preset'); card.dataset.preset = p.preset_id;
@@ -61,6 +65,7 @@ function draw(canvas, rows, whiteLevel = 0) {
     ctx.fillRect(left+pad,lineTop+lineHeight+lineGap,width*cell-pad*2,lineHeight);
   }
 }
+function clockTime(seconds){const total=Math.max(0,Math.floor(seconds||0)),minutes=Math.floor(total/60);return `${minutes}:${String(total%60).padStart(2,'0')}`;}
 function renderState(s) {
   state = s; connected = true;
   $('connection').textContent = s.live ? '● Live output' : s.live_allowed ? '● Live ready · stopped' : '● Simulation';
@@ -86,6 +91,21 @@ function renderState(s) {
   $('sequence-status').textContent = s.playing ? 'Running timed scene list.' : cue ? 'Holding this scene.' : 'Select a scene or start the list.';
   $('play').disabled = !cues.length || s.playing || s.blackout; $('pause').disabled = !s.playing;
   $('next').disabled = $('prev').disabled = !cues.length;
+  const performance=s.performance||{mode:'manual',state:'inactive',song_count:0,song_index:null,duration_seconds:0,elapsed_seconds:0,remaining_seconds:0,playable:false,running:false};
+  if(document.activeElement!==$('performance-mode'))$('performance-mode').value=performance.mode;
+  const setlistMode=performance.mode==='setlist';$('setlist-performance').hidden=!setlistMode;$('manual-transport').hidden=setlistMode;$('quick-preset').disabled=setlistMode;
+  $('performance-heading').textContent=setlistMode?'Setlist performance':'Manual scene control';
+  if(performance.setlist_id&&document.activeElement!==$('performance-setlist'))$('performance-setlist').value=performance.setlist_id;
+  $('performance-song-number').textContent=performance.song_index===null?'NO SONG SELECTED':`${String(performance.song_index+1).padStart(2,'0')} / ${String(performance.song_count).padStart(2,'0')}`;
+  $('performance-song-title').textContent=performance.song_title||'Choose a setlist';
+  const performanceMessage=!performance.song_title?'Selection and mode changes never start playback.':!performance.playable?'No published cue sheet. Publish one in Song Builder before starting.':performance.running?'Running prepared cue timeline.':performance.state==='complete'?'Setlist complete. Start restarts the selected final song.':performance.state==='armed'?'Armed and waiting for explicit start.':'Stopped. Start begins again from the first cue.';
+  $('performance-song-detail').textContent=performanceMessage;
+  $('performance-song-progress').max=Math.max(1,performance.duration_seconds);$('performance-song-progress').value=performance.elapsed_seconds;
+  $('performance-elapsed').textContent=clockTime(performance.elapsed_seconds);$('performance-remaining').textContent=`-${clockTime(performance.remaining_seconds)}`;
+  $('performance-next').textContent=`Next: ${performance.next_song_title||'—'}`;
+  $('toggle-song').textContent=performance.running?'Stop song':'Start song';
+  $('toggle-song').disabled=!performance.song_title||(!performance.running&&(!performance.playable||s.blackout));
+  $('previous-song').disabled=$('next-song').disabled=!performance.song_count;
   const audio = s.audio || {enabled:false,running:false,healthy:false,message:'Audio input disabled',loudness:0,onset:0,bass:0,mid:0,treble:0,auto_level_available:false,auto_level_enabled:false,gain_multiplier:1};
   $('audio-status').textContent = !audio.enabled ? 'Disabled' : audio.healthy ? 'Microphone active' : 'Input unavailable';
   $('audio-detail').textContent = audio.message;
@@ -128,7 +148,7 @@ function renderState(s) {
   $('white-output-level').disabled = !white.output_available;
   $('white-preview-status').textContent = white.output_active_level > 0 ? 'LIVE WHITE PEAK' : white.output_enabled ? `Live whites armed · max ${Math.round(white.output_ceiling*100)}%` : white.commissioned ? 'Commissioned · output off' : 'Physical output locked';
   const foot = s.foot_control || {enabled:false,connected:false,message:'Foot control disabled',messages_received:0,reconnects:0};
-  $('foot-status').textContent = foot.enabled ? `${foot.connected ? 'Pedal connected' : foot.message} · ${foot.messages_received} events · ${foot.reconnects} reconnects` : 'Foot control disabled';
+  $('foot-status').textContent = foot.enabled ? `${foot.connected ? 'Pedal connected' : foot.message} · ${foot.messages_received} events · ${foot.reconnects} reconnects · ${setlistMode?'song transport':'scene transport'}` : 'Foot control disabled';
   document.querySelectorAll('[data-cue]').forEach(e => e.classList.toggle('active', Number(e.dataset.cue) === s.scene_index));
   document.querySelectorAll('[data-preset]').forEach(e => e.classList.toggle('active', e.dataset.preset === s.preset_id));
   const displayWhite = Math.max(white.active_level, white.output_ceiling ? white.output_active_level/white.output_ceiling*0.8 : 0);
@@ -301,6 +321,14 @@ $('delete-setlist').addEventListener('click',()=>{
   const setlist=catalog.song_library.setlists.find(item=>item.setlist_id===selectedSetlistId);if(!setlist||!confirm(`Delete ${setlist.name}?`))return;
   const document=songDocument();document.setlists=document.setlists.filter(item=>item.setlist_id!==setlist.setlist_id);selectedSetlistId=null;saveSongDocument(document,'Setlist deleted.');
 });
+$('performance-mode').addEventListener('change',event=>{
+  const mode=event.target.value,setlistId=mode==='setlist'?($('performance-setlist').value||null):null;
+  act('performance_mode',{mode,setlist_id:setlistId});
+});
+$('performance-setlist').addEventListener('change',event=>act('load_setlist',{setlist_id:event.target.value}));
+$('previous-song').addEventListener('click',()=>act('previous_song'));
+$('next-song').addEventListener('click',()=>act('next_song'));
+$('toggle-song').addEventListener('click',()=>act(state?.performance?.running?'stop_song':'start_song'));
 $('quick-preset').addEventListener('change',e=>act('preset',{value:e.target.value}));
 $('master').addEventListener('input',e=>{$('master-value').textContent=`${Math.round(e.target.value*100)}%`;});
 $('master').addEventListener('change',e=>act('brightness',{value:Number(e.target.value)}));

@@ -257,12 +257,20 @@ store is `songs.json` beside the configured user library. Chromium workflow
 validation completed with no console errors; performance playback remains
 Sprint 3.
 
-### Sprint 3 - Setlist performance mode
+### Sprint 3 - Setlist performance mode (software complete; Pi validation pending)
 
 - Add transport-independent performance commands and browser Performance View.
 - Add mode-specific Ampero mappings without changing global blackout semantics.
 - Validate reboot, controller disconnect, browser loss, song skipping, and
   setlist completion on the Pi before live fixture use.
+
+Implemented by `performance.py`, `SongTimelineRunner`, and the browser Perform
+view. Manual/Setlist selection, current/next song status, explicit start/stop,
+position display, song navigation, mode-specific foot commands, no-autostart
+completion, blackout cancellation, and browser-lease cancellation are covered
+by hardware-free tests. Chromium validation completed the arm/start/stop/manual
+workflow in simulation with no console errors. Reboot, USB pedal disconnect,
+full setlist completion, and live fixture behavior still require Pi acceptance.
 
 ### Sprint 4A - Authorized MP3 analysis
 

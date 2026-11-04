@@ -202,9 +202,17 @@ the configured user library; no audio media is stored there. Start the safe
 browser simulator, open **Songs**, create a song, create a cue-sheet revision,
 preview and publish it, then add the song to a setlist.
 
-The deterministic injected-clock timeline runner is implemented and tested but
-is not yet wired into live browser performance controls. The next show-control
-work adds separate Manual and Setlist performance modes.
+The browser **Perform** tab has explicit **Manual scenes** and **Setlist
+performance** modes. Setlist mode shows the current and next song, elapsed and
+remaining time, and previous/start-stop/next controls. Selecting the mode,
+setlist, or song only arms it; **Start Song** is always explicit. Completion
+selects the next song in an armed state and never starts it automatically.
+
+The Ampero mapping is mode-specific: in Manual mode FS1/FS2 select scenes and
+FS3 taps tempo; in Setlist mode FS1/FS2 select songs and FS3 starts or stops the
+selected song. FS4 remains the global blackout in both modes. Blackout, Stop
+output, a lost browser lease, or application shutdown stops the song timeline
+and releasing blackout does not resume it.
 
 Song playback will always require an explicit performer start; completion may
 arm the next song but will not start it automatically. AI is planned only as an
@@ -215,6 +223,8 @@ links are out of scope. Both inputs build a baseline scene timeline. At a show,
 the existing microphone-reactive layer still adjusts intensity and motion inside
 the selected scenes to follow the actual performance.
 See [Song Builder and Setlist Performance Roadmap](docs/song-setlist-roadmap.md).
+For show operation and recovery, see
+[Setlist performance operation](docs/setlist-performance.md).
 
 ## Run live on the Raspberry Pi
 

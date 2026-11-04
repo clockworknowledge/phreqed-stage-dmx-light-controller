@@ -7,3 +7,62 @@ canvas.fixture-preview {
   grid-template-columns: 1fr;
   gap: 0;
 }
+
+.performance-mode-card > .section-title > label {
+  min-width: 230px;
+}
+
+.performance-mode-card select {
+  margin-bottom: 0;
+}
+
+.song-now {
+  background: #121814;
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  margin: 18px 0;
+  padding: 20px;
+}
+
+.song-now h2 {
+  font-size: clamp(28px, 5vw, 48px);
+}
+
+.song-now progress {
+  accent-color: var(--accent);
+  display: block;
+  height: 18px;
+  margin-top: 18px;
+  width: 100%;
+}
+
+.song-times {
+  color: var(--muted);
+  display: flex;
+  font-variant-numeric: tabular-nums;
+  font-size: 12px;
+  justify-content: space-between;
+}
+
+#setlist-performance > .transport button {
+  flex: 1;
+}
+
+@media (max-width: 600px) {
+  .performance-mode-card > .section-title {
+    display: block;
+  }
+
+  .performance-mode-card > .section-title > label {
+    margin-top: 16px;
+  }
+
+  #setlist-performance > .transport {
+    flex-wrap: wrap;
+  }
+
+  #toggle-song {
+    flex-basis: 100%;
+    order: -1;
+  }
+}

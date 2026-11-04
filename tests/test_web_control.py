@@ -162,6 +162,25 @@ class BrowserControlTests(unittest.TestCase):
             }],
         }
 
+    def two_song_document(self):
+        document = self.song_document()
+        document['songs'][0]['duration_seconds'] = 10.0
+        document['songs'].append({
+            'song_id': 'song-second', 'title': 'Second Song', 'artist': 'Phreqed',
+            'duration_seconds': 8.0, 'notes': '', 'source': 'manual',
+            'active_cue_sheet_id': 'cue-second-v1',
+        })
+        document['cue_sheets'].append({
+            'cue_sheet_id': 'cue-second-v1', 'song_id': 'song-second',
+            'revision': 1, 'published': True,
+            'cues': [{
+                'at_seconds': 0.0, 'preset_id': 'energy-bridge',
+                'transition_seconds': 0.25,
+            }],
+        })
+        document['setlists'][0]['song_ids'].append('song-second')
+        return document
+
     def test_song_library_storage_survives_browser_restart(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
         document = self.song_document()
@@ -172,6 +191,10 @@ class BrowserControlTests(unittest.TestCase):
         self.addCleanup(restored.close)
         self.assertEqual(restored.catalog()['song_library'], document)
         self.assertIsNone(restored.sender)
+        performance = restored.state()['performance']
+        self.assertEqual(performance['mode'], 'manual')
+        self.assertEqual(performance['state'], 'inactive')
+        self.assertFalse(performance['running'])
 
     def test_song_library_rejects_unknown_presets_and_protects_references(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
@@ -214,16 +237,98 @@ class BrowserControlTests(unittest.TestCase):
             ))
         self.control.sender = None
 
+    def test_setlist_mode_requires_explicit_start_and_never_autostarts_next_song(self):
+        self.control.command(dict(action='save_preset', preset=self.preset()))
+        self.control.command(dict(
+            action='save_song_library', song_library=self.two_song_document()
+        ))
+        now = [0.0]
+        self.control.song_timeline.clock = lambda: now[0]
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            self.control.command(dict(
+                action='performance_mode', mode='setlist',
+                setlist_id='setlist-test',
+            ))
+            armed = self.control.state()['performance']
+            self.assertEqual((armed['state'], armed['song_title']),
+                             ('armed', 'Test Song'))
+            self.assertEqual(armed['next_song_title'], 'Second Song')
+            self.assertEqual(self.control.engine.active_preset_id,
+                             'psychedelic-bloom')
+
+            self.control.command(dict(action='start_song'))
+            self.assertEqual(self.control.engine.active_preset_id, 'user-test')
+            now[0] = 4.0
+            self.assertEqual(
+                self.control.state()['performance']['elapsed_seconds'], 4.0
+            )
+            now[0] = 10.0
+            self.control.step(self.control.started + 10.0)
+            next_song = self.control.state()['performance']
+            self.assertEqual((next_song['state'], next_song['song_title']),
+                             ('armed', 'Second Song'))
+            now[0] = 20.0
+            self.control.step(self.control.started + 20.0)
+            self.assertEqual(self.control.engine.active_preset_id, 'user-test')
+            sender.assert_not_called()
+
+    def test_setlist_blackout_stops_without_resume_and_manual_actions_are_isolated(self):
+        self.control.command(dict(action='save_preset', preset=self.preset()))
+        self.control.command(dict(
+            action='save_song_library', song_library=self.two_song_document()
+        ))
+        self.control.song_timeline.clock = lambda: 0.0
+        self.control.command(dict(
+            action='performance_mode', mode='setlist',
+            setlist_id='setlist-test',
+        ))
+        self.control.command(dict(action='start_song'))
+        with self.assertRaisesRegex(ValueError, 'Manual mode'):
+            self.control.command(dict(action='preset', value='energy-bridge'))
+        self.control.command(dict(action='blackout'))
+        self.assertEqual(self.control.state()['performance']['state'], 'stopped')
+        self.control.command(dict(action='resume'))
+        self.assertEqual(self.control.state()['performance']['state'], 'stopped')
+        self.control.command(dict(action='performance_mode', mode='manual'))
+        self.assertEqual(self.control.state()['performance']['state'], 'inactive')
+
+    def test_foot_commands_route_by_mode_while_blackout_remains_global(self):
+        self.control.command(dict(action='save_preset', preset=self.preset()))
+        self.control.command(dict(
+            action='save_song_library', song_library=self.two_song_document()
+        ))
+        self.control.song_timeline.clock = lambda: 0.0
+        foot = BrowserFootCommands(self.control)
+        self.control.command(dict(
+            action='performance_mode', mode='setlist',
+            setlist_id='setlist-test',
+        ))
+        foot.next_scene()
+        self.assertEqual(self.control.state()['performance']['song_title'],
+                         'Second Song')
+        foot.tap_tempo()
+        self.assertTrue(self.control.state()['performance']['running'])
+        foot.tap_tempo()
+        self.assertFalse(self.control.state()['performance']['running'])
+        foot.blackout(True)
+        self.assertTrue(self.control.state()['blackout'])
+        foot.blackout(False)
+        self.assertFalse(self.control.state()['blackout'])
+
     def test_browser_contains_song_timeline_and_setlist_authoring_controls(self):
         html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
         script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
         for control_id in (
             'song-list', 'song-editor', 'timeline-editor', 'song-cue-editor',
             'publish-cue-sheet', 'setlist-select', 'setlist-songs',
+            'performance-mode', 'performance-setlist', 'performance-song-title',
+            'previous-song', 'toggle-song', 'next-song',
         ):
             self.assertIn(f'id="{control_id}"', html)
         self.assertIn("command('save_song_library'", script)
         self.assertIn("act('preview_song_cue'", script)
+        self.assertIn("act('performance_mode'", script)
+        self.assertIn("act(state?.performance?.running?'stop_song':'start_song')", script)
         self.assertIn('Published cue-sheet versions are immutable', html)
 
     def test_deletion_rejects_referenced_presets_and_builtins(self):
@@ -424,6 +529,35 @@ class BrowserControlTests(unittest.TestCase):
             control.command(dict(action='heartbeat'))
             self.assertIsNone(control.sender)
 
+    def test_browser_lease_loss_stops_setlist_timeline_without_resume(self):
+        path = self.path.with_name('lease-loss-library.json')
+        control = BrowserControl(Controller(load_config()), path, allow_live=True)
+        self.addCleanup(control.close)
+        control.command(dict(action='save_preset', preset=self.preset()))
+        control.command(dict(
+            action='save_song_library', song_library=self.song_document()
+        ))
+        control.song_timeline.clock = lambda: 0.0
+        control.command(dict(
+            action='performance_mode', mode='setlist',
+            setlist_id='setlist-test',
+        ))
+
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='start_live'))
+            control.command(dict(action='start_song'))
+            self.assertTrue(control.state()['performance']['running'])
+            control.step(control.lease_deadline + 0.1)
+            sender.return_value.close.assert_called_once_with()
+
+        state = control.state()
+        self.assertTrue(state['blackout'])
+        self.assertIsNone(control.sender)
+        self.assertEqual(state['performance']['state'], 'stopped')
+        self.assertFalse(state['performance']['running'])
+        control.command(dict(action='resume'))
+        self.assertEqual(control.state()['performance']['state'], 'stopped')
+
     def test_browser_startup_preserves_lower_explicit_brightness(self):
         controller = Controller(load_config())
         controller.engine.set_global_brightness(0.15)
@@ -474,9 +608,9 @@ class BrowserControlTests(unittest.TestCase):
         self.assertEqual(
             [call.args[0] for call in control.command.call_args_list],
             [
-                {'action': 'previous_scene'},
-                {'action': 'next_scene'},
-                {'action': 'tap'},
+                {'action': 'performance_previous'},
+                {'action': 'performance_next'},
+                {'action': 'performance_primary'},
                 {'action': 'blackout'},
                 {'action': 'resume'},
             ],

@@ -19,9 +19,11 @@ from .compositor import black_scene
 from .effect_library import EFFECT_REGISTRY
 from .foot_control import RawMidiFootController
 from .library import UserLibrary, number, object_fields, parse_preset, preset_data
+from .performance import PerformanceController, PerformanceMode
 from .presets import PRESETS
 from .render import compose_dmx
-from .songs import SongLibrary
+from .song_timeline import SongTimelineRunner, TimelineState
+from .songs import SongCue, SongLibrary
 from .white_output import (
     DEFAULT_WHITE_OUTPUT_LEVEL,
     MAX_WHITE_FLASH_HZ,
@@ -41,13 +43,13 @@ class BrowserFootCommands:
         self.control = control
 
     def previous_scene(self) -> None:
-        self.control.command({'action': 'previous_scene'})
+        self.control.command({'action': 'performance_previous'})
 
     def next_scene(self) -> None:
-        self.control.command({'action': 'next_scene'})
+        self.control.command({'action': 'performance_next'})
 
     def tap_tempo(self, timestamp: float | None = None) -> float:
-        self.control.command({'action': 'tap'})
+        self.control.command({'action': 'performance_primary'})
         return self.control.controller.show.context().tempo_bpm
 
     def blackout(self, enabled: bool = True) -> None:
@@ -84,6 +86,13 @@ class BrowserControl:
             song_library_path or library_path.with_name('songs.json'),
             set(self.engine.presets),
         )
+        self.song_timeline = SongTimelineRunner(
+            self.song_library,
+            self._activate_song_cue,
+            clock=self.elapsed,
+            blackout_active=lambda: self.engine.blackout_enabled,
+        )
+        self.performance = PerformanceController(self.song_timeline)
         # Never raise an explicit lower CLI limit when browser control starts.
         self.engine.set_global_brightness(
             min(
@@ -115,6 +124,49 @@ class BrowserControl:
 
     def elapsed(self) -> float:
         return time.monotonic() - self.started
+
+    def _activate_song_cue(self, cue: SongCue, scheduled: float) -> None:
+        self.controller.begin_transition(
+            scheduled, duration=cue.transition_seconds
+        )
+        self.controller.scenes.playing = False
+        self.controller.scenes.index = None
+        self.engine.activate_preset(cue.preset_id)
+
+    def _performance_state(self) -> dict:
+        timeline = self.song_timeline
+        setlist = timeline.setlist
+        song = timeline.song
+        song_count = len(setlist.song_ids) if setlist is not None else 0
+        song_index = timeline.song_index
+        elapsed = timeline.position_seconds
+        duration = song.duration_seconds if song is not None else 0.0
+        elapsed = min(duration, elapsed)
+        next_song = None
+        if (setlist is not None and song_index is not None
+                and song_index + 1 < song_count):
+            next_song = self.song_library.songs.get(
+                setlist.song_ids[song_index + 1]
+            )
+        sheet = timeline.cue_sheet
+        playable = bool(sheet is not None and sheet.published)
+        return dict(
+            mode=self.performance.mode.value,
+            setlist_id=timeline.setlist_id,
+            setlist_name=setlist.name if setlist is not None else None,
+            state=timeline.state.value,
+            song_index=song_index,
+            song_count=song_count,
+            song_id=song.song_id if song is not None else None,
+            song_title=song.title if song is not None else None,
+            song_artist=song.artist if song is not None else None,
+            duration_seconds=duration,
+            elapsed_seconds=elapsed,
+            remaining_seconds=max(0.0, duration - elapsed),
+            next_song_title=next_song.title if next_song is not None else None,
+            playable=playable,
+            running=timeline.state is TimelineState.RUNNING,
+        )
 
     def catalog(self) -> dict:
         return dict(effects=[asdict(m) for m in EFFECT_REGISTRY.metadata()],
@@ -227,6 +279,7 @@ class BrowserControl:
                                 reconnects=0,
                             )
                         ),
+                        performance=self._performance_state(),
                         frames={name: [[[round(c.red * 255), round(c.green * 255), round(c.blue * 255)]
                                         for c in row] for row in grid.rows()]
                                 for name, grid in self.frames.items()})
@@ -259,7 +312,7 @@ class BrowserControl:
             {
                 'value', 'preset', 'scenes', 'index', 'enabled', 'floor',
                 'threshold', 'level', 'song_library', 'cue_sheet_id',
-                'cue_index',
+                'cue_index', 'setlist_id', 'mode',
             },
         )
         action = data['action']
@@ -272,6 +325,7 @@ class BrowserControl:
                 self.engine.set_blackout(True)
                 self._disable_white_output()
                 scenes.playing = False
+                self.performance.blackout()
                 self.controller._transition_from = None
                 self.frames = black_scene(self.engine.geometry)
                 if self.sender is not None:
@@ -300,6 +354,7 @@ class BrowserControl:
             elif action == 'stop_live':
                 self.engine.set_blackout(True)
                 scenes.playing = False
+                self.performance.blackout()
                 self._stop_live()
             elif action == 'brightness':
                 self.engine.set_global_brightness(number(
@@ -366,6 +421,8 @@ class BrowserControl:
                 if not enabled:
                     self._disable_white_output()
             elif action == 'preset':
+                if self.performance.mode is PerformanceMode.SETLIST:
+                    raise ValueError('switch to Manual mode to select a look directly')
                 preset_id = data.get('value')
                 if not isinstance(preset_id, str) or preset_id not in self.engine.presets:
                     raise ValueError('unknown preset')
@@ -382,6 +439,8 @@ class BrowserControl:
                     self.library.save(document)
                     self._sync_library()
                 else:
+                    if self.performance.mode is PerformanceMode.SETLIST:
+                        raise ValueError('switch to Manual mode to preview a look')
                     self.controller.begin_transition(elapsed, duration=0.8)
                     # Draft is deliberately excluded from the persistent library.
                     from dataclasses import replace
@@ -411,13 +470,18 @@ class BrowserControl:
                 self.library.save(document)
                 self._sync_library()
             elif action == 'save_song_library':
+                if self.song_timeline.state is TimelineState.RUNNING:
+                    raise ValueError('stop the active song before editing the song library')
                 self.song_library.preset_ids = set(self.engine.presets)
                 self.song_library.save(data.get('song_library'))
+                self.performance.reconcile_library()
             elif action == 'preview_song_cue':
                 if self.sender is not None:
                     raise ValueError('song cue preview is simulation-only; stop live output first')
                 if self.engine.blackout_enabled:
                     raise ValueError('release blackout before previewing a song cue')
+                if self.song_timeline.state is TimelineState.RUNNING:
+                    raise ValueError('stop the active song before previewing a cue')
                 cue_sheet_id = data.get('cue_sheet_id')
                 cue_index = data.get('cue_index')
                 sheet = self.song_library.cue_sheets.get(cue_sheet_id)
@@ -433,15 +497,59 @@ class BrowserControl:
                 scenes.playing = False
                 scenes.index = None
                 self.engine.activate_preset(cue.preset_id)
+            elif action == 'performance_mode':
+                mode = data.get('mode')
+                self.performance.set_mode(mode)
+                scenes.playing = False
+                scenes.index = None
+                if self.performance.mode is PerformanceMode.SETLIST:
+                    setlist_id = data.get('setlist_id')
+                    if setlist_id is not None:
+                        self.performance.load_setlist(setlist_id)
+            elif action == 'load_setlist':
+                self.performance.load_setlist(data.get('setlist_id'))
+            elif action == 'select_song':
+                self.performance.select(data.get('index'))
+            elif action == 'previous_song':
+                self.performance.move(-1)
+            elif action == 'next_song':
+                self.performance.move(1)
+            elif action == 'start_song':
+                self.performance.start()
+            elif action == 'stop_song':
+                self.performance.stop()
+            elif action == 'performance_previous':
+                if self.performance.mode is PerformanceMode.SETLIST:
+                    self.performance.move(-1)
+                else:
+                    scenes.move(-1, elapsed)
+            elif action == 'performance_next':
+                if self.performance.mode is PerformanceMode.SETLIST:
+                    self.performance.move(1)
+                else:
+                    scenes.move(1, elapsed)
+            elif action == 'performance_primary':
+                if self.performance.mode is PerformanceMode.SETLIST:
+                    self.performance.toggle()
+                else:
+                    self.controller.show.tap_tempo()
             elif action == 'select_scene':
+                if self.performance.mode is PerformanceMode.SETLIST:
+                    raise ValueError('switch to Manual mode to select scenes')
                 scenes.select(data.get('index'), elapsed)
             elif action in ('next_scene', 'previous_scene'):
+                if self.performance.mode is PerformanceMode.SETLIST:
+                    raise ValueError('switch to Manual mode to navigate scenes')
                 scenes.move(1 if action == 'next_scene' else -1, elapsed)
             elif action == 'play':
+                if self.performance.mode is PerformanceMode.SETLIST:
+                    raise ValueError('switch to Manual mode to run the scene list')
                 if self.engine.blackout_enabled:
                     raise ValueError('release blackout before starting the scene list')
                 scenes.play(elapsed)
             elif action == 'pause':
+                if self.performance.mode is PerformanceMode.SETLIST:
+                    raise ValueError('switch to Manual mode to hold the scene list')
                 scenes.playing = False
             elif action == 'tap':
                 self.controller.show.tap_tempo()
@@ -454,8 +562,10 @@ class BrowserControl:
             if self.sender is not None and now >= self.lease_deadline:
                 self.engine.set_blackout(True)
                 self.controller.scenes.playing = False
+                self.performance.blackout()
                 self._stop_live()
                 self.notice = 'Browser connection lost. Output stopped with blackout; start it explicitly to resume.'
+            self.performance.update()
             self.frames = self.controller.render_scene(now - self.started)
             source = self.controller.audio_source
             analysis = source.sample(now - self.started) if source is not None else None
@@ -505,6 +615,7 @@ class BrowserControl:
                         self.error = f'Output stopped: {exc}'
                         self.engine.set_blackout(True)
                         self.controller.scenes.playing = False
+                        self.performance.blackout()
                         self.frames = black_scene(self.engine.geometry)
                         self._stop_live()
                     return
@@ -521,6 +632,7 @@ class BrowserControl:
         if self.thread is not None:
             self.thread.join(timeout=3)
         with self.lock:
+            self.performance.stop()
             self._stop_live()
 
 
