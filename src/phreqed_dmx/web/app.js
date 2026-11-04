@@ -211,6 +211,8 @@ function songDocument(){return copy(catalog.song_library);}
 function saveSongDocument(document,message,done=()=>{}){command('save_song_library',{song_library:document},true).then(()=>{notify(message);done();}).catch(()=>{});}
 function songById(id){return catalog.song_library.songs.find(song=>song.song_id===id);}
 function sheetsForSong(id){return catalog.song_library.cue_sheets.filter(sheet=>sheet.song_id===id);}
+const songStyleNames={unspecified:'Unspecified',punk:'Punk',rock:'Rock',mellow:'Mellow',funk:'Funk'};
+function songStyleName(song){return songStyleNames[song?.style||'unspecified']||'Unspecified';}
 function timelineSheet(song){
   const sheets=sheetsForSong(song.song_id),drafts=sheets.filter(sheet=>!sheet.published).sort((a,b)=>b.revision-a.revision);
   return drafts[0]||sheets.find(sheet=>sheet.cue_sheet_id===song.active_cue_sheet_id)||null;
@@ -220,7 +222,7 @@ function renderSongs(){
   if(selectedSongId&&!songById(selectedSongId))selectedSongId=null;
   for(const song of library.songs){
     const card=node('article',undefined,'cue');
-    const info=node('div');info.append(node('h3',song.title),node('p',`${song.artist} | ${song.duration_seconds}s | ${song.active_cue_sheet_id?'published timeline':'no published timeline'}`,'hint'));
+    const info=node('div');info.append(node('h3',song.title),node('p',`${song.artist} | ${songStyleName(song)} | ${song.duration_seconds}s | ${song.active_cue_sheet_id?'published timeline':'no published timeline'}`,'hint'));
     const row=node('div',undefined,'row');
     row.append(button('Timeline',()=>{selectedSongId=song.song_id;renderSongs();renderTimeline();}),button('Edit',()=>openSongEditor(song)),button('Delete',()=>deleteSong(song)));
     card.append(node('span',String(library.songs.indexOf(song)+1).padStart(2,'0'),'cue-number'),info,row);$('song-list').append(card);
@@ -229,7 +231,7 @@ function renderSongs(){
 }
 function openSongEditor(song=null){
   editingSongId=song?.song_id||null;$('song-editor').hidden=false;$('song-editor-heading').textContent=song?'Edit song':'New song';
-  $('song-title').value=song?.title||'';$('song-artist').value=song?.artist||'Phreqed';$('song-duration').value=song?.duration_seconds||'';$('song-id').value=song?.song_id||'';$('song-id').disabled=Boolean(song);$('song-notes').value=song?.notes||'';
+  $('song-title').value=song?.title||'';$('song-artist').value=song?.artist||'Phreqed';$('song-duration').value=song?.duration_seconds||'';$('song-id').value=song?.song_id||'';$('song-id').disabled=Boolean(song);$('song-style').value=song?.style||'unspecified';$('song-notes').value=song?.notes||'';
   $('song-editor').scrollIntoView({behavior:'smooth',block:'center'});
 }
 function deleteSong(song){
@@ -241,6 +243,7 @@ function deleteSong(song){
 function renderTimeline(){
   const song=selectedSongId?songById(selectedSongId):null;$('timeline-editor').hidden=!song;if(!song)return;
   $('timeline-title').textContent=song.title;const sheet=timelineSheet(song),editable=Boolean(sheet&&!sheet.published);
+  $('apply-style-default').textContent=song.style&&song.style!=='unspecified'?`Apply ${songStyleName(song)} default`:'Choose a song style first';$('apply-style-default').disabled=!song.style||song.style==='unspecified';
   $('new-cue-draft').hidden=editable;$('publish-cue-sheet').hidden=!editable;$('song-cue-editor').hidden=!editable;$('song-cue-list').replaceChildren();
   $('timeline-status').textContent=!sheet?'No cue sheet yet. Create the first draft.':sheet.published?`Published revision ${sheet.revision}. Create a new revision to edit.`:`Draft revision ${sheet.revision}. Add cues, preview them, then publish.`;
   if(!sheet)return;
@@ -260,6 +263,12 @@ function newCueDraft(){
   // A draft needs its first zero-second cue before it can pass the schema.
   if(!active)draftSheet.cues=[{at_seconds:0,preset_id:catalog.presets[0].preset_id,transition_seconds:0.5}];
   saveSongDocument(document,'Cue-sheet draft created.',clearSongCueEdit);
+}
+function applyStyleDefault(){
+  const song=songById(selectedSongId);if(!song||!song.style||song.style==='unspecified'){notify('Edit the song and choose Punk, Rock, Mellow, or Funk first.',true);return;}
+  const sheet=timelineSheet(song),replace=Boolean(sheet&&!sheet.published);
+  if(replace&&!confirm(`Replace every cue in the current draft with the ${songStyleName(song)} default?`))return;
+  command('apply_song_style',{song_id:song.song_id,replace},true).then(()=>{notify(`${songStyleName(song)} baseline created as an editable draft.`);clearSongCueEdit();}).catch(()=>{});
 }
 function publishCueSheet(){
   const song=songById(selectedSongId),sheet=song&&timelineSheet(song);if(!sheet||sheet.published)return;
@@ -288,12 +297,13 @@ $('song-editor').addEventListener('submit',event=>{
   for(const input of $('song-editor').querySelectorAll('input'))if(!input.reportValidity())return;
   const document=songDocument(),songId=$('song-id').value.trim(),existing=document.songs.find(song=>song.song_id===editingSongId);
   if(!existing&&document.songs.some(song=>song.song_id===songId)){notify('That song ID already exists.',true);return;}
-  const song={song_id:songId,title:$('song-title').value.trim(),artist:$('song-artist').value.trim(),duration_seconds:Number($('song-duration').value),notes:$('song-notes').value.trim(),source:existing?.source||'manual',active_cue_sheet_id:existing?.active_cue_sheet_id||null};
+  const song={song_id:songId,title:$('song-title').value.trim(),artist:$('song-artist').value.trim(),duration_seconds:Number($('song-duration').value),notes:$('song-notes').value.trim(),source:existing?.source||'manual',active_cue_sheet_id:existing?.active_cue_sheet_id||null,style:$('song-style').value};
   if(existing)document.songs[document.songs.indexOf(existing)]=song;else document.songs.push(song);
   saveSongDocument(document,'Song saved.',()=>{$('song-editor').hidden=true;editingSongId=null;selectedSongId=song.song_id;renderSongs();});
 });
 function clearSongCueEdit(){editingSongCueIndex=null;$('song-cue-time').value='';$('song-cue-transition').value=0.5;$('save-song-cue').textContent='+ Add cue';$('cancel-song-cue').hidden=true;}
 $('cancel-song-cue').addEventListener('click',clearSongCueEdit);
+$('apply-style-default').addEventListener('click',applyStyleDefault);
 $('new-cue-draft').addEventListener('click',newCueDraft);
 $('publish-cue-sheet').addEventListener('click',publishCueSheet);
 $('song-cue-editor').addEventListener('submit',event=>{

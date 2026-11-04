@@ -78,7 +78,7 @@ and shutdown stop the timeline without automatic resume. A restart defaults to
 Manual mode, no active timeline, and output stopped. Recovery is documented in
 [`setlist-performance.md`](setlist-performance.md).
 
-Windows validation passes all 193 tests, including deterministic selection,
+Windows validation passes all 198 tests, including deterministic selection,
 explicit start/stop, no-next-song autostart, blackout cancellation, lease-loss
 cancellation, reboot-safe defaults, Manual-mode compatibility, serialized foot
 commands, and no Art-Net construction in simulation. Chromium validation
@@ -628,6 +628,24 @@ Generate representative simulator images for every effect and preset at fixed
 times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
+
+### SONG-004 - Style-based default song timelines (`P1`, authoring)
+
+Songs can now be tagged Punk, Rock, Mellow, or Funk. Each style has a distinct,
+deterministic sequence of safe existing looks with proportional cue positions
+and style-appropriate transitions. **Apply style default** creates a new
+unpublished revision, or replaces an existing draft only after confirmation;
+published revisions remain immutable and active until a new draft is reviewed
+and explicitly published.
+
+The version-1 song document remains backward compatible: existing Pi songs
+without style metadata load as Unspecified and round-trip unchanged. Generation
+validates duration and preset availability, cannot start playback or construct
+Art-Net, and produces strictly increasing cue times even at the minimum song
+duration. Automated tests cover all four distinct templates, invalid styles,
+legacy loading, draft replacement, publication isolation, and network safety.
+A real Chromium simulation saved Rock on a legacy song and generated its
+editable eight-cue draft with zero console errors or warnings.
 
 ### SONG-002 - Song, cue-sheet, and setlist authoring UI (`P1`, show control)
 

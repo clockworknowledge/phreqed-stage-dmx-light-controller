@@ -24,6 +24,16 @@ class SongSource(str, Enum):
     REHEARSAL_CAPTURE = 'rehearsal_capture'
 
 
+class SongStyle(str, Enum):
+    """Operator-selected starting point for a baseline cue sheet."""
+
+    UNSPECIFIED = 'unspecified'
+    PUNK = 'punk'
+    ROCK = 'rock'
+    MELLOW = 'mellow'
+    FUNK = 'funk'
+
+
 def _object_fields(value: object, required: set[str]) -> dict:
     if not isinstance(value, dict) or value.keys() != required:
         raise ValueError(f'expected fields: {", ".join(sorted(required))}')
@@ -67,6 +77,7 @@ class Song:
     notes: str = ''
     source: SongSource = SongSource.MANUAL
     active_cue_sheet_id: str | None = None
+    style: SongStyle = SongStyle.UNSPECIFIED
 
     def __post_init__(self) -> None:
         _identifier(self.song_id, 'song', 'song ID')
@@ -76,11 +87,13 @@ class Song:
         _text(self.notes, 'song notes', 4000, allow_empty=True)
         if not isinstance(self.source, SongSource):
             raise ValueError('song source is invalid')
+        if not isinstance(self.style, SongStyle):
+            raise ValueError('song style is invalid')
         if self.active_cue_sheet_id is not None:
             _identifier(self.active_cue_sheet_id, 'cue', 'active cue-sheet ID')
 
     def as_dict(self) -> dict:
-        return {
+        data = {
             'song_id': self.song_id,
             'title': self.title,
             'artist': self.artist,
@@ -89,6 +102,11 @@ class Song:
             'source': self.source.value,
             'active_cue_sheet_id': self.active_cue_sheet_id,
         }
+        # Omit the default so existing version-1 song documents round-trip
+        # unchanged while styled songs persist the new optional metadata.
+        if self.style is not SongStyle.UNSPECIFIED:
+            data['style'] = self.style.value
+        return data
 
 
 @dataclass(frozen=True, slots=True)
@@ -172,18 +190,27 @@ class Setlist:
 
 
 def _parse_song(value: object) -> Song:
-    data = _object_fields(value, {
+    required = {
         'song_id', 'title', 'artist', 'duration_seconds', 'notes', 'source',
         'active_cue_sheet_id',
-    })
+    }
+    if (not isinstance(value, dict)
+            or not required <= value.keys()
+            or not value.keys() <= required | {'style'}):
+        raise ValueError(f'expected fields: {", ".join(sorted(required))}; optional: style')
+    data = value
     try:
         source = SongSource(data['source'])
     except (TypeError, ValueError) as exc:
         raise ValueError('song source is invalid') from exc
+    try:
+        style = SongStyle(data.get('style', SongStyle.UNSPECIFIED.value))
+    except (TypeError, ValueError) as exc:
+        raise ValueError('song style is invalid') from exc
     return Song(
         data['song_id'], data['title'], data['artist'],
         _number(data['duration_seconds'], 'song duration', 1, MAX_SONG_SECONDS),
-        data['notes'], source, data['active_cue_sheet_id'],
+        data['notes'], source, data['active_cue_sheet_id'], style,
     )
 
 

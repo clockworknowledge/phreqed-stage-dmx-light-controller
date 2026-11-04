@@ -40,6 +40,13 @@ Ampero commands route through this controller; in Manual mode the existing
 scene/tap-tempo behavior remains unchanged. Entering Setlist mode or selecting
 a song only arms it. Neither action starts a timeline or enables fixture output.
 
+Songs may optionally declare a `SongStyle` of Punk, Rock, Mellow, or Funk.
+`song_styles.py` converts the selected style into deterministic cue positions
+proportional to song duration using only known visual preset IDs. Applying a
+style creates a new unpublished cue-sheet revision, or replaces an existing
+draft only after explicit confirmation. It never modifies a published revision,
+publishes a draft, starts playback, or touches Art-Net.
+
 `BrowserControl` serializes access to one controller from an HTTP server and a
 25 FPS render thread. The `web` command is simulation-only and cannot create an
 Art-Net sender. `live --web` merely makes live activation available; the user

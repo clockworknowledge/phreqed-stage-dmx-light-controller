@@ -23,6 +23,7 @@ from .performance import PerformanceController, PerformanceMode
 from .presets import PRESETS
 from .render import compose_dmx
 from .song_timeline import SongTimelineRunner, TimelineState
+from .song_styles import generate_style_cues
 from .songs import SongCue, SongLibrary
 from .white_output import (
     DEFAULT_WHITE_OUTPUT_LEVEL,
@@ -168,6 +169,43 @@ class BrowserControl:
             running=timeline.state is TimelineState.RUNNING,
         )
 
+    def _apply_song_style(self, song_id: object, replace: object) -> None:
+        if not isinstance(song_id, str) or song_id not in self.song_library.songs:
+            raise ValueError('unknown song')
+        if not isinstance(replace, bool):
+            raise ValueError('replace must be boolean')
+        if self.song_timeline.state is TimelineState.RUNNING:
+            raise ValueError('stop the active song before editing its timeline')
+        song = self.song_library.songs[song_id]
+        cues = generate_style_cues(
+            song.style, song.duration_seconds, set(self.engine.presets)
+        )
+        document = self.song_library.document()
+        sheets = [
+            sheet for sheet in document['cue_sheets']
+            if sheet['song_id'] == song_id
+        ]
+        drafts = [sheet for sheet in sheets if not sheet['published']]
+        if drafts:
+            draft = max(drafts, key=lambda sheet: sheet['revision'])
+            if not replace:
+                raise ValueError(
+                    'this song already has an editable draft; confirm replacement first'
+                )
+        else:
+            revision = max((sheet['revision'] for sheet in sheets), default=0) + 1
+            draft = {
+                'cue_sheet_id': f"cue-{song_id[5:]}-v{revision}",
+                'song_id': song_id,
+                'revision': revision,
+                'published': False,
+                'cues': [],
+            }
+            document['cue_sheets'].append(draft)
+        draft['cues'] = [cue.as_dict() for cue in cues]
+        self.song_library.save(document)
+        self.performance.reconcile_library()
+
     def catalog(self) -> dict:
         return dict(effects=[asdict(m) for m in EFFECT_REGISTRY.metadata()],
                     presets=[{**preset_data(p), 'builtin': p.preset_id in PRESETS}
@@ -312,7 +350,7 @@ class BrowserControl:
             {
                 'value', 'preset', 'scenes', 'index', 'enabled', 'floor',
                 'threshold', 'level', 'song_library', 'cue_sheet_id',
-                'cue_index', 'setlist_id', 'mode',
+                'cue_index', 'setlist_id', 'mode', 'song_id', 'replace',
             },
         )
         action = data['action']
@@ -475,6 +513,8 @@ class BrowserControl:
                 self.song_library.preset_ids = set(self.engine.presets)
                 self.song_library.save(data.get('song_library'))
                 self.performance.reconcile_library()
+            elif action == 'apply_song_style':
+                self._apply_song_style(data.get('song_id'), data.get('replace', False))
             elif action == 'preview_song_cue':
                 if self.sender is not None:
                     raise ValueError('song cue preview is simulation-only; stop live output first')

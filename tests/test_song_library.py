@@ -25,11 +25,13 @@ class SongLibraryTests(unittest.TestCase):
                     'song_id': 'song-first', 'title': 'First Song', 'artist': 'Phreqed',
                     'duration_seconds': 120.0, 'notes': 'Open the set',
                     'source': 'mp3_upload', 'active_cue_sheet_id': 'cue-first-v1',
+                    'style': 'punk',
                 },
                 {
                     'song_id': 'song-second', 'title': 'Second Song', 'artist': 'Phreqed',
                     'duration_seconds': 90.0, 'notes': '',
                     'source': 'rehearsal_capture', 'active_cue_sheet_id': 'cue-second-v1',
+                    'style': 'mellow',
                 },
             ],
             'cue_sheets': [
@@ -64,6 +66,7 @@ class SongLibraryTests(unittest.TestCase):
         restored = SongLibrary(self.path, set(PRESETS))
         self.assertEqual(restored.document(), document)
         self.assertEqual(restored.songs['song-first'].source.value, 'mp3_upload')
+        self.assertEqual(restored.songs['song-first'].style.value, 'punk')
         self.assertEqual(restored.setlists['setlist-show'].song_ids,
                          ('song-first', 'song-second'))
 
@@ -76,6 +79,7 @@ class SongLibraryTests(unittest.TestCase):
             lambda d: d.update(extra=True),
             lambda d: d['songs'][0].update(song_id='../../escape'),
             lambda d: d['songs'][0].update(source='streaming_link'),
+            lambda d: d['songs'][0].update(style='metal'),
             lambda d: d['songs'][0].update(duration_seconds=float('nan')),
             lambda d: d['songs'][0].update(active_cue_sheet_id='cue-missing'),
             lambda d: d['songs'].append(copy.deepcopy(d['songs'][0])),
@@ -94,6 +98,17 @@ class SongLibraryTests(unittest.TestCase):
                     self.library.save(proposed)
                 self.assertEqual(self.path.read_bytes(), before)
                 self.assertEqual(self.library.document(), original)
+
+    def test_legacy_song_without_style_loads_as_unspecified(self):
+        document = self.document()
+        for song in document['songs']:
+            song.pop('style')
+        self.path.write_text(json.dumps(document), encoding='utf-8')
+
+        restored = SongLibrary(self.path, set(PRESETS))
+
+        self.assertEqual(restored.songs['song-first'].style.value, 'unspecified')
+        self.assertEqual(restored.document(), document)
 
     def test_unpublished_draft_is_allowed_until_made_active(self):
         document = self.document()

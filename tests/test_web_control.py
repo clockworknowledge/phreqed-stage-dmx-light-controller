@@ -237,6 +237,34 @@ class BrowserControlTests(unittest.TestCase):
             ))
         self.control.sender = None
 
+    def test_song_style_creates_editable_draft_without_output_or_publication(self):
+        self.control.command(dict(action='save_preset', preset=self.preset()))
+        document = self.song_document()
+        document['songs'][0]['style'] = 'punk'
+        self.control.command(dict(
+            action='save_song_library', song_library=document
+        ))
+
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            self.control.command(dict(
+                action='apply_song_style', song_id='song-test', replace=False
+            ))
+            sender.assert_not_called()
+
+        saved = self.control.catalog()['song_library']
+        draft = next(sheet for sheet in saved['cue_sheets'] if not sheet['published'])
+        self.assertEqual((draft['revision'], draft['cues'][0]['at_seconds']), (2, 0.0))
+        self.assertGreater(len(draft['cues']), 5)
+        self.assertEqual(saved['songs'][0]['active_cue_sheet_id'], 'cue-test-v1')
+        with self.assertRaisesRegex(ValueError, 'confirm replacement'):
+            self.control.command(dict(
+                action='apply_song_style', song_id='song-test', replace=False
+            ))
+        self.control.command(dict(
+            action='apply_song_style', song_id='song-test', replace=True
+        ))
+        self.assertFalse(self.control.song_library.cue_sheets[draft['cue_sheet_id']].published)
+
     def test_setlist_mode_requires_explicit_start_and_never_autostarts_next_song(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
         self.control.command(dict(
@@ -323,11 +351,13 @@ class BrowserControlTests(unittest.TestCase):
             'publish-cue-sheet', 'setlist-select', 'setlist-songs',
             'performance-mode', 'performance-setlist', 'performance-song-title',
             'previous-song', 'toggle-song', 'next-song',
+            'song-style', 'apply-style-default',
         ):
             self.assertIn(f'id="{control_id}"', html)
         self.assertIn("command('save_song_library'", script)
         self.assertIn("act('preview_song_cue'", script)
         self.assertIn("act('performance_mode'", script)
+        self.assertIn("command('apply_song_style'", script)
         self.assertIn("act(state?.performance?.running?'stop_song':'start_song')", script)
         self.assertIn('Published cue-sheet versions are immutable', html)
 

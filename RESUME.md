@@ -35,11 +35,18 @@ never starts the next song. Blackout, Stop output, browser-lease loss, render
 failure, and shutdown stop the timeline without resume. Restart defaults to
 Manual mode, no active timeline, and output stopped. Chromium validation passed
 the arm/start/stop/manual workflow with zero console errors, and the complete
-Windows Python 3.12 suite passes 193 tests.
+Windows Python 3.12 suite passes 198 tests.
 
 `SHOW-004` now sits in Validation pending Pi startup, Ampero disconnect/reconnect,
 multi-song completion, browser-loss, and low-brightness fixture acceptance. The
 operating and recovery procedure is in `docs/setlist-performance.md`.
+
+Song authoring now also supports optional Punk, Rock, Mellow, and Funk styles.
+Applying the selected style in the timeline editor generates a deterministic,
+duration-scaled unpublished draft while retaining every published revision.
+Existing Pi `songs.json` files without a style remain valid and display as
+Unspecified. Browser simulation validation completed the Rock workflow with
+zero console errors and no live-output activation.
 
 The next authoring sequence is `ANALYSIS-001`/`ANALYSIS-002`. AI analysis is an
 offline workflow using either an authorized MP3 upload or an explicitly started
