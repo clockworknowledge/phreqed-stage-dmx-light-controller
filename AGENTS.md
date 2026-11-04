@@ -26,6 +26,10 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
   0.10-second/4 Hz safety limits.
 - `src/phreqed_dmx/scenes.py`: deterministic ordered-cue playback and transitions.
 - `src/phreqed_dmx/library.py`: validated, atomic user presets and scene storage.
+- `src/phreqed_dmx/songs.py`: validated, atomic song, cue-sheet, and setlist
+  metadata storage; it never stores audio media.
+- `src/phreqed_dmx/song_timeline.py`: transport-independent, injected-clock
+  setlist playback with explicit start/stop and no automatic next-song start.
 - `src/phreqed_dmx/fixtures.py`: fixture geometry and logical-pixel-to-DMX mapping.
 - `src/phreqed_dmx/render.py`: composes logical grids into one DMX universe.
 - `src/phreqed_dmx/artnet.py`: ArtDMX packet construction and UDP transmission.

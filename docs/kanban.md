@@ -52,20 +52,6 @@ the profile passes a rehearsal-length USB soak; and the browser remains the
 independent control path. Do not rely on simultaneous-switch chords for new
 performance commands.
 
-### SONG-001 — Song library and deterministic cue timeline (`P1`, show control)
-
-Implement versioned `Song`, `SongCueSheet`, `SongCue`, and `Setlist` models plus
-an injected-clock timeline runner. Start and stop are explicit. Completion may
-arm/select the next song but must never start it automatically. This foundation
-contains no media decoder, LLM client, or streaming-service integration.
-
-Acceptance: atomic persistence and schema validation preserve prior data on
-failure; missing presets are rejected before arming; deterministic tests cover
-cue boundaries, transitions, previous/next song selection, restart, completion,
-blackout priority, and application restart; simulation constructs no sender;
-and current manual-scene behavior remains unchanged. See
-[`song-setlist-roadmap.md`](song-setlist-roadmap.md), Sprint 1.
-
 ### SPRITE-001 — Production sprite renderer (`P2`, visuals)
 
 Promote experimental sprite helpers into the normalized rendering pipeline with
@@ -622,6 +608,23 @@ Generate representative simulator images for every effect and preset at fixed
 times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
+
+### SONG-001 — Song library and deterministic cue timeline (`P1`, show control)
+
+Implemented versioned `Song`, `SongCueSheet`, `SongCue`, and `Setlist` models,
+strict cross-reference validation, and atomic metadata-only JSON persistence.
+The injected-clock timeline runner supports explicit load/select/start/stop and
+restart, deterministic skipped-time cue deadlines, previous/next selection,
+blackout cancellation without resume, mode deactivation, and song completion
+that arms the next song without starting it. It imports no renderer, media,
+network, fixture, or transport code.
+
+Acceptance passed on Windows Python 3.12: eighteen focused tests cover atomic
+failure preservation, corrupt input, schema and preset boundaries, application
+restart, cue timing, callback failure, blackout priority, completion, and
+network isolation. The complete suite passes 179 tests. Browser authoring and
+runtime integration remain SONG-002 and SHOW-004. See
+[`song-setlist-roadmap.md`](song-setlist-roadmap.md), Sprint 1.
 
 ### HW-001 — Commission LF4808 white-zone mapping (`P0`, safety)
 

@@ -195,8 +195,11 @@ simulation before resuming live output.
 
 ## Planned song and setlist control
 
-The next show-control family adds a versioned song library, editable cue
-timelines, ordered setlists, and separate Manual and Setlist performance modes.
+The first foundation is implemented: a versioned, atomic metadata library for
+songs, cue sheets, and ordered setlists plus a deterministic injected-clock
+timeline runner. It is not yet connected to the browser or live controller.
+The next show-control work adds editable browser timelines and separate Manual
+and Setlist performance modes.
 Song playback will always require an explicit performer start; completion may
 arm the next song but will not start it automatically. AI is planned only as an
 offline authoring assistant whose proposals are reviewed and published before a

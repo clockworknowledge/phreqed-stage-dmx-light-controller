@@ -20,8 +20,8 @@ reachable performance bank safe or disable bank navigation if the supported
 configuration allows it. `CONTROL-002` is reduced to optional backup/inspection
 research.
 
-The next implementation sequence is `SONG-001` followed by the browser
-authoring and Setlist performance cards. The approved product direction is:
+The implementation sequence now continues with `SONG-002` browser authoring,
+followed by the Setlist performance card. The approved product direction is:
 manual scene mode remains unchanged; Setlist mode selects previous/next song
 and requires an explicit start/stop; song completion may arm the next song but
 never auto-starts it. AI analysis is an offline authoring workflow using either
@@ -31,6 +31,14 @@ prepared cue sheet supplies baseline scene selection while the existing
 microphone dynamics continue to modulate the active scene. Streaming links are
 not part of the initial workflow. See
 `docs/song-setlist-roadmap.md` and `docs/kanban.md`.
+
+`SONG-001` is now implemented as a hardware-free foundation. `songs.py` provides
+strict versioned models and atomic metadata persistence for songs, cue sheets,
+and setlists; `song_timeline.py` provides injected-clock playback with explicit
+start/stop, blackout cancellation, deterministic skipped-time cue deadlines,
+and arm-next-without-autostart behavior. Eighteen focused tests bring the full
+Windows Python 3.12 suite to 179 passing tests. Browser authoring and performance
+mode integration remain SONG-002 and SHOW-004.
 
 Generated Playwright snapshots and screenshots were removed from the pending
 change set and their local output directories are ignored. They are not project

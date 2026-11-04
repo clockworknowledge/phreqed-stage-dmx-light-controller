@@ -230,7 +230,7 @@ required fallback.
 - Create and soak a performance-safe Ampero profile across reachable banks.
 - Keep read-only configuration backup/recovery research separate from live use.
 
-### Sprint 1 - Song domain and deterministic timeline
+### Sprint 1 - Song domain and deterministic timeline (complete)
 
 - Implement `Song`, `SongCueSheet`, `SongCue`, and `Setlist` validation and
   persistence with injected clocks.
@@ -238,6 +238,11 @@ required fallback.
   completion, and arm-next-without-autostart behavior.
 - Add hardware-free tests for clock boundaries, missing presets, blackout,
   mode changes, restarts, and fixture independence.
+
+Implemented by `songs.py` and `song_timeline.py`. The metadata store is atomic
+and versioned, while the runner is clock/callback injected and has no rendering,
+media, network, or transport dependency. The focused and complete Windows test
+suites pass; browser integration begins in Sprint 2.
 
 ### Sprint 2 - Library, timeline, and setlist authoring UI
 

@@ -24,6 +24,15 @@ replacing the on-disk file. Built-in presets remain immutable. `SceneSequencer`
 uses caller-supplied elapsed time for deterministic cue selection, timed holds,
 and crossfades without importing GUI or transport code.
 
+`SongLibrary` separately validates and atomically stores metadata-only `Song`,
+`SongCueSheet`, `SongCue`, and `Setlist` documents. It accepts a caller-supplied
+set of known preset IDs and rejects unknown preset references before runtime.
+It never stores MP3 or captured audio bytes. `SongTimelineRunner` uses an
+injected monotonic clock and a cue-activation callback, with no renderer,
+network, media, or GUI imports. Start/stop is explicit; blackout stops playback
+without automatic resume; song completion arms the next selection without
+starting it; and the final song holds a complete state.
+
 `BrowserControl` serializes access to one controller from an HTTP server and a
 25 FPS render thread. The `web` command is simulation-only and cannot create an
 Art-Net sender. `live --web` merely makes live activation available; the user
