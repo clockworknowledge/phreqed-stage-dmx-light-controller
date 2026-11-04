@@ -24,9 +24,12 @@ The next implementation sequence is `SONG-001` followed by the browser
 authoring and Setlist performance cards. The approved product direction is:
 manual scene mode remains unchanged; Setlist mode selects previous/next song
 and requires an explicit start/stop; song completion may arm the next song but
-never auto-starts it. AI analysis is an offline authoring workflow using an
-authorized local audio upload and derived features. Spotify/Apple Music links
-are metadata identifiers only, not audio sources. See
+never auto-starts it. AI analysis is an offline authoring workflow using either
+an authorized MP3 upload or an explicitly started rehearsal microphone capture.
+Both produce the same derived song-structure contract. During the show, the
+prepared cue sheet supplies baseline scene selection while the existing
+microphone dynamics continue to modulate the active scene. Streaming links are
+not part of the initial workflow. See
 `docs/song-setlist-roadmap.md` and `docs/kanban.md`.
 
 Generated Playwright snapshots and screenshots were removed from the pending

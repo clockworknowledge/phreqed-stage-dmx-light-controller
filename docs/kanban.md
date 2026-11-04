@@ -459,23 +459,40 @@ and Manual mode remains backward compatible. See the roadmap, Sprint 3.
 
 ### ANALYSIS-001 - Rights-safe offline song analysis (`P1`, authoring)
 
-Accept user-owned/licensed WAV, FLAC, or MP3 files with rights attestation and
-an explicit retention policy. Produce versioned tempo, beat/bar, energy/onset,
-frequency-band, and section artifacts in an optional offline worker. A Spotify
-or Apple Music link may import permitted metadata only; it is never an audio
-download or analysis source.
+Accept user-owned/licensed MP3 files with rights attestation and an explicit
+retention policy. Produce versioned tempo, beat/bar, energy/onset,
+frequency-band, and section artifacts in an optional offline worker. Streaming
+links, WAV, and FLAC are out of scope for the initial upload workflow.
 
 Acceptance: uploaded audio and credentials are excluded from Git and logs;
 malformed/oversized files fail safely; results are deterministic within stated
 tolerances; decoding cannot block the 25 FPS controller; and Windows/Pi resource
-measurements determine the supported authoring host. See the roadmap, Sprint 4.
+measurements determine the supported authoring host. See the roadmap, Sprint 4A.
+
+### ANALYSIS-002 - Rehearsal microphone song capture (`P1`, authoring)
+
+Add an explicitly armed listening session that uses the configured microphone
+while the band performs a complete song. Capture time-indexed normalized audio
+features and timing markers, then feed the same analysis and cue-proposal
+contract as ANALYSIS-001. Retain derived features by default, not raw rehearsal
+audio. This authoring capture is separate from the existing show-time microphone
+dynamics layer.
+
+Acceptance: listening requires deliberate Start/Stop and visibly reports device,
+level, clipping, elapsed time, and capture health; device loss, gaps, long
+silence, and incomplete captures prevent silent publication; raw PCM is removed
+after feature extraction unless a future explicit retention option is approved;
+capture cannot construct an Art-Net sender or block the 25 FPS controller; and
+the resulting `SongAnalysis` is interchangeable with an MP3-derived analysis.
+See the roadmap, Sprint 4B.
 
 ### AI-SONG-001 - Structured AI cue proposal and review (`P1`, authoring)
 
 Generate a proposed cue sheet from bounded derived analysis, effect metadata,
-and operator preferences. Validate a versioned JSON response before showing it
-in the existing editor. Never send Spotify/Apple audio to a model, and never
-call a model during a performance.
+and operator preferences. The derived analysis may originate from an uploaded
+MP3 or a rehearsal listening session. Validate a versioned JSON response before
+showing it in the existing editor. Never send raw rehearsal or streaming audio
+to a model, and never call a model during a performance.
 
 Acceptance: unknown presets, invalid times, excessive brightness, and unsafe
 white-output requests are rejected; the operator can compare, edit, simulate,

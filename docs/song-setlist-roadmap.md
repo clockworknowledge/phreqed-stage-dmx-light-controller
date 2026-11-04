@@ -11,18 +11,26 @@ manual scene controller:
   tempo, and blackout workflow.
 - **Setlist performance** lets the operator select a song, explicitly start or
   stop its prepared cue timeline, and move to the previous or next song.
-- **AI Song Builder** analyzes authorized audio before a show, proposes a scene
-  timeline, and lets the operator edit, simulate, approve, and publish it.
+- **AI Song Builder** analyzes either an uploaded MP3 or a deliberate rehearsal
+  listening session before a show, proposes a baseline scene timeline, and lets
+  the operator edit, simulate, approve, and publish it.
 - **Setlist Builder** orders approved songs and presents a large current/next
   song view for the performer.
 
 The AI and audio-analysis paths are authoring tools. They must never be required
 by the Raspberry Pi during a performance.
 
-## Streaming-link feasibility
+## Supported analysis inputs
 
-A pasted Apple Music or Spotify link is useful as a catalog identifier, but it
-must not be treated as permission or as an audio-download source.
+The initial product will not accept Apple Music, Spotify, or other streaming
+links. It supports two band-controlled inputs:
+
+1. A user-owned or licensed **MP3 upload**.
+2. A deliberate **rehearsal listening session** captured from the configured
+   microphone while the band performs the complete song.
+
+Streaming links remain explicitly out of scope because they must not be treated
+as permission or as an audio-download source.
 
 - Spotify's current [Developer Policy](https://developer.spotify.com/policy)
   prohibits downloading Spotify content, analyzing Spotify content, and using
@@ -37,19 +45,52 @@ must not be treated as permission or as an audio-download source.
 
 Therefore the supported design is:
 
-1. Accept a streaming URL only to identify a song and optionally import allowed
-   metadata.
-2. Require a separate user-owned or licensed WAV, FLAC, or MP3 upload for audio
-   analysis, with an explicit rights attestation.
-3. Offer fully manual song/timeline creation when no audio file is available.
-4. Keep uploaded media outside Git and out of diagnostic bundles. Give the user
-   an explicit retention/delete policy.
+1. Accept only MP3 for uploaded-audio analysis, with an explicit rights
+   attestation.
+2. Offer rehearsal listening and fully manual song/timeline creation when no
+   MP3 is available.
+3. Keep uploaded MP3 files outside Git and out of diagnostic bundles. Give the
+   user an explicit retention/delete policy.
+4. Store time-indexed derived features from rehearsal listening; do not retain
+   raw rehearsal audio by default.
 5. Send derived features and a compact section summary to an LLM, not a
    streaming-service recording. Provider retention and rights still require
    review before enabling a hosted model.
 
 This is a product/engineering constraint, not legal advice. Platform terms must
 be reviewed again before shipping an integration.
+
+## Analysis and performance pipeline
+
+```text
+MP3 upload --------------------+
+                               +-> local feature extraction
+Rehearsal microphone session --+      |
+                                      v
+                            versioned SongAnalysis
+                                      |
+                         structured AI cue proposal
+                                      |
+                         operator edit and simulation
+                                      |
+                          published baseline cue sheet
+                                      |
+                   explicit Start in Setlist performance mode
+                                      |
+             baseline scene changes + live microphone modulation
+```
+
+Local signal processing extracts timing, energy, onset, frequency-band, and
+candidate section information. The LLM receives this bounded structure plus the
+effect catalog and proposes scene choices; it is not responsible for live audio
+capture or DMX output. Human review remains mandatory before publication.
+
+During a show, the cue sheet controls baseline scene selection and transitions.
+The existing low-latency microphone context independently adjusts bounded
+brightness, movement, contrast, and permitted white accents so the visuals
+still respond to the actual performance. The live modulation layer cannot
+rewrite the cue sheet. Later SYNC-001 work may gently correct cue timing when
+confidence is high.
 
 ## Proposed data model
 
@@ -59,15 +100,16 @@ following the existing preset-library approach.
 ```text
 Song
   id, title, artist, duration_s, notes
-  source metadata and optional streaming identifiers
+  analysis source type (mp3_upload, rehearsal_capture, or manual)
   local media reference/fingerprint (never the media bytes)
   active analysis version and active cue-sheet version
 
 SongAnalysis
-  analyzer/version, duration, confidence
+  analyzer/version, source type, duration, confidence
   tempo/beat/bar map
   section boundaries (intro, verse, chorus, bridge, solo, outro, custom)
   bounded energy, onset, and frequency-band curves
+  capture health and timing discontinuities
 
 SongCueSheet
   song id, version, created-by, published flag
@@ -96,10 +138,14 @@ items, so automatic start is unsafe and surprising. A later setting may choose
 whether the selection advances or remains on the completed song, but playback
 must never auto-start by default.
 
-The first timing implementation starts when the performer presses Start. A
-studio recording will not remain phase-locked to a live band indefinitely.
-Mic-based beat/onset phase correction is a later experimental sprint with
-bounded corrections and an immediate fallback to the original timeline.
+The first timing implementation starts when the performer presses Start. An MP3
+or rehearsal capture supplies baseline structure and cue timing, not an exact
+promise about the live rendition. During performance the existing microphone
+analysis continues to modulate brightness, motion, contrast, and bounded white
+accents inside the active scene. It does not automatically replace the authored
+scene sequence. Mic-based beat/onset phase correction is a later experimental
+sprint with bounded corrections and an immediate fallback to the baseline
+timeline.
 
 Blackout remains global, immediate, and available in every mode. Changing mode,
 selecting a song, or loading a setlist cannot enable Art-Net. Setlist playback
@@ -109,10 +155,21 @@ can change scenes only after the existing explicit browser live activation.
 
 ### Song Library
 
-- Create songs manually or import permitted metadata from a link.
-- Upload authorized audio to an operator-configured media directory.
+- Create songs manually, upload an authorized MP3 to an operator-configured
+  media directory, or start a rehearsal listening session.
 - Show media/analysis/cue-sheet state and version.
-- Analyze, reanalyze, delete local media, or open the timeline editor.
+- Analyze, reanalyze, delete local media/features, or open the timeline editor.
+
+### Rehearsal Listening
+
+- Require an explicit armed state and operator Start/Stop; never listen merely
+  because the browser page is open.
+- Show input device, level, clipping, elapsed time, capture health, and a clear
+  recording/listening indicator.
+- Capture normalized feature frames and timing markers for the entire song.
+- Detect gaps, device loss, and clipping and require operator review when the
+  capture is incomplete.
+- Retain derived features by default, not raw rehearsal audio.
 
 ### AI Song Builder
 
@@ -195,15 +252,26 @@ required fallback.
 - Validate reboot, controller disconnect, browser loss, song skipping, and
   setlist completion on the Pi before live fixture use.
 
-### Sprint 4 - Authorized offline audio analysis
+### Sprint 4A - Authorized MP3 analysis
 
-- Add upload/storage policy, rights attestation, file fingerprinting, and safe
-  deletion.
+- Add MP3-only upload/storage policy, rights attestation, file fingerprinting,
+  validation, and safe deletion.
 - Evaluate decoding and analysis in an optional offline worker rather than the
   25 FPS controller process.
 - Produce deterministic tempo, beat/bar, energy/onset, and section artifacts.
 - Benchmark on Windows first, then decide whether authoring belongs on the Pi or
   a more capable computer.
+
+### Sprint 4B - Rehearsal listening analysis
+
+- Add an explicitly armed microphone capture session separate from show-time
+  audio modulation.
+- Record a time-indexed feature timeline without retaining raw audio by default.
+- Detect clipping, input loss, long silence, discontinuities, and incomplete
+  captures before analysis can be published.
+- Feed the same section detection and AI proposal pipeline used for MP3 input.
+- Confirm that capture/analysis cannot enable Art-Net or interfere with an
+  already-running controller.
 
 ### Sprint 5 - AI cue proposal and review
 
@@ -233,10 +301,12 @@ required fallback.
 - Manual performance behavior remains backward compatible.
 - Simulation is the default and proves zero network construction.
 - AI and media services are absent from the live timing path.
+- MP3 and rehearsal inputs produce the same validated `SongAnalysis` contract.
 - Every setlist is usable offline after publishing.
 - Start/stop remains explicit; completion never auto-starts another song.
 - Blackout wins over every cue and survives missing media, pedal, browser, or
   analysis services.
-- Uploaded recordings and credentials are excluded from Git and logs.
+- Uploaded MP3 files, raw capture buffers, and credentials are excluded from Git
+  and logs; raw rehearsal audio is not retained by default.
 - The complete Pi soak sustains 25 FPS with no reserved-channel activity and a
   verified normal-shutdown blackout.

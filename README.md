@@ -200,8 +200,11 @@ timelines, ordered setlists, and separate Manual and Setlist performance modes.
 Song playback will always require an explicit performer start; completion may
 arm the next song but will not start it automatically. AI is planned only as an
 offline authoring assistant whose proposals are reviewed and published before a
-show. Apple Music and Spotify links may identify catalog metadata, but they are
-not audio-analysis sources; analysis requires a user-owned or licensed upload.
+show. Initial analysis accepts either a user-owned/licensed MP3 upload or an
+explicit rehearsal listening session from the configured microphone; streaming
+links are out of scope. Both inputs build a baseline scene timeline. At a show,
+the existing microphone-reactive layer still adjusts intensity and motion inside
+the selected scenes to follow the actual performance.
 See [Song Builder and Setlist Performance Roadmap](docs/song-setlist-roadmap.md).
 
 ## Run live on the Raspberry Pi
