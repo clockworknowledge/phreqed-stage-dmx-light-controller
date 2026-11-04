@@ -1,3 +1,9 @@
 canvas.fixture-preview {
   aspect-ratio: 12 / 5;
 }
+
+.song-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 0;
+}

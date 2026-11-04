@@ -37,7 +37,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/sprites.py`: small bitmap sprites and grid drawing helpers.
 - `src/phreqed_dmx/simulator.py`: local Tkinter preview; never opens a UDP socket.
 - `src/phreqed_dmx/web_control.py`: dependency-free browser preview/control with
-  explicit live enablement and a disconnect watchdog.
+  explicit live enablement, a disconnect watchdog, and simulation-only song
+  cue authoring/preview backed by `SongLibrary`.
 - `src/phreqed_dmx/app.py`: application controller, timing, and mode selection.
 - `config/fixtures.toml`: hardware and controller configuration.
 - `tests/`: hardware-free unit tests.

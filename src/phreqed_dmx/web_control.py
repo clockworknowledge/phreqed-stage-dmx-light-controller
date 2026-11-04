@@ -21,6 +21,7 @@ from .foot_control import RawMidiFootController
 from .library import UserLibrary, number, object_fields, parse_preset, preset_data
 from .presets import PRESETS
 from .render import compose_dmx
+from .songs import SongLibrary
 from .white_output import (
     DEFAULT_WHITE_OUTPUT_LEVEL,
     MAX_WHITE_FLASH_HZ,
@@ -60,6 +61,7 @@ class BrowserControl:
         controller: Controller,
         library_path: Path,
         *,
+        song_library_path: Path | None = None,
         allow_live: bool = False,
         white_output_ceiling: float = WHITE_OUTPUT_CEILING,
     ) -> None:
@@ -78,6 +80,10 @@ class BrowserControl:
         self.engine.presets = self.library.all_presets
         self.engine.preset_order = tuple(self.engine.presets)
         self.controller.scenes.replace(self.library.cues)
+        self.song_library = SongLibrary(
+            song_library_path or library_path.with_name('songs.json'),
+            set(self.engine.presets),
+        )
         # Never raise an explicit lower CLI limit when browser control starts.
         self.engine.set_global_brightness(
             min(
@@ -113,7 +119,9 @@ class BrowserControl:
     def catalog(self) -> dict:
         return dict(effects=[asdict(m) for m in EFFECT_REGISTRY.metadata()],
                     presets=[{**preset_data(p), 'builtin': p.preset_id in PRESETS}
-                             for p in self.library.all_presets.values()], library=self.library.document())
+                             for p in self.library.all_presets.values()],
+                    library=self.library.document(),
+                    song_library=self.song_library.document())
 
     def state(self) -> dict:
         with self.lock:
@@ -229,6 +237,8 @@ class BrowserControl:
         if self.engine.active_preset_id not in self.engine.presets:
             self.engine.activate_preset(next(iter(PRESETS)))
         self.controller.scenes.replace(self.library.cues)
+        self.song_library.preset_ids = set(self.engine.presets)
+        self.song_library.validate(self.song_library.document())
 
     def _stop_live(self) -> None:
         self._disable_white_output()
@@ -248,7 +258,8 @@ class BrowserControl:
             {'action'},
             {
                 'value', 'preset', 'scenes', 'index', 'enabled', 'floor',
-                'threshold', 'level',
+                'threshold', 'level', 'song_library', 'cue_sheet_id',
+                'cue_index',
             },
         )
         action = data['action']
@@ -384,6 +395,12 @@ class BrowserControl:
                 preset_id = data.get('value')
                 if not isinstance(preset_id, str) or preset_id not in self.library.presets:
                     raise ValueError('only saved user presets can be deleted')
+                if any(
+                    cue.preset_id == preset_id
+                    for sheet in self.song_library.cue_sheets.values()
+                    for cue in sheet.cues
+                ):
+                    raise ValueError('preset is referenced by a song cue sheet')
                 document = self.library.document()
                 document['presets'] = [p for p in document['presets'] if p['preset_id'] != preset_id]
                 self.library.save(document)
@@ -393,6 +410,29 @@ class BrowserControl:
                 document['scenes'] = data.get('scenes')
                 self.library.save(document)
                 self._sync_library()
+            elif action == 'save_song_library':
+                self.song_library.preset_ids = set(self.engine.presets)
+                self.song_library.save(data.get('song_library'))
+            elif action == 'preview_song_cue':
+                if self.sender is not None:
+                    raise ValueError('song cue preview is simulation-only; stop live output first')
+                if self.engine.blackout_enabled:
+                    raise ValueError('release blackout before previewing a song cue')
+                cue_sheet_id = data.get('cue_sheet_id')
+                cue_index = data.get('cue_index')
+                sheet = self.song_library.cue_sheets.get(cue_sheet_id)
+                if sheet is None:
+                    raise ValueError('unknown song cue sheet')
+                if (isinstance(cue_index, bool) or not isinstance(cue_index, int)
+                        or not 0 <= cue_index < len(sheet.cues)):
+                    raise ValueError('song cue index is out of range')
+                cue = sheet.cues[cue_index]
+                self.controller.begin_transition(
+                    elapsed, duration=cue.transition_seconds
+                )
+                scenes.playing = False
+                scenes.index = None
+                self.engine.activate_preset(cue.preset_id)
             elif action == 'select_scene':
                 scenes.select(data.get('index'), elapsed)
             elif action in ('next_scene', 'previous_scene'):

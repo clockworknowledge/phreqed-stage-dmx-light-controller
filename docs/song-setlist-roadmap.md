@@ -242,13 +242,20 @@ required fallback.
 Implemented by `songs.py` and `song_timeline.py`. The metadata store is atomic
 and versioned, while the runner is clock/callback injected and has no rendering,
 media, network, or transport dependency. The focused and complete Windows test
-suites pass; browser integration begins in Sprint 2.
+suites pass.
 
-### Sprint 2 - Library, timeline, and setlist authoring UI
+### Sprint 2 - Library, timeline, and setlist authoring UI (complete)
 
 - Add Song Library, manual timeline editor, Setlist Builder, and simulation.
 - Add version/publish workflow and large validation messages.
 - Do not add AI or media decoding yet.
+
+Implemented in the browser controller. Operators can create/edit manual song
+metadata, create draft cue-sheet revisions, add/edit/remove and simulation-
+preview cues, publish immutable revisions, and create/reorder setlists. The
+store is `songs.json` beside the configured user library. Chromium workflow
+validation completed with no console errors; performance playback remains
+Sprint 3.
 
 ### Sprint 3 - Setlist performance mode
 

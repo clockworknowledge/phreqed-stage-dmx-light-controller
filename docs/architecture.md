@@ -39,6 +39,9 @@ Art-Net sender. `live --web` merely makes live activation available; the user
 must confirm it in the page. A five-second heartbeat lease closes the sender
 with blackout if the browser disappears. The HTTP server binds to loopback by
 default and limits non-loopback clients to an explicit trusted IPv4 network.
+It also exposes manual song/cue-sheet/setlist authoring backed by `SongLibrary`.
+Cue audition is rejected whenever a live Art-Net sender exists; authoring does
+not activate the deterministic timeline or change performance mode.
 
 `VisualEngine` preserves the four formulas from the reconstructed v2 baseline:
 plasma, tunnel, pulse, and chase. It also treats both cubes as one logical 24x4

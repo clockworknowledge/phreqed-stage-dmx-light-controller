@@ -420,16 +420,6 @@ are excluded; and failure leaves the live controller usable through its browser
 backup. Never commit the vendor APK or attempt writes during ordinary bench
 testing. See `docs/ampero-control.md`.
 
-### SONG-002 - Song, cue-sheet, and setlist authoring UI (`P1`, show control)
-
-Add the Song Library, manual cue timeline editor, Setlist Builder, validation,
-simulation, and version/publish workflow on top of SONG-001. Media bytes remain
-outside Git, and this card does not require AI.
-
-Acceptance: an operator can create and edit songs, audition cue sheets in
-network-isolated simulation, order a setlist, publish immutable versions, and
-recover prior valid data after a malformed write. See the roadmap, Sprint 2.
-
 ### SHOW-004 - Manual/setlist performance modes (`P1`, performance control)
 
 Add an explicit mode selector and a large Performance View with current/next
@@ -609,6 +599,21 @@ times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
 
+### SONG-002 - Song, cue-sheet, and setlist authoring UI (`P1`, show control)
+
+The browser now provides a Song Library, manual baseline cue timeline editor,
+immutable publish/revision workflow, per-cue simulation preview, and ordered
+Setlist Builder. Song metadata is stored atomically in `songs.json` beside the
+existing user library. MP3 and rehearsal media remain outside this store and
+AI is not involved.
+
+Acceptance passed on Windows Python 3.12: backend tests cover persistence,
+malformed writes, preset references, published-version immutability, and
+simulation-only preview; a real Chromium workflow created a song, added and
+previewed cues, published a revision, and created a setlist with zero console
+errors. The complete suite passes 185 tests. Runtime performance mode remains
+SHOW-004. See [`song-setlist-roadmap.md`](song-setlist-roadmap.md), Sprint 2.
+
 ### SONG-001 — Song library and deterministic cue timeline (`P1`, show control)
 
 Implemented versioned `Song`, `SongCueSheet`, `SongCue`, and `Setlist` models,
@@ -622,8 +627,8 @@ network, fixture, or transport code.
 Acceptance passed on Windows Python 3.12: eighteen focused tests cover atomic
 failure preservation, corrupt input, schema and preset boundaries, application
 restart, cue timing, callback failure, blackout priority, completion, and
-network isolation. The complete suite passes 179 tests. Browser authoring and
-runtime integration remain SONG-002 and SHOW-004. See
+network isolation. Browser authoring is now complete under SONG-002; runtime
+integration remains SHOW-004. See
 [`song-setlist-roadmap.md`](song-setlist-roadmap.md), Sprint 1.
 
 ### HW-001 — Commission LF4808 white-zone mapping (`P0`, safety)

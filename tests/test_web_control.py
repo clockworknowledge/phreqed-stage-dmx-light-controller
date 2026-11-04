@@ -140,6 +140,92 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIsNone(restored.sender)
         self.assertIsNone(restored.controller.scenes.index)
 
+    def song_document(self):
+        return {
+            'version': 1,
+            'songs': [{
+                'song_id': 'song-test', 'title': 'Test Song', 'artist': 'Phreqed',
+                'duration_seconds': 60.0, 'notes': '', 'source': 'manual',
+                'active_cue_sheet_id': 'cue-test-v1',
+            }],
+            'cue_sheets': [{
+                'cue_sheet_id': 'cue-test-v1', 'song_id': 'song-test',
+                'revision': 1, 'published': True,
+                'cues': [{
+                    'at_seconds': 0.0, 'preset_id': 'user-test',
+                    'transition_seconds': 0.5,
+                }],
+            }],
+            'setlists': [{
+                'setlist_id': 'setlist-test', 'name': 'Test Set',
+                'song_ids': ['song-test'], 'notes': '',
+            }],
+        }
+
+    def test_song_library_storage_survives_browser_restart(self):
+        self.control.command(dict(action='save_preset', preset=self.preset()))
+        document = self.song_document()
+        self.control.command(dict(action='save_song_library', song_library=document))
+        self.assertEqual(self.control.catalog()['song_library'], document)
+
+        restored = BrowserControl(Controller(load_config()), self.path)
+        self.addCleanup(restored.close)
+        self.assertEqual(restored.catalog()['song_library'], document)
+        self.assertIsNone(restored.sender)
+
+    def test_song_library_rejects_unknown_presets_and_protects_references(self):
+        self.control.command(dict(action='save_preset', preset=self.preset()))
+        document = self.song_document()
+        self.control.command(dict(action='save_song_library', song_library=document))
+        before = self.control.song_library.path.read_bytes()
+
+        invalid = json.loads(json.dumps(document))
+        invalid['cue_sheets'][0]['cues'][0]['preset_id'] = 'missing'
+        with self.assertRaises(ValueError):
+            self.control.command(dict(action='save_song_library', song_library=invalid))
+        self.assertEqual(self.control.song_library.path.read_bytes(), before)
+        with self.assertRaisesRegex(ValueError, 'song cue sheet'):
+            self.control.command(dict(action='delete_preset', value='user-test'))
+
+    def test_song_authoring_in_simulation_never_constructs_sender(self):
+        self.control.command(dict(action='save_preset', preset=self.preset()))
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            self.control.command(dict(
+                action='save_song_library', song_library=self.song_document()
+            ))
+            sender.assert_not_called()
+
+    def test_song_cue_preview_is_simulation_only_and_does_not_construct_sender(self):
+        self.control.command(dict(action='save_preset', preset=self.preset()))
+        self.control.command(dict(
+            action='save_song_library', song_library=self.song_document()
+        ))
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            self.control.command(dict(
+                action='preview_song_cue', cue_sheet_id='cue-test-v1', cue_index=0
+            ))
+            sender.assert_not_called()
+        self.assertEqual(self.control.engine.active_preset_id, 'user-test')
+
+        self.control.sender = Mock()
+        with self.assertRaisesRegex(ValueError, 'simulation-only'):
+            self.control.command(dict(
+                action='preview_song_cue', cue_sheet_id='cue-test-v1', cue_index=0
+            ))
+        self.control.sender = None
+
+    def test_browser_contains_song_timeline_and_setlist_authoring_controls(self):
+        html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
+        script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
+        for control_id in (
+            'song-list', 'song-editor', 'timeline-editor', 'song-cue-editor',
+            'publish-cue-sheet', 'setlist-select', 'setlist-songs',
+        ):
+            self.assertIn(f'id="{control_id}"', html)
+        self.assertIn("command('save_song_library'", script)
+        self.assertIn("act('preview_song_cue'", script)
+        self.assertIn('Published cue-sheet versions are immutable', html)
+
     def test_deletion_rejects_referenced_presets_and_builtins(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
         self.control.command(dict(action='save_scenes', scenes=[dict(

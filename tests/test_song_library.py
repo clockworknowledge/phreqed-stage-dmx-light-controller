@@ -102,6 +102,28 @@ class SongLibraryTests(unittest.TestCase):
         self.library.save(document)
         self.assertFalse(self.library.cue_sheets['cue-first-v1'].published)
 
+    def test_published_cue_sheet_is_immutable_but_new_revision_is_allowed(self):
+        document = self.document()
+        self.library.save(document)
+        changed = copy.deepcopy(document)
+        changed['cue_sheets'][0]['cues'][0]['preset_id'] = 'energy-bridge'
+        with self.assertRaisesRegex(ValueError, 'immutable'):
+            self.library.save(changed)
+
+        revised = copy.deepcopy(document)
+        revised['songs'][0]['active_cue_sheet_id'] = 'cue-first-v2'
+        revised['cue_sheets'].append({
+            'cue_sheet_id': 'cue-first-v2', 'song_id': 'song-first',
+            'revision': 2, 'published': True,
+            'cues': [{
+                'at_seconds': 0.0, 'preset_id': 'energy-bridge',
+                'transition_seconds': 0.5,
+            }],
+        })
+        self.library.save(revised)
+        self.assertEqual(self.library.songs['song-first'].active_cue_sheet_id,
+                         'cue-first-v2')
+
     def test_setlist_may_repeat_a_song_for_an_encore(self):
         document = self.document()
         document['setlists'][0]['song_ids'].append('song-first')

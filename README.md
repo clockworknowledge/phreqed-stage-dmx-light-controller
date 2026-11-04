@@ -193,13 +193,19 @@ selected until the performance-safe multi-bank profile in `CONTROL-003` is
 validated; if actions stop, return to bank 0 and verify all four controls in
 simulation before resuming live output.
 
-## Planned song and setlist control
+## Song and setlist control
 
-The first foundation is implemented: a versioned, atomic metadata library for
-songs, cue sheets, and ordered setlists plus a deterministic injected-clock
-timeline runner. It is not yet connected to the browser or live controller.
-The next show-control work adds editable browser timelines and separate Manual
-and Setlist performance modes.
+The browser **Songs** tab now provides a manual Song Library, editable baseline
+cue timelines, immutable published revisions, simulation-only cue previews, and
+an ordered Setlist Builder. Metadata is saved atomically in `songs.json` beside
+the configured user library; no audio media is stored there. Start the safe
+browser simulator, open **Songs**, create a song, create a cue-sheet revision,
+preview and publish it, then add the song to a setlist.
+
+The deterministic injected-clock timeline runner is implemented and tested but
+is not yet wired into live browser performance controls. The next show-control
+work adds separate Manual and Setlist performance modes.
+
 Song playback will always require an explicit performer start; completion may
 arm the next song but will not start it automatically. AI is planned only as an
 offline authoring assistant whose proposals are reviewed and published before a

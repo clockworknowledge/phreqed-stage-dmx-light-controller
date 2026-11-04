@@ -292,6 +292,11 @@ class SongLibrary:
 
     def save(self, data: object) -> None:
         songs, cue_sheets, setlists = self.validate(data)
+        for cue_sheet_id, existing in self.cue_sheets.items():
+            if existing.published:
+                replacement = cue_sheets.get(cue_sheet_id)
+                if replacement is None or replacement.as_dict() != existing.as_dict():
+                    raise ValueError('published cue sheets are immutable')
         encoded = json.dumps(data, indent=2, allow_nan=False) + '\n'
         if len(encoded.encode('utf-8')) > MAX_DOCUMENT_BYTES:
             raise ValueError('song library exceeds 2 MB')

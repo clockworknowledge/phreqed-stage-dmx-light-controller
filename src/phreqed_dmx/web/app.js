@@ -3,6 +3,7 @@ const $ = id => document.getElementById(id);
 let token = '', catalog = null, state = null, draft = null, editingId = null, connected = false;
 let queue = Promise.resolve();
 let editingCue = null;
+let editingSongId = null, editingSongCueIndex = null, selectedSongId = null, selectedSetlistId = null;
 const copy = value => JSON.parse(JSON.stringify(value));
 function node(tag, text, className) { const e = document.createElement(tag); if (text !== undefined) e.textContent = text; if (className) e.className = className; return e; }
 function notify(text, error = false) { $('message').textContent = text; $('message').classList.toggle('error', error); }
@@ -35,6 +36,9 @@ function renderCatalog() {
     body.append(row); card.append(body); $('preset-grid').append(card);
   }
   renderCues();
+  fillPresets($('song-cue-preset'), $('song-cue-preset').value);
+  renderSongs();
+  renderSetlists();
 }
 function draw(canvas, rows, whiteLevel = 0) {
   const ctx = canvas.getContext('2d'); ctx.fillStyle = '#0c100d'; ctx.fillRect(0,0,canvas.width,canvas.height);
@@ -182,6 +186,121 @@ function renderCues() {
     card.append(node('span',String(index+1).padStart(2,'0'),'cue-number'),info,row);$('cue-list').append(card);
   });
 }
+function slug(prefix,name){const value=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,58)||'untitled';return `${prefix}-${value}`;}
+function songDocument(){return copy(catalog.song_library);}
+function saveSongDocument(document,message,done=()=>{}){command('save_song_library',{song_library:document},true).then(()=>{notify(message);done();}).catch(()=>{});}
+function songById(id){return catalog.song_library.songs.find(song=>song.song_id===id);}
+function sheetsForSong(id){return catalog.song_library.cue_sheets.filter(sheet=>sheet.song_id===id);}
+function timelineSheet(song){
+  const sheets=sheetsForSong(song.song_id),drafts=sheets.filter(sheet=>!sheet.published).sort((a,b)=>b.revision-a.revision);
+  return drafts[0]||sheets.find(sheet=>sheet.cue_sheet_id===song.active_cue_sheet_id)||null;
+}
+function renderSongs(){
+  const library=catalog.song_library;$('song-list').replaceChildren();$('empty-songs').hidden=Boolean(library.songs.length);
+  if(selectedSongId&&!songById(selectedSongId))selectedSongId=null;
+  for(const song of library.songs){
+    const card=node('article',undefined,'cue');
+    const info=node('div');info.append(node('h3',song.title),node('p',`${song.artist} | ${song.duration_seconds}s | ${song.active_cue_sheet_id?'published timeline':'no published timeline'}`,'hint'));
+    const row=node('div',undefined,'row');
+    row.append(button('Timeline',()=>{selectedSongId=song.song_id;renderSongs();renderTimeline();}),button('Edit',()=>openSongEditor(song)),button('Delete',()=>deleteSong(song)));
+    card.append(node('span',String(library.songs.indexOf(song)+1).padStart(2,'0'),'cue-number'),info,row);$('song-list').append(card);
+  }
+  renderTimeline();
+}
+function openSongEditor(song=null){
+  editingSongId=song?.song_id||null;$('song-editor').hidden=false;$('song-editor-heading').textContent=song?'Edit song':'New song';
+  $('song-title').value=song?.title||'';$('song-artist').value=song?.artist||'Phreqed';$('song-duration').value=song?.duration_seconds||'';$('song-id').value=song?.song_id||'';$('song-id').disabled=Boolean(song);$('song-notes').value=song?.notes||'';
+  $('song-editor').scrollIntoView({behavior:'smooth',block:'center'});
+}
+function deleteSong(song){
+  if(sheetsForSong(song.song_id).length){notify('Songs with cue-sheet history cannot be deleted.',true);return;}
+  if(catalog.song_library.setlists.some(setlist=>setlist.song_ids.includes(song.song_id))){notify('Remove this song from every setlist before deleting it.',true);return;}
+  if(!confirm(`Delete ${song.title}?`))return;
+  const document=songDocument();document.songs=document.songs.filter(item=>item.song_id!==song.song_id);saveSongDocument(document,'Song deleted.');
+}
+function renderTimeline(){
+  const song=selectedSongId?songById(selectedSongId):null;$('timeline-editor').hidden=!song;if(!song)return;
+  $('timeline-title').textContent=song.title;const sheet=timelineSheet(song),editable=Boolean(sheet&&!sheet.published);
+  $('new-cue-draft').hidden=editable;$('publish-cue-sheet').hidden=!editable;$('song-cue-editor').hidden=!editable;$('song-cue-list').replaceChildren();
+  $('timeline-status').textContent=!sheet?'No cue sheet yet. Create the first draft.':sheet.published?`Published revision ${sheet.revision}. Create a new revision to edit.`:`Draft revision ${sheet.revision}. Add cues, preview them, then publish.`;
+  if(!sheet)return;
+  sheet.cues.forEach((cue,index)=>{
+    const card=node('article',undefined,'cue'),info=node('div');const preset=catalog.presets.find(item=>item.preset_id===cue.preset_id);
+    info.append(node('h3',preset?.name||cue.preset_id),node('p',`${cue.at_seconds}s | ${cue.transition_seconds}s transition`,'hint'));
+    const row=node('div',undefined,'row');row.append(button('Preview',()=>act('preview_song_cue',{cue_sheet_id:sheet.cue_sheet_id,cue_index:index})));
+    if(editable)row.append(button('Edit',()=>{editingSongCueIndex=index;$('song-cue-time').value=cue.at_seconds;$('song-cue-preset').value=cue.preset_id;$('song-cue-transition').value=cue.transition_seconds;$('save-song-cue').textContent='Save cue';$('cancel-song-cue').hidden=false;}),button('Remove',()=>{if(sheet.cues.length===1){notify('A cue sheet must keep at least one cue.',true);return;}const document=songDocument(),draft=document.cue_sheets.find(item=>item.cue_sheet_id===sheet.cue_sheet_id);draft.cues.splice(index,1);saveSongDocument(document,'Cue removed.');}));
+    card.append(node('span',String(index+1).padStart(2,'0'),'cue-number'),info,row);$('song-cue-list').append(card);
+  });
+}
+function newCueDraft(){
+  const song=songById(selectedSongId);if(!song)return;const document=songDocument(),sheets=sheetsForSong(song.song_id);if(sheets.some(sheet=>!sheet.published)){notify('This song already has an editable draft.',true);return;}
+  const revision=Math.max(0,...sheets.map(sheet=>sheet.revision))+1,active=sheets.find(sheet=>sheet.cue_sheet_id===song.active_cue_sheet_id);
+  const draftSheet={cue_sheet_id:`cue-${song.song_id.slice(5)}-v${revision}`,song_id:song.song_id,revision,published:false,cues:active?copy(active.cues):[]};
+  document.cue_sheets.push(draftSheet);
+  // A draft needs its first zero-second cue before it can pass the schema.
+  if(!active)draftSheet.cues=[{at_seconds:0,preset_id:catalog.presets[0].preset_id,transition_seconds:0.5}];
+  saveSongDocument(document,'Cue-sheet draft created.',clearSongCueEdit);
+}
+function publishCueSheet(){
+  const song=songById(selectedSongId),sheet=song&&timelineSheet(song);if(!sheet||sheet.published)return;
+  if(!sheet.cues.length||sheet.cues[0].at_seconds!==0){notify('The first cue must start at 0 seconds.',true);return;}
+  if(!confirm(`Publish revision ${sheet.revision} for ${song.title}? Published revisions cannot be changed.`))return;
+  const document=songDocument(),draft=document.cue_sheets.find(item=>item.cue_sheet_id===sheet.cue_sheet_id),savedSong=document.songs.find(item=>item.song_id===song.song_id);draft.published=true;savedSong.active_cue_sheet_id=draft.cue_sheet_id;saveSongDocument(document,'Cue sheet published.');
+}
+function renderSetlists(){
+  const library=catalog.song_library,select=$('setlist-select'),previous=selectedSetlistId||select.value;select.replaceChildren();for(const setlist of library.setlists)option(select,setlist.setlist_id,setlist.name);
+  selectedSetlistId=library.setlists.some(item=>item.setlist_id===previous)?previous:(library.setlists[0]?.setlist_id||null);select.value=selectedSetlistId||'';
+  const songSelect=$('setlist-song');songSelect.replaceChildren();for(const song of library.songs)option(songSelect,song.song_id,`${song.title} - ${song.artist}`);
+  const setlist=library.setlists.find(item=>item.setlist_id===selectedSetlistId);$('setlist-songs').replaceChildren();$('delete-setlist').disabled=$('save-setlist').disabled=!setlist;$('add-setlist-song').disabled=!setlist||!library.songs.length;
+  if(document.activeElement!==$('setlist-name'))$('setlist-name').value=setlist?.name||'';
+  if(!setlist)return;
+  setlist.song_ids.forEach((songId,index)=>{const song=songById(songId),card=node('article',undefined,'cue'),info=node('div');info.append(node('h3',song?.title||songId),node('p',song?.artist||'Missing song','hint'));const row=node('div',undefined,'row');
+    row.append(button('Up',()=>moveSetlistSong(index,-1)),button('Down',()=>moveSetlistSong(index,1)),button('Remove',()=>removeSetlistSong(index)));row.children[0].disabled=index===0;row.children[1].disabled=index===setlist.song_ids.length-1;card.append(node('span',String(index+1).padStart(2,'0'),'cue-number'),info,row);$('setlist-songs').append(card);});
+}
+function updateSetlist(mutator,message){const document=songDocument(),setlist=document.setlists.find(item=>item.setlist_id===selectedSetlistId);if(!setlist)return;mutator(setlist);saveSongDocument(document,message);}
+function moveSetlistSong(index,direction){updateSetlist(setlist=>{const target=index+direction;if(target<0||target>=setlist.song_ids.length)return;[setlist.song_ids[index],setlist.song_ids[target]]=[setlist.song_ids[target],setlist.song_ids[index]];},'Setlist order saved.');}
+function removeSetlistSong(index){const setlist=catalog.song_library.setlists.find(item=>item.setlist_id===selectedSetlistId);if(setlist?.song_ids.length===1){notify('A setlist must keep one song; delete the setlist instead.',true);return;}updateSetlist(item=>item.song_ids.splice(index,1),'Song removed from setlist.');}
+$('new-song').addEventListener('click',()=>openSongEditor());
+$('cancel-song').addEventListener('click',()=>{$('song-editor').hidden=true;editingSongId=null;});
+$('song-title').addEventListener('input',()=>{if(!editingSongId)$('song-id').value=slug('song',$('song-title').value);});
+$('song-editor').addEventListener('submit',event=>{
+  event.preventDefault();
+  for(const input of $('song-editor').querySelectorAll('input'))if(!input.reportValidity())return;
+  const document=songDocument(),songId=$('song-id').value.trim(),existing=document.songs.find(song=>song.song_id===editingSongId);
+  if(!existing&&document.songs.some(song=>song.song_id===songId)){notify('That song ID already exists.',true);return;}
+  const song={song_id:songId,title:$('song-title').value.trim(),artist:$('song-artist').value.trim(),duration_seconds:Number($('song-duration').value),notes:$('song-notes').value.trim(),source:existing?.source||'manual',active_cue_sheet_id:existing?.active_cue_sheet_id||null};
+  if(existing)document.songs[document.songs.indexOf(existing)]=song;else document.songs.push(song);
+  saveSongDocument(document,'Song saved.',()=>{$('song-editor').hidden=true;editingSongId=null;selectedSongId=song.song_id;renderSongs();});
+});
+function clearSongCueEdit(){editingSongCueIndex=null;$('song-cue-time').value='';$('song-cue-transition').value=0.5;$('save-song-cue').textContent='+ Add cue';$('cancel-song-cue').hidden=true;}
+$('cancel-song-cue').addEventListener('click',clearSongCueEdit);
+$('new-cue-draft').addEventListener('click',newCueDraft);
+$('publish-cue-sheet').addEventListener('click',publishCueSheet);
+$('song-cue-editor').addEventListener('submit',event=>{
+  event.preventDefault();
+  for(const input of $('song-cue-editor').querySelectorAll('input'))if(!input.reportValidity())return;
+  const song=songById(selectedSongId),sheet=song&&timelineSheet(song);if(!sheet||sheet.published){notify('Create an editable cue-sheet revision first.',true);return;}
+  const cue={at_seconds:Number($('song-cue-time').value),preset_id:$('song-cue-preset').value,transition_seconds:Number($('song-cue-transition').value)},document=songDocument(),saved=document.cue_sheets.find(item=>item.cue_sheet_id===sheet.cue_sheet_id);
+  if(editingSongCueIndex===null)saved.cues.push(cue);else saved.cues[editingSongCueIndex]=cue;
+  saved.cues.sort((left,right)=>left.at_seconds-right.at_seconds);
+  saveSongDocument(document,'Song cue saved.',clearSongCueEdit);
+});
+$('setlist-select').addEventListener('change',event=>{selectedSetlistId=event.target.value||null;renderSetlists();});
+$('new-setlist').addEventListener('click',()=>{
+  if(!catalog.song_library.songs.length){notify('Add a song before creating a setlist.',true);return;}
+  const name=prompt('Setlist name','New setlist')?.trim();if(!name)return;
+  const document=songDocument(),setlistId=slug('setlist',name);if(document.setlists.some(item=>item.setlist_id===setlistId)){notify('A setlist with that ID already exists.',true);return;}
+  const firstSongId=selectedSongId||$('setlist-song').value||catalog.song_library.songs[0].song_id;
+  document.setlists.push({setlist_id:setlistId,name,song_ids:[firstSongId],notes:''});selectedSetlistId=setlistId;saveSongDocument(document,'Setlist created.');
+});
+$('add-setlist-song').addEventListener('click',()=>updateSetlist(setlist=>setlist.song_ids.push($('setlist-song').value),'Song added to setlist.'));
+$('save-setlist').addEventListener('click',()=>{
+  const name=$('setlist-name').value.trim();if(!name){notify('Give the setlist a name.',true);return;}updateSetlist(setlist=>{setlist.name=name;},'Setlist saved.');
+});
+$('delete-setlist').addEventListener('click',()=>{
+  const setlist=catalog.song_library.setlists.find(item=>item.setlist_id===selectedSetlistId);if(!setlist||!confirm(`Delete ${setlist.name}?`))return;
+  const document=songDocument();document.setlists=document.setlists.filter(item=>item.setlist_id!==setlist.setlist_id);selectedSetlistId=null;saveSongDocument(document,'Setlist deleted.');
+});
 $('quick-preset').addEventListener('change',e=>act('preset',{value:e.target.value}));
 $('master').addEventListener('input',e=>{$('master-value').textContent=`${Math.round(e.target.value*100)}%`;});
 $('master').addEventListener('change',e=>act('brightness',{value:Number(e.target.value)}));
