@@ -52,6 +52,10 @@ coverage.xml
 .pytest_cache/
 cover/
 
+# Local browser automation captures
+.playwright-cli/
+output/playwright/
+
 # Translations
 *.mo
 *.pot

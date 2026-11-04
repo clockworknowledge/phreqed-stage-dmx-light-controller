@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-10-22
+Last reviewed: 2026-11-04
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -24,11 +24,47 @@ impact are understood.
 Priority uses `P0` for safety/release blockers, `P1` for the next major project
 outcome, `P2` for important improvements, and `P3` for optional polish.
 
+The planned Song Builder and setlist work is sequenced in
+[`song-setlist-roadmap.md`](song-setlist-roadmap.md). Its sprint numbers express
+dependency order; the cards below remain the source of truth for status.
+
 ## In progress
 
 No active implementation.
 
 ## Ready
+
+### CONTROL-003 — Performance-safe Ampero bank profile (`P0`, reliability)
+
+The 2026-11-04 diagnosis established that the intermittent loss of mapped pedal
+actions was an accidental Ampero bank change from bank 0 to bank 1, caused by
+pressing two adjacent left-hand switches together. This is not evidence that
+the pedal erased its programming. Create the same safe Phreqed mapping in every
+bank reachable during a show, or disable bank navigation if the supported
+vendor configuration permits it. Document the bank indicator and the immediate
+recovery procedure: return to bank 0, then verify all mapped actions in
+simulation before resuming live output.
+
+Acceptance: accidental adjacent-switch presses cannot remove blackout or leave
+scene control silently mapped to unrelated messages; bank 0 and every reachable
+fallback bank emit the expected notes/CC values; recovery requires no phone app;
+the profile passes a rehearsal-length USB soak; and the browser remains the
+independent control path. Do not rely on simultaneous-switch chords for new
+performance commands.
+
+### SONG-001 — Song library and deterministic cue timeline (`P1`, show control)
+
+Implement versioned `Song`, `SongCueSheet`, `SongCue`, and `Setlist` models plus
+an injected-clock timeline runner. Start and stop are explicit. Completion may
+arm/select the next song but must never start it automatically. This foundation
+contains no media decoder, LLM client, or streaming-service integration.
+
+Acceptance: atomic persistence and schema validation preserve prior data on
+failure; missing presets are rejected before arming; deterministic tests cover
+cue boundaries, transitions, previous/next song selection, restart, completion,
+blackout priority, and application restart; simulation constructs no sender;
+and current manual-scene behavior remains unchanged. See
+[`song-setlist-roadmap.md`](song-setlist-roadmap.md), Sprint 1.
 
 ### SPRITE-001 — Production sprite renderer (`P2`, visuals)
 
@@ -110,18 +146,20 @@ stable raw-MIDI udev path is implemented; its reboot and unplug/replug behavior
 still needs explicit captured verification.
 
 The 2026-10-21 controlled reconnect test proved that reopening the ALSA node is
-not sufficient evidence of a healthy pedal. The reader detected removal,
+not sufficient evidence of mapped pedal actions. The reader detected removal,
 reopened `/dev/snd/midiC3D0`, and reported connected, but received zero messages;
-direct `amidi` and `aseqdump` were also silent until the bank was reinitialized
-with the iOS app. Treat a valid mapped MIDI event after startup or reconnect as
-the functional readiness gate. Configuration inspection and recovery are
-deferred to CONTROL-002 rather than expanding this reliability fix in place.
+direct `amidi` and `aseqdump` were also silent. The later operator diagnosis
+identified an accidental bank 0-to-1 switch as the intermittent cause, rather
+than erased programming. Treat a valid mapped MIDI event after startup or
+reconnect as the functional readiness gate. Performance-bank hardening is
+tracked by CONTROL-003; optional read-only backup research remains CONTROL-002.
 
 The subsequent current-catalog Pi bench passed all 39 looks and encountered one
 unplanned `Errno 19` disconnect. This time the worker reconnected functionally:
 the run ended connected after 62 messages, every required action was observed,
 and no action errors occurred. This validates the reader recovery path when the
-pedal retains its programmed bank, while the silent-pedal case remains open.
+pedal emits the selected bank's mapped messages. The formerly unexplained
+silent-pedal case is now covered by CONTROL-003's bank-selection mitigation.
 
 A post-move launch found the explicit `/dev/snd/midiC3D0` path absent and
 previously crashed before the reconnect thread started. Initial open failure is
@@ -360,14 +398,15 @@ hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
 
-### CONTROL-002 — Ampero configuration inspection and recovery (`P1`, reliability)
+### CONTROL-002 — Ampero configuration backup and inspection (`P2`, reliability)
 
 Build a separately scoped tool for detecting, inspecting, verifying, backing
-up, and eventually restoring the known Phreqed bank on the Hotone Ampero
-Control. The motivating 2026-10-21 test showed that Linux can reopen the USB
-MIDI node while the pedal remains functionally silent; reinitializing it with
-the iOS app restored the expected messages. Do not treat an open descriptor or
-ALSA enumeration as proof that the programmed bank is active.
+up, and eventually restoring the known Phreqed banks on the Hotone Ampero
+Control. The later diagnosis found that the motivating silent-pedal incident
+was an accidental bank change from 0 to 1, not demonstrated configuration loss.
+This lowers the urgency and separates immediate show hardening (CONTROL-003)
+from useful long-term backup/recovery research. Do not treat an open descriptor
+or ALSA enumeration as proof that the expected bank mapping is selected.
 
 Initial static research used the official firmware-1.13 Android application
 archive without committing the vendor binary. The archive SHA-256 is
@@ -394,6 +433,77 @@ power-loss and partial-write behavior are understood; firmware-update endpoints
 are excluded; and failure leaves the live controller usable through its browser
 backup. Never commit the vendor APK or attempt writes during ordinary bench
 testing. See `docs/ampero-control.md`.
+
+### SONG-002 - Song, cue-sheet, and setlist authoring UI (`P1`, show control)
+
+Add the Song Library, manual cue timeline editor, Setlist Builder, validation,
+simulation, and version/publish workflow on top of SONG-001. Media bytes remain
+outside Git, and this card does not require AI.
+
+Acceptance: an operator can create and edit songs, audition cue sheets in
+network-isolated simulation, order a setlist, publish immutable versions, and
+recover prior valid data after a malformed write. See the roadmap, Sprint 2.
+
+### SHOW-004 - Manual/setlist performance modes (`P1`, performance control)
+
+Add an explicit mode selector and a large Performance View with current/next
+song, position, state, previous/next, start/stop, and blackout. In Setlist mode,
+map FS1/FS2 to previous/next song and FS3 to start/stop while FS4 remains the
+global explicit blackout. The application, not Ampero banks, owns the song
+index.
+
+Acceptance: switching modes cannot enable output; end of song may arm the next
+selection but never starts it; missing pedal/browser/media leaves blackout and
+Stop output available; reboot and mid-set recovery are documented and tested;
+and Manual mode remains backward compatible. See the roadmap, Sprint 3.
+
+### ANALYSIS-001 - Rights-safe offline song analysis (`P1`, authoring)
+
+Accept user-owned/licensed WAV, FLAC, or MP3 files with rights attestation and
+an explicit retention policy. Produce versioned tempo, beat/bar, energy/onset,
+frequency-band, and section artifacts in an optional offline worker. A Spotify
+or Apple Music link may import permitted metadata only; it is never an audio
+download or analysis source.
+
+Acceptance: uploaded audio and credentials are excluded from Git and logs;
+malformed/oversized files fail safely; results are deterministic within stated
+tolerances; decoding cannot block the 25 FPS controller; and Windows/Pi resource
+measurements determine the supported authoring host. See the roadmap, Sprint 4.
+
+### AI-SONG-001 - Structured AI cue proposal and review (`P1`, authoring)
+
+Generate a proposed cue sheet from bounded derived analysis, effect metadata,
+and operator preferences. Validate a versioned JSON response before showing it
+in the existing editor. Never send Spotify/Apple audio to a model, and never
+call a model during a performance.
+
+Acceptance: unknown presets, invalid times, excessive brightness, and unsafe
+white-output requests are rejected; the operator can compare, edit, simulate,
+approve, and publish a proposal; provider failures preserve manual authoring;
+and a published setlist runs entirely offline. See the roadmap, Sprint 5.
+
+### SYNC-001 - Bounded live-band timeline correction (`P2`, experimental audio)
+
+Evaluate Snowball onset/beat tracking for gentle phase correction of a prepared
+song timeline. This is separate from basic elapsed-time playback because a live
+band will drift from a studio recording.
+
+Acceptance: corrections are bounded and confidence-visible; low confidence
+falls back smoothly to the authored clock; no correction can skip safety cues,
+enable output, or block manual control; and rehearsal data demonstrates an
+improvement before this becomes a show option. See the roadmap, Sprint 6.
+
+### CONTROL-004 - Optional Ampero song-number feedback (`P3`, hardware research)
+
+Determine whether the commissioned Ampero exposes documented, reversible host
+feedback or arbitrary display control. The browser remains the required large
+song-number/name display. Do not equate the pedal's bank number with the setlist
+index and do not transmit reverse-engineered writes during a show.
+
+Acceptance: official capability or a safely captured protocol is documented;
+unsupported hardware falls back to the browser or a dedicated small display;
+and feedback failure cannot affect input, blackout, or the setlist clock. See
+the roadmap, Sprint 7.
 
 ### WEAR-001 — Performer-safe wearable lighting prototype (`P2`, visual output)
 

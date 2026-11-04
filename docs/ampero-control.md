@@ -31,6 +31,16 @@ The blackout binding uses explicit values rather than toggling application
 state blindly. This makes duplicate MIDI messages idempotent. The pedal's bank
 state and the controller state should still be checked after reconnecting.
 
+The Ampero changes banks when adjacent switches are pressed together. During
+performance, an accidental two-switch press can change bank 0 to bank 1 and
+make the expected single-switch actions appear unresponsive. The operator
+identified this as the cause of the previously intermittent control loss; it
+was not demonstrated configuration erasure. Until CONTROL-003 is complete,
+keep bank 0 selected, avoid simultaneous-switch chords, and return to bank 0 if
+mapped actions stop. Then verify all four actions in simulation before resuming
+live output. The preferred durable mitigation is the same safe mapping in every
+reachable bank, or supported bank-navigation lockout if available.
+
 ## Discover the USB MIDI device on the Pi
 
 Connect the Ampero Control to the Pi with its USB Type-B cable, then run:
@@ -125,11 +135,14 @@ On 2026-10-21 a controlled USB disconnect produced the expected reader events:
 the old device failed with `Errno 19`, and the same path was reopened. The final
 status said connected with one reconnect, but `messages_received` remained zero
 and none of the five required actions occurred. Direct `amidi` and `aseqdump`
-were also silent. Reinitializing the Ampero bank with the iOS application
-restored MIDI output. This distinguishes operating-system reconnection from
-functional pedal recovery and keeps the reconnect acceptance gate open.
+were also silent. Using the iOS application and returning to the intended bank
+restored MIDI output. The later diagnosis identified accidental bank switching
+as the intermittent cause. This still distinguishes operating-system
+reconnection from functional mapped-action readiness, but it no longer supports
+the assumption that the pedal lost its stored configuration.
 
-Configuration recovery is tracked separately as `CONTROL-002`. Initial static,
+Performance-bank hardening is tracked as `CONTROL-003`. Optional configuration
+backup/inspection remains `CONTROL-002`. Initial static,
 read-only research used Hotone's official firmware-1.13 Android application
 archive. The vendor ZIP was not added to this repository; its SHA-256 is
 `3F8645221B4C6B8386211FFC914F751B79D6C54379E189464CE766EDFF5D6192`.

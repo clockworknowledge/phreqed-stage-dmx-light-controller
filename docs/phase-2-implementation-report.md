@@ -115,6 +115,14 @@ restore tool are deferred to `CONTROL-002`, with no vendor application binary
 stored in the repository and no unknown write commands permitted during normal
 testing.
 
+Correction recorded 2026-11-04: the operator identified accidental adjacent
+footswitch activation as the intermittent root cause. It changed the Ampero
+from bank 0 to bank 1, so the selected bank no longer emitted the expected
+mapping; there is no evidence that configuration was erased. Functional-event
+readiness remains valid, but immediate mitigation is now `CONTROL-003`'s
+performance-safe bank profile. `CONTROL-002` is lower-priority backup and
+inspection research.
+
 ## Audio-analysis contract — 2026-10-20
 
 `AudioAnalysis` and `FrequencyBands` add normalized loudness, onset, bass, mid,
@@ -467,9 +475,9 @@ were true; the Snowball source ended healthy after 6,681 chunks, and every
 mapped pedal action was observed multiple times. This is retained as valid
 hardware evidence for that revision. The expanded 22-effect/17-preset catalog
 requires a new 39-look run under ordinary connected operation before closing
-the current visual, audio, and pedal acceptance cards. Deliberate MIDI recovery
-is separated into `CONTROL-002` because ALSA reconnection alone did not restore
-pedal output in the 2026-10-21 test.
+the current visual, audio, and pedal acceptance cards. MIDI transport recovery
+is separate from `CONTROL-003` bank hardening because ALSA reconnection alone
+cannot prove that the intended Ampero bank is selected.
 
 The soak harness originally classified every MIDI reporting callback as a fatal
 error, including the expected disconnect and reconnected messages from a
@@ -490,7 +498,7 @@ and 5 blackout-off actions. An unplanned `Errno 19` disconnect occurred, after
 which the worker reconnected; the final status was connected with 62 messages
 received and no action errors. This is a successful functional recovery case,
 but it does not invalidate the earlier silent-after-reopen case tracked by
-`CONTROL-002`.
+`CONTROL-003`; the later diagnosis attributes that case to bank selection.
 
 Following visual review, Flame Thrower was separated from the travelling
 Cross-Cube Blaster. The new `flame-jet` effect keeps a compact hot source at the

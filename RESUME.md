@@ -1,6 +1,37 @@
-# Codex Resume: Audio Contract, Ampero Control, and Show Scene Pack
+# Codex Resume: Live Show Baseline and Song/Setlist Roadmap
 
-Last updated: 2026-10-22
+Last updated: 2026-11-04
+
+## Current checkpoint -- repository consolidation and next feature family
+
+The 2026-10-22 unattended live-band checkpoint remains the current physical
+baseline: headless QLC+, browser control, two fixtures, Snowball audio response,
+and Ampero scene/tempo/blackout control worked together. The validated feature
+work is consolidated into `main` at this checkpoint. Use
+`git status --short --branch` and the repository Kanban rather than older
+branch/hash statements later in this historical handoff.
+
+The intermittent Ampero control outage is now explained: pressing two adjacent
+left-hand switches can move the pedal from bank 0 to bank 1. This made the
+expected mapped actions disappear but is not evidence that the saved bank was
+erased. Immediate recovery is to return to bank 0 and verify previous/next,
+tap, blackout on, and blackout off in simulation. `CONTROL-003` will make every
+reachable performance bank safe or disable bank navigation if the supported
+configuration allows it. `CONTROL-002` is reduced to optional backup/inspection
+research.
+
+The next implementation sequence is `SONG-001` followed by the browser
+authoring and Setlist performance cards. The approved product direction is:
+manual scene mode remains unchanged; Setlist mode selects previous/next song
+and requires an explicit start/stop; song completion may arm the next song but
+never auto-starts it. AI analysis is an offline authoring workflow using an
+authorized local audio upload and derived features. Spotify/Apple Music links
+are metadata identifiers only, not audio sources. See
+`docs/song-setlist-roadmap.md` and `docs/kanban.md`.
+
+Generated Playwright snapshots and screenshots were removed from the pending
+change set and their local output directories are ignored. They are not project
+source or deployment inputs.
 
 ## Pause checkpoint -- successful live band test
 
@@ -20,12 +51,9 @@ system working, but the resolved-link output and an explicit unplug/replug or
 second-reboot observation were not captured in chat; retain those as validation
 rather than inferring them.
 
-Current development branch and remote are `feat/audio-context` at `55701dd`.
-Do not use the main-only `scripts/pi-update.sh` until this branch is merged;
-feature-branch deployments use `git pull --ff-only origin feat/audio-context`,
-`scripts/pi-install.sh`, and `scripts/pi-install-show-service.sh`. The Windows
-checkout still contains four unrelated user-staged Playwright YAML/PNG
-artifacts; preserve them.
+This paragraph originally recorded the pre-consolidation feature branch at
+`55701dd`. It is retained only as historical context; follow the current
+checkpoint above and deploy only from the updated `main` branch.
 
 Next priorities after the pause are: verify the stable MIDI link across a
 reboot and USB reconnect, choose and validate the private stage LAN, perform a
@@ -45,8 +73,8 @@ identity `84ef:0029` and creates `/dev/snd/phreqed-ampero-midi`. The show-servic
 installer deploys and reloads the rule, reports the resolved target, warns when
 an existing environment file still uses a numbered path, and now verifies the
 browser with GET rather than unsupported HTTP HEAD. Pi unplug/replug and reboot
-verification remain pending; this does not address loss of the pedal's internal
-bank programming, which remains CONTROL-002.
+verification remain pending; the stable device path does not verify which pedal
+bank is selected. See the current checkpoint and CONTROL-003.
 
 ## Latest checkpoint -- unattended show startup
 
@@ -185,17 +213,19 @@ The pedal registered 18 previous-scene, 17 next-scene, 16 tap-tempo, 6 blackout
 on, and 5 blackout-off actions. One unplanned `Errno 19` disconnect occurred;
 the worker reconnected and the run finished connected with 62 received messages
 and no action errors. This is positive evidence of functional same-path recovery
-when the pedal retains its bank, but it does not close `CONTROL-002`: the earlier
-controlled test still showed that a reopened device can remain silent until app
-reinitialization.
+when the selected bank emits the expected mapping. The earlier controlled test
+still showed that a reopened device can have no mapped actions. The 2026-11-04
+diagnosis supersedes the implied configuration loss: an accidental bank 0-to-1
+change caused the mapped-action outage. The reconnect evidence remains valid,
+while bank hardening moves to CONTROL-003.
 
 ## Latest checkpoint — Ampero reconnect characterized; recovery sprint deferred
 
 The controlled 2026-10-21 USB reconnect test detected `Errno 19`, reopened the
 same raw-MIDI path, and reported one successful reconnect, but received zero
 messages and no pedal actions. Direct `amidi` and `aseqdump` were also silent.
-Reinitializing the bank with the iOS app restored MIDI output. An open ALSA node
-therefore proves transport availability, not a functionally programmed pedal;
+Returning to the intended bank through the iOS app restored MIDI output. An
+open ALSA node therefore proves transport availability, not a selected mapping;
 a valid mapped event is required after startup or reconnect before show-ready
 status.
 

@@ -186,6 +186,24 @@ If the explicitly selected node is absent at startup, the browser controller now
 stays available and reports that MIDI is waiting while retrying that same path;
 it never guesses at or binds another MIDI device.
 
+Adjacent Ampero switches can select another hardware bank when pressed
+together. The previously intermittent loss of mapped actions was diagnosed as
+an accidental change from bank 0 to bank 1, not erased programming. Keep bank 0
+selected until the performance-safe multi-bank profile in `CONTROL-003` is
+validated; if actions stop, return to bank 0 and verify all four controls in
+simulation before resuming live output.
+
+## Planned song and setlist control
+
+The next show-control family adds a versioned song library, editable cue
+timelines, ordered setlists, and separate Manual and Setlist performance modes.
+Song playback will always require an explicit performer start; completion may
+arm the next song but will not start it automatically. AI is planned only as an
+offline authoring assistant whose proposals are reviewed and published before a
+show. Apple Music and Spotify links may identify catalog metadata, but they are
+not audio-analysis sources; analysis requires a user-owned or licensed upload.
+See [Song Builder and Setlist Performance Roadmap](docs/song-setlist-roadmap.md).
+
 ## Run live on the Raspberry Pi
 
 The Pi deployment is terminal-only and does not require Codex or VS Code. After
