@@ -107,6 +107,10 @@ Check the boot sequence:
   journalctl -u qlcplus.service -u phreqed-dmx.service -b --no-pager -n 100
   curl -I http://127.0.0.1:9999
   curl -fsS http://127.0.0.1:8080/api/state | python3 -m json.tool
+  .venv/bin/python scripts/show-readiness.py --startup-defaults
+
+Optional Pi-hosted stage Wi-Fi (configure from Ethernet/local console):
+  bash scripts/pi-stage-hotspot.sh configure
 
 Phreqed starts with browser live capability available but fixture output stopped.
 Art-Net begins only after the operator presses Start live in the browser.

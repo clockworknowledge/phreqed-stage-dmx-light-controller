@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-04
 
-## Current checkpoint -- Setlist performance software complete
+## Current checkpoint -- Show acceptance and private-LAN tooling ready
 
 The 2026-10-22 unattended live-band checkpoint remains the current physical
 baseline: headless QLC+, browser control, two fixtures, Snowball audio response,
@@ -19,6 +19,22 @@ tap, blackout on, and blackout off in simulation. `CONTROL-003` will make every
 reachable performance bank safe or disable bank navigation if the supported
 configuration allows it. `CONTROL-002` is reduced to optional backup/inspection
 research.
+
+`CONTROL-003`, `SHOW-004`, and `OPS-003` now have repeatable acceptance tools.
+`scripts/ampero-bank-check.py` validates every expected Note/CC action for one
+selected bank without creating Art-Net output. `scripts/show-readiness.py`
+checks service state, stopped fixture output, optional boot defaults, audio,
+MIDI activity, and the commissioned stage-LAN addresses. The guarded
+`scripts/pi-stage-hotspot.sh` provisions `Phreqed-Stage` at `10.42.0.1/24` via
+NetworkManager; configuration, activation, and boot enablement are separate,
+and it refuses to drop an SSH session routed over the same Wi-Fi interface.
+The iPhone joins that SSID directly and opens `http://10.42.0.1:8080`; no venue
+Wi-Fi or internet is required. Secrets remain outside Git.
+
+Windows Python 3.12 now passes 202 tests and all changed shell/Python scripts
+pass syntax compilation. The three cards remain in Validation because the Pi
+hotspot, duplicate Ampero banks, offline boot, complete setlist run, browser
+lease loss, and low-brightness fixture sequence require operator hardware.
 
 `SONG-001`, `SONG-002`, and the software portion of `SHOW-004` are now
 implemented. The browser **Songs** tab can

@@ -48,3 +48,25 @@ Avoid adjacent-switch bank changes until the multi-bank safe profile in
 Before first live use on a new deployment, validate the complete workflow in
 browser simulation, then repeat it on the Pi at low brightness with QLC+
 blackout immediately available.
+
+## SHOW-004 Pi acceptance sequence
+
+1. Reboot with fixtures powered but browser live output stopped. Run
+   `show-readiness.py --startup-defaults` and confirm Manual/inactive/stopped.
+2. In simulation, select a multi-song setlist. Verify previous/next changes the
+   armed song, FS3 starts/stops it, completing a song arms but does not start
+   the next, and the last song reaches complete.
+3. Disconnect and reconnect Ampero USB. Require a newly observed mapped action,
+   not just a recreated device node. Repeat after deliberately selecting each
+   CONTROL-003 fallback bank.
+4. While a song runs in simulation, close all controller tabs or interrupt the
+   network until the browser lease expires. Confirm the timeline stops and does
+   not resume on reconnect.
+5. Restart `phreqed-dmx.service` and repeat the startup-default check. Confirm
+   the saved library/setlist remains but runtime position does not resume.
+6. With QLC+ blackout immediately available and people warned, repeat one short
+   setlist at a conservative RGB ceiling. Verify Stop output and global blackout
+   both stop the timeline and request fixture blackout.
+
+Record the date, revision, network topology, bank results, and any reconnect
+events in the Kanban evidence before moving SHOW-004 to Done.

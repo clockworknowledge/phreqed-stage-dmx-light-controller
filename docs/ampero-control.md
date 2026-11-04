@@ -41,6 +41,39 @@ mapped actions stop. Then verify all four actions in simulation before resuming
 live output. The preferred durable mitigation is the same safe mapping in every
 reachable bank, or supported bank-navigation lockout if available.
 
+### CONTROL-003 bank-hardening procedure
+
+The current firmware/app behavior makes adjacent-switch bank navigation easy
+to trigger and does not provide a repository-controlled lockout. Program the
+table above identically in bank 0 and bank 1, plus any other bank reachable by
+the same adjacent-switch gesture. Use short bank labels such as `LIGHT 0` and
+`LIGHT 1` if desired; the emitted MIDI values, not the label, are authoritative.
+Do not assign unrelated show commands to a fallback bank.
+
+Verify each programmed bank independently with the simulation-only checker.
+The managed controller normally owns the raw MIDI input, so stop it first; its
+normal SIGTERM path requests blackout and closes live output:
+
+```bash
+sudo systemctl stop phreqed-dmx.service
+.venv/bin/python scripts/ampero-bank-check.py --bank 0
+# Deliberately use the adjacent-switch gesture to select bank 1.
+.venv/bin/python scripts/ampero-bank-check.py --bank 1
+sudo systemctl start phreqed-dmx.service
+```
+
+For each run press FS1, FS2, FS3, then toggle FS4 on and off. A pass requires
+Note 60, Note 61, Note 62, CC 23 high, and CC 23 low on channel 1. The checker
+has no rendering, Art-Net, or network code. After both banks pass, deliberately
+change banks several times and repeat the actions in browser simulation. Keep
+the browser available as the independent path and perform a rehearsal-length
+USB soak before closing CONTROL-003.
+
+If an unexpected bank is selected during a show, use the browser blackout,
+return to a verified bank, and test one harmless navigation action before
+relying on the pedal again. The phone app should not be needed for recovery
+once every reachable bank contains the duplicate safe profile.
+
 ## Discover the USB MIDI device on the Pi
 
 Connect the Ampero Control to the Pi with its USB Type-B cable, then run:

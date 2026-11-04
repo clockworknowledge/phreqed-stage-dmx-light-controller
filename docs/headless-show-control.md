@@ -21,6 +21,54 @@ arrangement the Pi normally uses `10.42.0.1`, so the controller URL is
 from application installation because changing the Pi's active Wi-Fi profile
 can interrupt SSH access.
 
+## Pi-hosted stage Wi-Fi and iPhone control
+
+The Pi-hosted option works like a small private Wi-Fi router: the iPhone joins
+the Pi's SSID directly. Internet service is neither required nor provided. In
+iPhone **Settings > Wi-Fi**, select `Phreqed-Stage`, enter the private WPA2
+password, leave **Auto-Join** enabled, and retain the connection if iOS reports
+that it has no internet. Then open Safari at `http://10.42.0.1:8080`. **Add to
+Home Screen** is optional. Private Wi-Fi Address may remain enabled because
+Phreqed authorizes the subnet, not a phone MAC address. The phone may continue
+to use cellular data for internet traffic.
+
+Provision the NetworkManager profile from an Ethernet SSH session or a local
+console. Do not activate or disable it from SSH carried by `wlan0`; the helper
+detects and refuses that path. It prompts for the key without putting it in
+shell history, does not commit the key to Git, and separates configuration,
+testing, and boot enablement:
+
+```bash
+cd ~/phreqed-stage-dmx-light-controller
+bash scripts/pi-stage-hotspot.sh configure
+bash scripts/pi-stage-hotspot.sh status
+bash scripts/pi-stage-hotspot.sh activate
+```
+
+Join the SSID from the iPhone, verify the browser, then enable the tested
+profile for unattended boots:
+
+```bash
+bash scripts/pi-stage-hotspot.sh enable
+sudo reboot
+```
+
+The Pi's built-in Wi-Fi becomes the access point and is no longer a client of
+home or venue Wi-Fi. SSH from the iPhone-connected network uses
+`mmorley@10.42.0.1`. To return it to normal Wi-Fi-client operation, use an
+Ethernet/local session and run:
+
+```bash
+bash scripts/pi-stage-hotspot.sh disable
+```
+
+QLC+'s web interface is also reachable at `http://10.42.0.1:9999`; it is an
+operator/recovery surface, not a public service. Use a unique stage Wi-Fi key
+and do not share that network with an audience. A dedicated travel router with
+Pi Ethernet remains preferred when the extra device and power connection are
+acceptable, because it preserves Wi-Fi for other use and provides a separately
+replaceable network component.
+
 ## Network options
 
 | Option | Show reliability | Trade-off |
@@ -82,8 +130,21 @@ After reboot, join the selected private network and check:
 ```bash
 systemctl status qlcplus.service phreqed-dmx.service --no-pager
 curl -I http://127.0.0.1:9999
-curl -I http://127.0.0.1:8080
+curl -fsS http://127.0.0.1:8080/api/state | python3 -m json.tool
 ```
+
+The repository also supplies a read-only consolidated check. Immediately after
+a cold boot, and after pressing one mapped Ampero switch, run:
+
+```bash
+.venv/bin/python scripts/show-readiness.py \
+  --startup-defaults --require-stage-lan --require-audio --require-foot-event
+```
+
+It fails if output is already active, if Manual/inactive/stopped startup
+defaults were lost, if a required peripheral is unhealthy, or if neither
+commissioned stage address is present. A MIDI event proves the input path is
+alive; the bank acceptance tool is what proves all five mappings.
 
 The phone browser is the configuration and override interface. The Ampero is
 the no-screen show interface. Keep a tested Ampero blackout action, and retain

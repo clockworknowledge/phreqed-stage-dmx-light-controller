@@ -34,24 +34,6 @@ No active implementation.
 
 ## Ready
 
-### CONTROL-003 — Performance-safe Ampero bank profile (`P0`, reliability)
-
-The 2026-11-04 diagnosis established that the intermittent loss of mapped pedal
-actions was an accidental Ampero bank change from bank 0 to bank 1, caused by
-pressing two adjacent left-hand switches together. This is not evidence that
-the pedal erased its programming. Create the same safe Phreqed mapping in every
-bank reachable during a show, or disable bank navigation if the supported
-vendor configuration permits it. Document the bank indicator and the immediate
-recovery procedure: return to bank 0, then verify all mapped actions in
-simulation before resuming live output.
-
-Acceptance: accidental adjacent-switch presses cannot remove blackout or leave
-scene control silently mapped to unrelated messages; bank 0 and every reachable
-fallback bank emit the expected notes/CC values; recovery requires no phone app;
-the profile passes a rehearsal-length USB soak; and the browser remains the
-independent control path. Do not rely on simultaneous-switch chords for new
-performance commands.
-
 ### SPRITE-001 — Production sprite renderer (`P2`, visuals)
 
 Promote experimental sprite helpers into the normalized rendering pipeline with
@@ -62,6 +44,23 @@ Acceptance: sprite rendering is address-independent and deterministic, clips
 safely, supports both fixtures independently, and has visual regression tests.
 
 ## Validation
+
+### CONTROL-003 — Performance-safe Ampero bank profile (`P0`, reliability)
+
+The intermittent loss of mapped pedal actions was an accidental bank change,
+not demonstrated configuration erasure. The repository now documents the
+duplicate safe mapping for every reachable bank and supplies
+`scripts/ampero-bank-check.py`. The checker opens only the explicit raw-MIDI
+path, creates no renderer or Art-Net sender, and requires all five mapped
+actions: Note 60/61/62 and CC 23 high/low. Recovery guidance keeps browser
+blackout independent and requires no phone app after fallback banks are
+programmed.
+
+Acceptance remaining: use the vendor app to duplicate the mapping into bank 0,
+bank 1, and every other reachable bank; run the checker separately against each
+bank; deliberately exercise adjacent-switch navigation; and pass a
+rehearsal-length USB soak. Do not rely on simultaneous-switch chords for new
+performance commands.
 
 ### SHOW-004 - Manual/setlist performance modes (`P1`, performance control)
 
@@ -78,7 +77,7 @@ and shutdown stop the timeline without automatic resume. A restart defaults to
 Manual mode, no active timeline, and output stopped. Recovery is documented in
 [`setlist-performance.md`](setlist-performance.md).
 
-Windows validation passes all 198 tests, including deterministic selection,
+Windows validation passes all 202 tests, including deterministic selection,
 explicit start/stop, no-next-song autostart, blackout cancellation, lease-loss
 cancellation, reboot-safe defaults, Manual-mode compatibility, serialized foot
 commands, and no Art-Net construction in simulation. Chromium validation
@@ -90,6 +89,11 @@ disconnect/reconnect, song skipping, a complete multi-song setlist, browser
 loss, and recovery in simulation. Then perform a low-brightness live fixture
 check with QLC+ blackout immediately available. Do not infer pedal readiness
 from device enumeration; require a mapped event from the intended Ampero bank.
+
+The repeatable Pi sequence is now documented in `setlist-performance.md`, and
+`scripts/show-readiness.py --startup-defaults` checks that fixture output is
+stopped and the runtime is Manual/inactive/stopped after boot. Physical
+acceptance remains intentionally open.
 
 ### OPS-003 — Unattended show startup and private control LAN (`P0`, deployment)
 
@@ -104,9 +108,12 @@ browser when the Snowball is absent. Safe settings live outside Git in
 The browser boundary now accepts a comma-separated list of specific trusted
 IPv4 networks. The commissioned home LAN and reserved private stage LAN
 `10.42.0.0/24` are permitted by both application and systemd filters. A
-dedicated private router with Pi Ethernet is the recommended production path;
-a Pi-hosted access point remains a separately provisioned alternative so an
-installation cannot unexpectedly replace the active SSH network.
+dedicated private router with Pi Ethernet is the recommended production path.
+The guarded `scripts/pi-stage-hotspot.sh` now implements the alternative
+Pi-hosted access point at `10.42.0.1`: configure, activate, and boot enablement
+are separate actions, and activation/disable refuses an SSH path using the same
+Wi-Fi interface. iPhone join and no-internet behavior are documented. The
+read-only readiness check can require either commissioned stage-LAN address.
 
 Pi evidence on 2026-10-22: both enabled services survived an unattended reboot.
 QLC+ started first and Phreqed followed five seconds later; the browser logged
@@ -115,11 +122,11 @@ operator subsequently reported the full browser, audio, pedal, and two-fixture
 live path working with the band. The unsupported `curl -I` response on port
 8080 was only an HTTP HEAD limitation; the documented state check now uses GET.
 
-Acceptance remaining: repeat boot once with external Wi-Fi unavailable and
-confirm QLC+ plus port 8080 recover while fixtures stay dark. Confirm the
-browser from the selected private LAN and verify the documented no-audio
-startup behavior. A fixed Pi address or router DHCP reservation and private
-SSID/key must be recorded outside Git before show use.
+Acceptance remaining: configure and activate the selected network on the Pi,
+join it from the iPhone, then enable it at boot only after that test. Repeat a
+boot with external Wi-Fi unavailable and confirm QLC+ plus port 8080 recover
+while fixtures stay dark. Verify documented no-audio startup behavior. Record
+the private SSID/key outside Git.
 
 ### HW-002 — Guarded audio peak output for commissioned whites (`P0`, safety)
 
