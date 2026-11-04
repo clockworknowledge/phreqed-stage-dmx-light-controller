@@ -202,7 +202,8 @@ the configured user library; no audio media is stored there. Start the safe
 browser simulator, open **Songs**, create a song, create a cue-sheet revision,
 preview and publish it, then add the song to a setlist.
 
-Each song can optionally be tagged **Punk**, **Rock**, **Mellow**, or **Funk**.
+Each song can optionally be tagged **Punk**, **Rock**, **Mellow**, **Funk**,
+**Metal**, **Alternative**, **Blues**, **Reggae**, or **Electronic**.
 The timeline editor's **Apply style default** action scales a deterministic
 sequence of suitable looks across that song's duration. The result is an
 unpublished draft: preview, reorder, edit, or remove cues before publishing it.
@@ -214,6 +215,11 @@ Applying a style never overwrites a published revision or starts playback.
 | Rock | Eight driving sections with a broad finale |
 | Mellow | Six long sections with smooth, restrained fades |
 | Funk | Eight rhythmic, playful sections emphasizing VU and patterned motion |
+| Metal | Ten dense, high-energy sections with heat and hard directional motion |
+| Alternative | Eight contrasting textures with unexpected section changes |
+| Blues | Seven warm, slow-moving sections with restrained expressive peaks |
+| Reggae | Eight relaxed, offbeat sections with rolling patterned motion |
+| Electronic | Nine progressive digital sections with crisp synthetic changes |
 
 The browser **Perform** tab has explicit **Manual scenes** and **Setlist
 performance** modes. Setlist mode shows the current and next song, elapsed and

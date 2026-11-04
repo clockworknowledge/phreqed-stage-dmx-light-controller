@@ -211,7 +211,7 @@ function songDocument(){return copy(catalog.song_library);}
 function saveSongDocument(document,message,done=()=>{}){command('save_song_library',{song_library:document},true).then(()=>{notify(message);done();}).catch(()=>{});}
 function songById(id){return catalog.song_library.songs.find(song=>song.song_id===id);}
 function sheetsForSong(id){return catalog.song_library.cue_sheets.filter(sheet=>sheet.song_id===id);}
-const songStyleNames={unspecified:'Unspecified',punk:'Punk',rock:'Rock',mellow:'Mellow',funk:'Funk'};
+const songStyleNames={unspecified:'Unspecified',punk:'Punk',rock:'Rock',mellow:'Mellow',funk:'Funk',metal:'Metal',alternative:'Alternative',blues:'Blues',reggae:'Reggae',electronic:'Electronic'};
 function songStyleName(song){return songStyleNames[song?.style||'unspecified']||'Unspecified';}
 function timelineSheet(song){
   const sheets=sheetsForSong(song.song_id),drafts=sheets.filter(sheet=>!sheet.published).sort((a,b)=>b.revision-a.revision);
@@ -265,7 +265,7 @@ function newCueDraft(){
   saveSongDocument(document,'Cue-sheet draft created.',clearSongCueEdit);
 }
 function applyStyleDefault(){
-  const song=songById(selectedSongId);if(!song||!song.style||song.style==='unspecified'){notify('Edit the song and choose Punk, Rock, Mellow, or Funk first.',true);return;}
+  const song=songById(selectedSongId);if(!song||!song.style||song.style==='unspecified'){notify('Edit the song and choose a song style first.',true);return;}
   const sheet=timelineSheet(song),replace=Boolean(sheet&&!sheet.published);
   if(replace&&!confirm(`Replace every cue in the current draft with the ${songStyleName(song)} default?`))return;
   command('apply_song_style',{song_id:song.song_id,replace},true).then(()=>{notify(`${songStyleName(song)} baseline created as an editable draft.`);clearSongCueEdit();}).catch(()=>{});

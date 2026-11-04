@@ -40,7 +40,7 @@ Ampero commands route through this controller; in Manual mode the existing
 scene/tap-tempo behavior remains unchanged. Entering Setlist mode or selecting
 a song only arms it. Neither action starts a timeline or enables fixture output.
 
-Songs may optionally declare a `SongStyle` of Punk, Rock, Mellow, or Funk.
+Songs may optionally declare one of the supported `SongStyle` genres.
 `song_styles.py` converts the selected style into deterministic cue positions
 proportional to song duration using only known visual preset IDs. Applying a
 style creates a new unpublished cue-sheet revision, or replaces an existing

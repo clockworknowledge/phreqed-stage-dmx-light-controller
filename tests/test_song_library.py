@@ -79,7 +79,7 @@ class SongLibraryTests(unittest.TestCase):
             lambda d: d.update(extra=True),
             lambda d: d['songs'][0].update(song_id='../../escape'),
             lambda d: d['songs'][0].update(source='streaming_link'),
-            lambda d: d['songs'][0].update(style='metal'),
+            lambda d: d['songs'][0].update(style='classical'),
             lambda d: d['songs'][0].update(duration_seconds=float('nan')),
             lambda d: d['songs'][0].update(active_cue_sheet_id='cue-missing'),
             lambda d: d['songs'].append(copy.deepcopy(d['songs'][0])),

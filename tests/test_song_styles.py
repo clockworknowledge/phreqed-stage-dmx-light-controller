@@ -6,9 +6,10 @@ from phreqed_dmx.songs import SongStyle
 
 
 class SongStyleTemplateTests(unittest.TestCase):
-    def test_all_four_styles_are_deterministic_valid_and_distinct(self):
+    def test_all_supported_styles_are_deterministic_valid_and_distinct(self):
         rendered = {}
-        for style in (SongStyle.PUNK, SongStyle.ROCK, SongStyle.MELLOW, SongStyle.FUNK):
+        styles = tuple(style for style in SongStyle if style is not SongStyle.UNSPECIFIED)
+        for style in styles:
             with self.subTest(style=style.value):
                 first = generate_style_cues(style, 180.0, set(PRESETS))
                 second = generate_style_cues(style, 180.0, set(PRESETS))
@@ -21,10 +22,8 @@ class SongStyleTemplateTests(unittest.TestCase):
                 self.assertLess(first[-1].at_seconds, 180.0)
                 self.assertTrue(all(cue.preset_id in PRESETS for cue in first))
                 rendered[style] = tuple(cue.preset_id for cue in first)
-        self.assertEqual(len(set(rendered.values())), 4)
-        self.assertEqual(set(STYLE_TEMPLATES), {
-            SongStyle.PUNK, SongStyle.ROCK, SongStyle.MELLOW, SongStyle.FUNK,
-        })
+        self.assertEqual(len(set(rendered.values())), len(styles))
+        self.assertEqual(set(STYLE_TEMPLATES), set(styles))
 
     def test_short_song_still_has_strictly_increasing_cues(self):
         cues = generate_style_cues('punk', 1.0, set(PRESETS))
@@ -34,10 +33,10 @@ class SongStyleTemplateTests(unittest.TestCase):
         ))
 
     def test_unspecified_unknown_and_missing_presets_are_rejected(self):
-        with self.assertRaisesRegex(ValueError, 'choose punk'):
+        with self.assertRaisesRegex(ValueError, 'supported song style'):
             generate_style_cues('unspecified', 120.0, set(PRESETS))
         with self.assertRaisesRegex(ValueError, 'style is invalid'):
-            generate_style_cues('metal', 120.0, set(PRESETS))
+            generate_style_cues('classical', 120.0, set(PRESETS))
         with self.assertRaisesRegex(ValueError, 'missing preset'):
             generate_style_cues('rock', 120.0, {'psychedelic-bloom'})
 

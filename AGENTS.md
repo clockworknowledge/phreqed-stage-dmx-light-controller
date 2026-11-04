@@ -30,8 +30,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
   metadata storage; it never stores audio media.
 - `src/phreqed_dmx/song_timeline.py`: transport-independent, injected-clock
   setlist playback with explicit start/stop and no automatic next-song start.
-- `src/phreqed_dmx/song_styles.py`: deterministic Punk, Rock, Mellow, and Funk
-  baseline cue templates scaled to song duration; generated revisions stay drafts.
+- `src/phreqed_dmx/song_styles.py`: deterministic genre-based baseline cue
+  templates scaled to song duration; generated revisions always stay drafts.
 - `src/phreqed_dmx/performance.py`: transport-independent Manual/Setlist mode,
   song selection, and performer command routing around `SongTimelineRunner`.
 - `src/phreqed_dmx/fixtures.py`: fixture geometry and logical-pixel-to-DMX mapping.

@@ -32,6 +32,11 @@ class SongStyle(str, Enum):
     ROCK = 'rock'
     MELLOW = 'mellow'
     FUNK = 'funk'
+    METAL = 'metal'
+    ALTERNATIVE = 'alternative'
+    BLUES = 'blues'
+    REGGAE = 'reggae'
+    ELECTRONIC = 'electronic'
 
 
 def _object_fields(value: object, required: set[str]) -> dict:

@@ -360,6 +360,11 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn("command('apply_song_style'", script)
         self.assertIn("act(state?.performance?.running?'stop_song':'start_song')", script)
         self.assertIn('Published cue-sheet versions are immutable', html)
+        for style in (
+            'punk', 'rock', 'mellow', 'funk', 'metal',
+            'alternative', 'blues', 'reggae', 'electronic',
+        ):
+            self.assertIn(f'<option value="{style}">', html)
 
     def test_deletion_rejects_referenced_presets_and_builtins(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))

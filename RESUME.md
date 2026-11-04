@@ -41,7 +41,8 @@ Windows Python 3.12 suite passes 198 tests.
 multi-song completion, browser-loss, and low-brightness fixture acceptance. The
 operating and recovery procedure is in `docs/setlist-performance.md`.
 
-Song authoring now also supports optional Punk, Rock, Mellow, and Funk styles.
+Song authoring now supports Punk, Rock, Mellow, Funk, Metal, Alternative,
+Blues, Reggae, and Electronic styles.
 Applying the selected style in the timeline editor generates a deterministic,
 duration-scaled unpublished draft while retaining every published revision.
 Existing Pi `songs.json` files without a style remain valid and display as
