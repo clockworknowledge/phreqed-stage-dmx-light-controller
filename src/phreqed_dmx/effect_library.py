@@ -16,6 +16,7 @@ from .effect_api import (
     ParameterSpec,
     PerformanceContext,
 )
+from .sprites import SPRITE_ANIMATIONS
 
 Sampler = Callable[
     [int, int, int, int, float, FixtureIdentity, EffectParameters, PerformanceContext | None],
@@ -699,6 +700,31 @@ def _blinking_eye(
     return sclera
 
 
+def _sprite_parade(
+    x: int, y: int, width: int, height: int, animation_time: float,
+    fixture: FixtureIdentity, parameters: EffectParameters,
+    context: PerformanceContext | None,
+) -> NormalizedRGB:
+    """Move reusable low-resolution figures across one combined fixture canvas."""
+    del context
+    t = _time(animation_time, parameters)
+    animation = SPRITE_ANIMATIONS[parameters.choice("character")]
+    sprite = animation.frame_at(t * parameters.number("animation_rate"))
+    total_width = width * fixture.count
+    global_x = x + fixture.index * width
+    spacing = int(round(parameters.number("spacing")))
+    stride = sprite.width + spacing
+    travel = math.floor(t * parameters.number("travel_rate"))
+    right_to_left = parameters.choice("direction") == "right-left"
+    local_x = (global_x + travel if right_to_left else global_x - travel) % stride
+    y_offset = max(0, (height - sprite.height) // 2)
+    local_y = y - y_offset
+    if sprite.is_on(local_x, local_y, flip_x=right_to_left):
+        shimmer = 0.82 + 0.18 * math.sin(t * 2.1 + global_x * 0.35)
+        return _paint(global_x / max(1, total_width) - t * 0.025, shimmer, parameters)
+    return BLACK_NORMALIZED
+
+
 def _inside_out_vu(
     x: int, y: int, width: int, height: int, animation_time: float,
     fixture: FixtureIdentity, parameters: EffectParameters,
@@ -920,6 +946,13 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("iris_size", "Iris size", 0.34, 0.16, 0.65, 0.01, "Iris radius within the eye"),
             number("gaze", "Gaze", 0.0, -0.5, 0.5, 0.05, "Horizontal iris position"),
         ), brightness=0.58), _blinking_eye),
+        ProceduralEffect(_metadata("sprite-parade", "Sprite Parade", "Animated birds, stick figures, and geometric shapes cross both fixtures.", "sprite", (
+            ParameterSpec("character", "Figure", "bird", "Sprite or shape to animate", choices=tuple(SPRITE_ANIMATIONS)),
+            ParameterSpec("direction", "Direction", "left-right", "Travel direction", choices=("left-right", "right-left")),
+            number("travel_rate", "Travel rate", 3.0, 0.25, 12.0, 0.25, "Horizontal cells per animation second"),
+            number("animation_rate", "Animation rate", 1.0, 0.1, 4.0, 0.1, "Wing or walking frame rate"),
+            number("spacing", "Figure spacing", 4.0, 1.0, 16.0, 1.0, "Dark cells between repeated figures"),
+        ), brightness=0.68), _sprite_parade),
         ProceduralEffect(_metadata("inside-out-vu", "Inside-Out VU", "Audio level expands from the shared centre toward both outer edges.", "musical", (
             number("sensitivity", "VU sensitivity", 1.15, 0.25, 2.5, 0.05, "Audio level gain"),
             number("peak_width", "Peak width", 0.055, 0.015, 0.25, 0.005, "Width of the bright level marker"),

@@ -517,6 +517,69 @@ EXAMPLE_PRESETS = (
         global_brightness=0.4,
     ),
     VisualPreset(
+        "pixel-flight",
+        "Pixel Flight",
+        "Animated birds flap across the joined 24-pixel stage canvas.",
+        (
+            EffectLayerSpec(
+                "sprite-parade",
+                parameters={
+                    "speed": 0.9,
+                    "brightness": 0.88,
+                    "palette": "ocean",
+                    "character": "bird",
+                    "direction": "left-right",
+                    "travel_rate": 2.8,
+                    "animation_rate": 1.15,
+                    "spacing": 5.0,
+                },
+            ),
+        ),
+        global_brightness=0.4,
+    ),
+    VisualPreset(
+        "stickman-step",
+        "Stickman Step",
+        "Walking stick figures march continuously across both fixtures.",
+        (
+            EffectLayerSpec(
+                "sprite-parade",
+                parameters={
+                    "speed": 0.82,
+                    "brightness": 0.9,
+                    "palette": "neon",
+                    "character": "stickman",
+                    "direction": "left-right",
+                    "travel_rate": 2.4,
+                    "animation_rate": 1.0,
+                    "spacing": 6.0,
+                },
+            ),
+        ),
+        global_brightness=0.38,
+    ),
+    VisualPreset(
+        "shape-shifter",
+        "Shape Shifter",
+        "Bold geometric outlines travel cleanly across the low-resolution grid.",
+        (
+            EffectLayerSpec(
+                "sprite-parade",
+                parameters={
+                    "speed": 0.72,
+                    "brightness": 0.9,
+                    "palette": "spectrum",
+                    "character": "triangle",
+                    "direction": "right-left",
+                    "travel_rate": 2.0,
+                    "animation_rate": 1.0,
+                    "spacing": 5.0,
+                },
+            ),
+        ),
+        global_brightness=0.4,
+    ),
+    VisualPreset(
         "inside-out-vu",
         "Inside-Out VU",
         "Audio energy expands from the gap between fixtures toward both outside edges.",

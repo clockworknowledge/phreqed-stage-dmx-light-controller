@@ -38,7 +38,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/render.py`: composes logical grids into one DMX universe.
 - `src/phreqed_dmx/artnet.py`: ArtDMX packet construction and UDP transmission.
 - `src/phreqed_dmx/effects.py`: v2-compatible effects that operate only on grids.
-- `src/phreqed_dmx/sprites.py`: small bitmap sprites and grid drawing helpers.
+- `src/phreqed_dmx/sprites.py`: deterministic bitmap animations, normalized
+  transforms, clipping, and combined cross-fixture sprite rendering.
 - `src/phreqed_dmx/simulator.py`: local Tkinter preview; never opens a UDP socket.
 - `src/phreqed_dmx/web_control.py`: dependency-free browser preview/control with
   explicit live enablement, a disconnect watchdog, performance-mode controls,

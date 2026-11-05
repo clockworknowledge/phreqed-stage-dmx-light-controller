@@ -34,16 +34,30 @@ No active implementation.
 
 ## Ready
 
-### SPRITE-001 — Production sprite renderer (`P2`, visuals)
-
-Promote experimental sprite helpers into the normalized rendering pipeline with
-front-view placement, clipping, palette tinting, scaling suitable for a 12 x 4
-grid, and optional cross-cube layouts.
-
-Acceptance: sprite rendering is address-independent and deterministic, clips
-safely, supports both fixtures independently, and has visual regression tests.
+No work is currently queued as Ready.
 
 ## Validation
+
+### SPRITE-001 — Production sprite renderer (`P2`, visuals)
+
+The former bitmap helper now supports normalized RGB rendering, integer scaling,
+horizontal/vertical transforms, clipping, deterministic equal-size animation
+frames, and splitting one logical canvas into independent fixture grids. The
+`Sprite Parade` effect exposes birds, walking stick figures, triangles, circles,
+and diamonds with editable palette, direction, travel, animation rate, and
+spacing. Pixel Flight, Stickman Step, and Shape Shifter provide starting looks.
+
+Windows tests cover animation determinism, transformed clipping, seam crossing,
+fixture independence, four-row fit, metadata, geometry, safe DMX boundaries,
+and preset rendering. Chromium simulation exposed all three looks and switched
+between them with zero console errors and no Art-Net capability. A socket-blocked
+48-look smoke passed all gates; Sprite Parade measured 1.489 ms mean and 1.652 ms
+maximum render time with no missed or over-budget frames.
+
+Acceptance remaining: visually review all figures on the physical LF4808 grids
+at low rehearsal brightness, particularly the bottom two rows and movement
+through the Cube A/B seam. Adjust silhouettes only if the real diffuser makes a
+pose ambiguous; do not infer physical readability from the browser alone.
 
 ### CONTROL-003 — Performance-safe Ampero bank profile (`P0`, reliability)
 

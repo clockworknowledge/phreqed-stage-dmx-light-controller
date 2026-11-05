@@ -184,6 +184,7 @@ steady procedure are recorded in `lf4808-white-commissioning.md`.
 - Preserve the legacy grid renderer only for baseline compatibility tests.
 - Add new effects through the per-pixel `Effect.sample` contract with complete
   metadata and no transport imports.
-- Add sprites as `Sprite` data and render them onto any `PixelGrid`.
+- Add sprites as `Sprite`/`SpriteAnimation` data and render them into normalized
+  grids or a combined cross-fixture canvas before DMX quantization.
 - Add fixture variants in TOML only when their channel layout is known.
 - Add transports behind a small `send(bytes)` boundary without changing effects.

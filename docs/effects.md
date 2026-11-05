@@ -37,6 +37,7 @@ ceiling of 0.65.
 | `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5, `pulse_frequency` 0-1.5 (music velocity), `cosine_morph` 0-1 (legacy key; onset phase push) |
 | `pacman` | Pac-Man Chase | sprite | `direction` left-right/right-left, `travel_rate` 0.5-10, `radius` 1.1-2.2, `mouth_rate` 0.3-4, `dot_spacing` 2-6 |
 | `blinking-eye` | Blinking Eye | sprite | `blink_rate` 0.08-1.5, `blink_duration` 0.08-0.5, `iris_size` 0.16-0.65, `gaze` -0.5-0.5 |
+| `sprite-parade` | Sprite Parade | sprite | `character` bird/stickman/triangle/circle/diamond, `direction` left-right/right-left, `travel_rate` 0.25-12, `animation_rate` 0.1-4, `spacing` 1-16 |
 | `inside-out-vu` | Inside-Out VU | musical | `sensitivity` 0.25-2.5, `peak_width` 0.015-0.25 |
 | `radial-pulse` | Radial Pulse | musical | `frequency` 0.5-6.0, `sharpness` 1-6 |
 | `tunnel` | Legacy Tunnel | legacy | `ring_frequency` 0.5-6.0, `floor` 0-0.5 |
@@ -86,6 +87,11 @@ both outside edges.
 pupil, subtle gaze drift, and a bounded close/reopen cycle independently on each
 fixture. A closed eye leaves only a restrained lid line.
 
+`sprite-parade` uses reusable bitmap animation frames on one logical 24-by-4
+canvas. Birds flap, stick figures alternate walking poses, and triangle, circle,
+or diamond outlines can travel in either direction. Palette tint, clipping, and
+fixture splitting happen in normalized render space. See [Sprite authoring](sprites.md).
+
 ## Included presets
 
 - `psychedelic-bloom`: neon plasma plus additive concentric rings.
@@ -110,6 +116,9 @@ fixture. A closed eye leaves only a restrained lid line.
 - `inside-out-vu`: music energy growing from the shared centre to both outer edges.
 - `watchful-eyes`: a synchronized eye on each fixture opening, watching, and
   blinking.
+- `pixel-flight`: flapping bird silhouettes crossing the shared fixture seam.
+- `stickman-step`: alternating walking figures marching across both fixtures.
+- `shape-shifter`: bold triangle outlines travelling right-to-left.
 
 All presets default below the 0.65 global safety ceiling and contain no
 strobe-channel behavior. The added show pack is capped at 0.48 global

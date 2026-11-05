@@ -28,6 +28,7 @@ REQUIRED_ADVANCED_EFFECTS = {
     "dynamic-wave",
     "pacman",
     "blinking-eye",
+    "sprite-parade",
     "inside-out-vu",
 }
 

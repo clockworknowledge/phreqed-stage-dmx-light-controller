@@ -2,7 +2,21 @@
 
 Last updated: 2026-11-05
 
-## Current checkpoint -- Browser clean shutdown awaiting Pi acceptance
+## Current checkpoint -- Sprite renderer and browser shutdown in validation
+
+`SPRITE-001` now promotes the experimental bitmap helper into the normalized
+rendering pipeline. It adds deterministic equal-size animation frames, integer
+scaling, flipping, clipping, palette tinting, and a combined 24-by-4 fixture
+canvas that splits back into independent grids. The new `Sprite Parade` effect
+offers birds, walking stick figures, triangles, circles, and diamonds. Pixel
+Flight, Stickman Step, and Shape Shifter are built-in starting looks. Windows
+passes 214 tests; Chromium simulation exposed and switched all three looks with
+zero console errors and no live-output capability. A socket-blocked 48-look
+smoke passed all gates; Sprite Parade rendered at 1.489 ms mean and 1.652 ms
+maximum with no missed slots, over-budget frames, reserved-channel output, or
+nonzero blackout. Low-brightness physical readability across the real diffusers
+and Cube A/B seam remains the acceptance step. Authoring guidance is in
+`docs/sprites.md`.
 
 `OPS-004` now implements an optional clean Raspberry Pi shutdown from the
 browser. It is unavailable by default and in simulation. Explicit managed-live

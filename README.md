@@ -12,17 +12,17 @@ To continue deployment or development in a fresh Codex session, start with the
 
 The reconstructed conversation baseline is preserved unchanged under
 `phreqed-stage-dmx-baseline/`. The package retains its plasma, tunnel, pulse,
-chase, and cross-cube chase while adding twenty-one advanced effects. These
+chase, and cross-cube chase while adding twenty-two advanced effects. These
 snapshots are not direct Pi exports; see the [baseline inventory](docs/baseline-inventory.md)
 and [Pi comparison checklist](docs/pi-script-import.md).
 
 ## Phase 2 capabilities
 
-- 25 registered effects with validated metadata and deterministic output
+- 26 registered effects with validated metadata and deterministic output
 - spectrum, magma, ocean, neon, ember, monochrome, and matrix palettes
 - alpha, additive, and lighten layers with opacity and masks
 - independent per-cube effects or continuous cross-cube effects
-- nineteen built-in presets, including independent and cross-cube show looks
+- twenty-two built-in presets, including animated figures and cross-cube looks
 - conservative global brightness ceiling and frame-rise limiter
 - transport-independent blackout, preset, event, tap-tempo, and navigation APIs
 - normalized, replayable audio analysis with explicit opt-in Blue Snowball/ALSA
@@ -94,6 +94,9 @@ phreqed-dmx simulate --preset blaster-sweep
 phreqed-dmx simulate --preset flame-thrower
 phreqed-dmx simulate --preset wave-rider
 phreqed-dmx simulate --preset pacman-chase
+phreqed-dmx simulate --preset pixel-flight
+phreqed-dmx simulate --preset stickman-step
+phreqed-dmx simulate --preset shape-shifter
 phreqed-dmx simulate --preset inside-out-vu
 ```
 
