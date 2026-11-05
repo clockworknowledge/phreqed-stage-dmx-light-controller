@@ -336,10 +336,15 @@ the page. It is never available in simulation-only browser mode. See the
 deployment guide before enabling it.
 
 Center-white output is an additional explicit step after browser live starts.
-It requires an active microphone and the **Enable physical white peak output**
-toggle. The default level is 5% and the default ceiling is 10%. Blackout, Stop
-output, render failure, or browser-lease loss disarms it; it never activates in
-the simulation-only `web` command or ordinary non-browser live mode.
+It requires an active microphone and the **Enable physical segmented white
+output** toggle. Supported looks use the sixteen commissioned parts as one
+left-to-right accent canvas: Blaster, Flame Jet, Wave Rider, Inside-Out VU, and
+sprite-family effects each select a deterministic pattern. Other looks keep the
+whites dark by design. Presets select only a pattern; they cannot arm output.
+The default level is 5% and the default ceiling is 10%. Blackout, Stop output,
+performance-mode changes, render failure, or browser-lease loss disarms it; it
+never activates in the simulation-only `web` command or ordinary non-browser
+live mode. The simulator displays the exact eight-part array for each fixture.
 
 After low-level commissioning, an operator may explicitly expose a higher
 center-white ceiling for one browser-live process. Start conservatively and

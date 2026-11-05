@@ -166,12 +166,18 @@ right-to-left from the front and each part drives both visible rows on both
 fixtures.
 
 The browser canvas represents the two white rows between the upper and lower
-RGB row pairs. Preview remains available in simulation. Physical peak output is
-a separate browser-live state outside presets and RGB effects: it requires an
-audio source and explicit toggle, defaults to a 10% ceiling, uses short
-threshold-crossing pulses no faster than 4 Hz, and is disarmed by every
-stop/blackout path. The separately acknowledged process-local override described
-above can raise the ceiling without relaxing those timing or shutdown gates.
+RGB row pairs as eight independently shaded sections per fixture. Preview
+remains available in simulation and exposes the same normalized arrays used at
+the output boundary. Effect IDs select a transport-independent pattern across
+the joined sixteen-part canvas: directional blaster core, flame muzzle/front,
+wave crest, inside-out VU, or sprite glint. Unsupported effects select an
+explicit dark pattern. Physical output remains a separate browser-live state:
+presets cannot arm it, and it requires an audio source plus the explicit toggle.
+The normalized pattern is multiplied by the short threshold-crossing pulse,
+operator level, and independent ceiling before DMX quantization. Pulses remain
+no faster than 4 Hz and every stop, blackout, mode-change, failure, lease-loss,
+and shutdown path disarms and zeros all parts. The separately acknowledged
+process-local override can raise the ceiling without relaxing those gates.
 
 Every RGB zone maps to R, G, then B. Cube A's RGB data occupies DMX 1-144 and
 its white parts occupy 145-152. Cube B's RGB data occupies 153-296 and its white

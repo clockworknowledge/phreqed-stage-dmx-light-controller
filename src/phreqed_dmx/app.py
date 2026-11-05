@@ -77,6 +77,7 @@ class Controller:
         )
         self.audio_motion_multiplier = 1.0
         self.audio_brightness_multiplier = 1.0
+        self.animation_time = 0.0
         self._last_scene: Scene | None = None
         self._transition_from: Scene | None = None
         self._transition_started = 0.0
@@ -124,6 +125,7 @@ class Controller:
         )
         self.audio_motion_multiplier = reactive.motion_multiplier
         self.audio_brightness_multiplier = reactive.brightness_multiplier
+        self.animation_time = reactive.animation_time
         scene = self.engine.render(reactive.animation_time, context)
         if self._transition_from is not None:
             progress = (elapsed - self._transition_started) / self._transition_duration

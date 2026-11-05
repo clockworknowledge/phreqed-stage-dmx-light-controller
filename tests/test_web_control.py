@@ -66,7 +66,8 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn('Parts 1-8 run right-to-left', html)
         self.assertIn('id="white-output"', html)
         self.assertIn("const white = Math.round", script)
-        self.assertIn("white.active_level", script)
+        self.assertIn("white.part_levels", script)
+        self.assertIn("white.pattern_name", script)
 
     def test_browser_reports_disabled_and_active_audio_analysis(self):
         disabled = self.control.state()['audio']
@@ -544,6 +545,51 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn('href="/safety.css"', html)
         self.assertIn('The default ceiling is 10%', html)
 
+    def test_segmented_white_preview_is_simulation_only_and_reports_exact_parts(self):
+        source = ManualAudioAnalysisSource(
+            AudioAnalysis(0.5, 0.95, FrequencyBands(0.4, 0.3, 0.2))
+        )
+        control = BrowserControl(
+            Controller(load_config(), audio_source=source), self.path
+        )
+        self.addCleanup(control.close)
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='preset', value='wave-rider'))
+            control.command(dict(
+                action='white_preview', enabled=True, threshold=0.65, level=0.8
+            ))
+            control.step(control.started + 1.0)
+            state = control.state()['white_preview']
+            sender.assert_not_called()
+        self.assertEqual(state['pattern_id'], 'wave')
+        self.assertEqual(set(state['part_levels']), {'Cube A', 'Cube B'})
+        self.assertTrue(all(len(values) == 8 for values in state['part_levels'].values()))
+        self.assertTrue(any(value > 0.0
+                            for values in state['part_levels'].values()
+                            for value in values))
+
+    def test_performance_mode_change_disarms_and_zeros_segmented_whites(self):
+        source = ManualAudioAnalysisSource(
+            AudioAnalysis(0.5, 0.95, FrequencyBands(0.4, 0.3, 0.2))
+        )
+        control = BrowserControl(
+            Controller(load_config(), audio_source=source), self.path, allow_live=True
+        )
+        self.addCleanup(control.close)
+        with patch('phreqed_dmx.web_control.ArtNetSender'):
+            control.command(dict(action='preset', value='blaster-sweep'))
+            control.command(dict(action='start_live'))
+            control.command(dict(action='white_output', enabled=True, level=0.05))
+            control.step(control.started + 1.0)
+            self.assertTrue(control.state()['white_preview']['output_enabled'])
+            control.command(dict(action='performance_mode', mode='setlist'))
+        state = control.state()['white_preview']
+        self.assertFalse(state['output_enabled'])
+        self.assertEqual(state['output_active_level'], 0.0)
+        self.assertTrue(all(value == 0.0
+                            for values in state['part_levels'].values()
+                            for value in values))
+
     def test_commissioned_white_output_requires_live_and_is_capped(self):
         source = ManualAudioAnalysisSource(
             AudioAnalysis(0.3, 0.9, FrequencyBands(0.4, 0.2, 0.2))
@@ -556,16 +602,16 @@ class BrowserControlTests(unittest.TestCase):
             control.command(dict(action='white_output', enabled=True, level=0.05))
 
         with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='preset', value='blaster-sweep'))
             control.command(dict(action='start_live'))
             control.command(dict(action='white_output', enabled=True, level=0.05))
             control.step(control.started + 1.0)
             payload = sender.return_value.send.call_args.args[0]
             cube_a = payload[144:152]
             cube_b = payload[296:304]
-            self.assertEqual(len(set(cube_a)), 1)
-            self.assertEqual(cube_a, cube_b)
-            self.assertGreater(cube_a[0], 0)
-            self.assertLessEqual(cube_a[0], 26)
+            self.assertGreater(max(cube_a + cube_b), 0)
+            self.assertGreater(len(set(cube_a + cube_b)), 1)
+            self.assertLessEqual(max(cube_a + cube_b), 26)
             state = control.state()['white_preview']
             self.assertTrue(state['commissioned'])
             self.assertTrue(state['output_enabled'])
@@ -606,13 +652,15 @@ class BrowserControlTests(unittest.TestCase):
         self.assertEqual(state['output_ceiling'], 0.60)
         self.assertTrue(state['high_output'])
         with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='preset', value='flame-thrower'))
             control.command(dict(action='start_live'))
             control.command(dict(action='white_output', enabled=True, level=0.55))
             control.step(control.started + 1.0)
             payload = sender.return_value.send.call_args.args[0]
-        self.assertGreater(payload[144], round(0.10 * 255))
-        self.assertLessEqual(payload[144], round(0.55 * 255))
-        self.assertEqual(payload[144:152], payload[296:304])
+        white_parts = payload[144:152] + payload[296:304]
+        self.assertGreater(max(white_parts), round(0.10 * 255))
+        self.assertLessEqual(max(white_parts), round(0.55 * 255))
+        self.assertGreater(len(set(white_parts)), 1)
         with self.assertRaises(ValueError):
             control.command(dict(action='white_output', enabled=True, level=0.61))
 

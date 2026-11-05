@@ -34,33 +34,31 @@ No active implementation.
 
 ## Ready
 
-### WHITE-ANIM-001 — Scene-aware segmented white animation (`P1`, visual safety)
-
-Use the commissioned eight independently dimmed white parts on each fixture as
-a 16-segment auxiliary canvas instead of driving every part at one shared level.
-First run a steady 5% registration sequence that records each part's physical
-span relative to the 12 RGB columns; right-to-left order and two-rows-together
-behavior are known, but exact 8-to-12 alignment is not yet recorded.
-
-Add normalized per-part white frames behind the existing explicit browser-live
-arm gate. Presets may request a pattern but must never enable physical whites.
-Initial patterns should include directional bolt/core travel for Blaster Sweep,
-a low sustained muzzle/hot-tip accent for Flame Thrower, a smoothly moving Wave
-Rider crest, center-out Inside-Out VU peaks, and restrained sprite glints. Most
-looks should continue to leave whites dark so the accents retain impact.
-
-Safety acceptance: the default process ceiling remains 10%; higher ceilings
-still require the existing startup acknowledgement and persistent warning;
-steady/spatial motion uses bounded fades and minimum holds rather than rapid
-hard switching; hard onset accents remain no longer than 0.10 seconds and no
-faster than 4 Hz; per-part and aggregate levels are clamped; blackout, Stop,
-lease loss, render failure, mode change, and shutdown immediately zero and
-disarm every part. Simulation previews the exact eight-part arrays without
-constructing `ArtNetSender`. Tests cover fixture independence, part order,
-scene selection, rate/energy limits, reserved-channel isolation, and zero-state
-recovery before any physical animated test.
+No implementation-ready work.
 
 ## Validation
+
+### WHITE-ANIM-001 — Scene-aware segmented white animation (`P1`, visual safety)
+
+The eight commissioned white parts per fixture now form a joined sixteen-part
+accent canvas. Pattern selection follows effect IDs, so built-in and user looks
+share directional blaster, flame muzzle/front, smooth wave, center-out VU, and
+sprite-glint behavior without learning DMX addresses. Other looks explicitly
+remain dark. The browser displays the exact eight normalized sections per fixture;
+simulation never constructs `ArtNetSender`.
+
+Physical output still requires explicit browser live, audio input, and separate
+white arming. Scene requests cannot enable it. Existing 10% default ceiling,
+acknowledged high-output boundary, 0.10-second/4 Hz limiter, per-part/aggregate
+clamps, and blackout/Stop/lease/failure/mode/shutdown disarm paths remain active.
+Automated tests cover deterministic selection, part order, fixture independence,
+energy bounds, simulation isolation, and zero-state recovery.
+
+Acceptance remaining: use the steady 5% commissioning sequence to record each
+part's physical span relative to the twelve RGB columns on both fixtures. Then
+visually validate the five pattern families at the default 5% level with fixtures
+positioned safely and QLC+ blackout ready. Do not raise the white ceiling during
+this registration run.
 
 ### SPRITE-001 — Production sprite renderer (`P2`, visuals)
 

@@ -31,8 +31,12 @@ from .white_output import (
     MAX_WHITE_FLASH_HZ,
     MAX_WHITE_OUTPUT_CEILING,
     WHITE_OUTPUT_CEILING,
+    WHITE_PATTERN_LABELS,
     WhitePeakLimiter,
-    commissioned_white_levels,
+    animated_white_pattern,
+    logical_white_levels,
+    scale_white_pattern,
+    select_white_pattern,
 )
 
 ASSETS = Path(__file__).with_name('web')
@@ -139,6 +143,11 @@ class BrowserControl:
         self.white_output_level = DEFAULT_WHITE_OUTPUT_LEVEL
         self.white_output_active_level = 0.0
         self.white_peak_limiter = WhitePeakLimiter()
+        self.white_pattern_id = 'dark'
+        self.white_part_levels = {
+            fixture.name: (0.0,) * fixture.white_zone_count
+            for fixture in self.controller.config.fixtures
+        }
         self.foot_controller: RawMidiFootController | None = None
         self.frames = black_scene(self.engine.geometry)
         self.thread: threading.Thread | None = None
@@ -311,6 +320,9 @@ class BrowserControl:
                             threshold=self.white_preview_threshold,
                             level=self.white_preview_level,
                             active_level=self.white_preview_active_level,
+                            pattern_id=self.white_pattern_id,
+                            pattern_name=WHITE_PATTERN_LABELS[self.white_pattern_id],
+                            part_levels=self.white_part_levels,
                             commissioned=white_commissioned,
                             mapping='Parts 1-8 right-to-left; both rows together',
                             output_available=(
@@ -383,6 +395,11 @@ class BrowserControl:
         self.white_output_enabled = False
         self.white_preview_active_level = 0.0
         self.white_output_active_level = 0.0
+        self.white_pattern_id = 'dark'
+        self.white_part_levels = {
+            fixture.name: (0.0,) * fixture.white_zone_count
+            for fixture in self.controller.config.fixtures
+        }
         self.white_peak_limiter.reset()
 
     def command(self, raw: object) -> None:
@@ -636,6 +653,9 @@ class BrowserControl:
             elif action == 'performance_mode':
                 mode = data.get('mode')
                 self.performance.set_mode(mode)
+                # A transport-mode change is a deliberate safety boundary.
+                # The operator must separately re-arm physical whites afterward.
+                self._disable_white_output()
                 scenes.playing = False
                 scenes.index = None
                 if self.performance.mode is PerformanceMode.SETLIST:
@@ -723,16 +743,53 @@ class BrowserControl:
                 if self.white_output_enabled and self.sender is not None
                 else 0.0
             )
-            if self.sender is not None:
-                white_zones = (
-                    commissioned_white_levels(
-                        self.controller.config.fixtures,
-                        self.white_output_active_level,
-                        maximum=self.white_output_ceiling,
-                    )
-                    if self.white_output_enabled
-                    else None
+            preset = self.engine.presets[self.engine.active_preset_id]
+            self.white_pattern_id = select_white_pattern(
+                tuple(layer.effect_id for layer in preset.layers)
+            )
+            fixtures = self.controller.config.fixtures
+            commissioned = all(
+                fixture.white_commissioned and fixture.white_rows_together
+                for fixture in fixtures
+            )
+            if commissioned:
+                normalized_pattern = animated_white_pattern(
+                    fixtures,
+                    self.white_pattern_id,
+                    self.controller.animation_time,
+                    loudness=analysis.loudness if analysis is not None else 0.0,
                 )
+                preview_parts = scale_white_pattern(
+                    fixtures, normalized_pattern,
+                    self.white_preview_active_level, maximum=1.0,
+                )
+                output_parts = scale_white_pattern(
+                    fixtures, normalized_pattern,
+                    self.white_output_active_level,
+                    maximum=self.white_output_ceiling,
+                )
+            else:
+                self.white_pattern_id = 'dark'
+                preview_parts = output_parts = {
+                    fixture.name: (0.0,) * fixture.white_zone_count
+                    for fixture in fixtures
+                }
+            display_parts = preview_parts
+            if not self.white_peak_preview and self.white_output_enabled:
+                display_parts = {
+                    name: tuple(
+                        min(1.0, value / self.white_output_ceiling)
+                        for value in values
+                    )
+                    for name, values in output_parts.items()
+                }
+            self.white_part_levels = (
+                logical_white_levels(fixtures, display_parts)
+                if commissioned
+                else display_parts
+            )
+            if self.sender is not None:
+                white_zones = output_parts if self.white_output_enabled else None
                 self.sender.send(compose_dmx(
                     self.controller.config.fixtures,
                     self.frames,

@@ -2,7 +2,24 @@
 
 Last updated: 2026-11-05
 
-## Current checkpoint -- Sprite renderer and browser shutdown in validation
+## Current checkpoint -- Segmented center-white animation in validation
+
+`WHITE-ANIM-001` now treats the two fixtures' commissioned white parts as one
+sixteen-section accent canvas. Effect-driven selection supplies deterministic
+blaster, flame, wave, inside-out VU, and sprite-glint patterns; unsupported
+looks explicitly remain dark. Pattern selection is address-free, works for user
+looks, and cannot arm physical output. The browser draws the exact eight-part
+array on each fixture. Existing audio/live/white gates, default 10% ceiling,
+0.10-second/4 Hz limiter, high-output acknowledgement, and every blackout/Stop/
+lease/failure/mode/shutdown disarm path remain intact. Windows Python 3.12 passes
+220 tests. A real Chromium simulation selected Wave Rider, reported its pattern,
+rendered visibly separated white sections, exposed no live capability, and had
+zero console errors. The card is in Validation pending a steady 5% physical
+8-to-12-column registration and low-level review of all five pattern families.
+
+`RIG-001` remains Backlog until more fixtures are acquired.
+
+## Prior checkpoint -- Sprite renderer and browser shutdown in validation
 
 `SPRITE-001` now promotes the experimental bitmap helper into the normalized
 rendering pipeline. It adds deterministic equal-size animation frames, integer
@@ -20,13 +37,9 @@ and Cube A/B seam remains the acceptance step. Authoring guidance is in
 
 The operator accepted the sprite silhouettes as useful at the current
 resolution and identified segmented center-white animation as the next visual
-opportunity. `WHITE-ANIM-001` is now Ready: it first registers the exact spatial
-span of all eight commissioned parts per fixture, then adds scene-requested but
-separately armed patterns for blaster, flame, wave, VU, and sprite accents under
-the existing ceiling, pulse, blackout, lease, and shutdown gates. `RIG-001`
-tracks future fixture expansion: up to three 152-channel fixtures fit one DMX
-universe; a fourth requires multi-universe transport, QLC+, output hardware, and
-dynamic browser layout work.
+opportunity. `RIG-001` tracks future fixture expansion: up to three 152-channel
+fixtures fit one DMX universe; a fourth requires multi-universe transport, QLC+,
+output hardware, and dynamic browser layout work.
 
 `OPS-004` now implements an optional clean Raspberry Pi shutdown from the
 browser. It is unavailable by default and in simulation. Explicit managed-live

@@ -61,3 +61,12 @@ its separate physical-white toggle is enabled. Output defaults to 5%, has a hard
 10% ceiling, uses pulses no longer than 0.10 seconds at no more than 4 Hz, and is
 disarmed by blackout, stop, failure, or lease loss. Presets and normal rendering
 still leave all white channels zero.
+
+## Segmented-animation registration
+
+`WHITE-ANIM-001` uses the confirmed right-to-left order but represents the eight
+parts as equal logical sections in the browser. Before accepting physical
+animation, repeat the steady 5% command above and record the left/right RGB-column
+span covered by every part on each fixture. Do not infer 8-to-12 alignment from
+the browser drawing. Both fixtures must agree; any disagreement blocks animated
+live use but does not affect RGB operation.

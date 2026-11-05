@@ -592,3 +592,28 @@ existing reconnect worker began. Initial open failure is now recoverable. The
 browser and audio controller remain running, publish a waiting/disconnected
 MIDI status, and retry only the explicitly selected path rather than scanning
 for an arbitrary MIDI device.
+
+## Scene-aware segmented center whites -- 2026-11-05
+
+The commissioned eight white parts on each fixture now form a deterministic
+sixteen-section auxiliary canvas. Pattern selection follows transport-free effect
+IDs rather than preset names: cross-blaster, flame jet, dynamic wave, inside-out
+VU, and sprite-family effects receive distinct smooth patterns, including saved
+user looks. Other effects explicitly select dark output. Logical left-to-right
+values are converted to the fixtures' confirmed right-to-left Part order only at
+the white-output boundary.
+
+The browser publishes and draws the exact eight-part array for each fixture.
+Simulation cannot construct an Art-Net sender. Physical values remain the product
+of the normalized pattern, audio onset limiter, operator level, and independent
+ceiling; presets cannot arm them. The existing default 10% ceiling, explicit
+high-output acknowledgement, 0.10-second/4 Hz pulse bounds, per-part/aggregate
+clamps, and all zero/disarm paths remain active. Changing between Manual and
+Setlist performance modes now also requires whites to be re-armed.
+
+Windows Python 3.12 passes 220 tests. Real Chromium simulation selected Wave
+Rider, exposed its named pattern and segmented monitor rows, retained simulation-
+only controls, and produced no console errors or warnings. Remaining risk is
+physical registration: the eight equal browser sections do not assert their exact
+span over the twelve RGB columns. A steady 5% two-fixture registration and visual
+review of all pattern families are required before the card leaves Validation.

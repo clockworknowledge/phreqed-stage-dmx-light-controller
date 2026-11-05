@@ -21,9 +21,10 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/show_control.py`: transport-independent performance commands.
 - `src/phreqed_dmx/foot_control.py`: dependency-free MIDI parsing and explicit
   Ampero Control input; it maps pedal messages only to show commands.
-- `src/phreqed_dmx/white_output.py`: commissioned white-part output, onset pulse
-  shaping, default 10% ceiling, explicit live override boundary, and independent
-  0.10-second/4 Hz safety limits.
+- `src/phreqed_dmx/white_output.py`: deterministic scene-aware sixteen-part white
+  patterns, commissioned logical/physical mapping, per-part and aggregate clamps,
+  onset pulse shaping, default 10% ceiling, explicit live override boundary, and
+  independent 0.10-second/4 Hz safety limits.
 - `src/phreqed_dmx/scenes.py`: deterministic ordered-cue playback and transitions.
 - `src/phreqed_dmx/library.py`: validated, atomic user presets and scene storage.
 - `src/phreqed_dmx/songs.py`: validated, atomic song, cue-sheet, and setlist

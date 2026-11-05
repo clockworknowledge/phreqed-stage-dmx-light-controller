@@ -50,7 +50,7 @@ function renderCatalog() {
   renderSongs();
   renderSetlists();
 }
-function draw(canvas, rows, whiteLevel = 0) {
+function draw(canvas, rows, whiteLevels = []) {
   const ctx = canvas.getContext('2d'); ctx.fillStyle = '#0c100d'; ctx.fillRect(0,0,canvas.width,canvas.height);
   const height = rows.length, width = rows[0]?.length || 0;
   if (!width || rows.some(row => row.length !== width)) return;
@@ -66,10 +66,14 @@ function draw(canvas, rows, whiteLevel = 0) {
   if (centerGap) {
     const lineHeight = Math.max(3,centerGap*0.22), lineGap = centerGap*0.12;
     const lineTop = top+(height/2)*cell+(centerGap-(lineHeight*2+lineGap))/2;
-    const white = Math.round(89 + (255-89)*Math.max(0,Math.min(1,whiteLevel)));
-    ctx.fillStyle = `rgb(${white},${white},${white})`;
-    ctx.fillRect(left+pad,lineTop,width*cell-pad*2,lineHeight);
-    ctx.fillRect(left+pad,lineTop+lineHeight+lineGap,width*cell-pad*2,lineHeight);
+    const parts = whiteLevels.length === 8 ? whiteLevels : Array(8).fill(0);
+    const partWidth = width*cell/parts.length, partPad = Math.max(1,partWidth*0.05);
+    parts.forEach((level,index) => {
+      const white = Math.round(35 + (255-35)*Math.max(0,Math.min(1,level)));
+      ctx.fillStyle = `rgb(${white},${white},${white})`;
+      ctx.fillRect(left+index*partWidth+partPad,lineTop,partWidth-partPad*2,lineHeight);
+      ctx.fillRect(left+index*partWidth+partPad,lineTop+lineHeight+lineGap,partWidth-partPad*2,lineHeight);
+    });
   }
 }
 function clockTime(seconds){const total=Math.max(0,Math.floor(seconds||0)),minutes=Math.floor(total/60);return `${minutes}:${String(total%60).padStart(2,'0')}`;}
@@ -150,7 +154,7 @@ function renderState(s) {
     : '';
   $('white-output-hint').textContent = highWhite
     ? 'This process was explicitly armed above the normal 10% ceiling. Pulses remain onset-thresholded, at most 0.10 seconds and 4 Hz, and stop on blackout, output stop, failure, or lease loss.'
-    : 'Physical whites require live output and this separate toggle. The default ceiling is 10%; pulses remain short, onset-thresholded, limited to no more than 4 Hz, and disabled by blackout, stop, or a lost browser lease.';
+    : 'Supported scenes animate all eight parts per fixture; other scenes stay dark by design. Physical whites require live output and this separate toggle. The default ceiling is 10%; pulses remain onset-thresholded, no more than 0.10 seconds or 4 Hz, and stop on blackout, mode change, output stop, failure, or lease loss.';
   if (highWhite) {
     $('live-warning').textContent += ` HIGH-OUTPUT CENTER WHITES are also available up to ${Math.round(white.output_ceiling*100)}% and require their separate in-page toggle.`;
   }
@@ -166,13 +170,15 @@ function renderState(s) {
   $('white-level').disabled = !white.enabled;
   $('white-output').disabled = !white.output_available;
   $('white-output-level').disabled = !white.output_available;
-  $('white-preview-status').textContent = white.output_active_level > 0 ? 'LIVE WHITE PEAK' : white.output_enabled ? `Live whites armed · max ${Math.round(white.output_ceiling*100)}%` : white.commissioned ? 'Commissioned · output off' : 'Physical output locked';
+  const whitePattern = white.pattern_name || 'Dark by design';
+  $('white-preview-status').textContent = white.output_active_level > 0 ? `LIVE · ${whitePattern}` : white.output_enabled ? `Armed · ${whitePattern} · max ${Math.round(white.output_ceiling*100)}%` : white.commissioned ? `Preview · ${whitePattern}` : 'Physical output locked';
   const foot = s.foot_control || {enabled:false,connected:false,message:'Foot control disabled',messages_received:0,reconnects:0};
   $('foot-status').textContent = foot.enabled ? `${foot.connected ? 'Pedal connected' : foot.message} · ${foot.messages_received} events · ${foot.reconnects} reconnects · ${setlistMode?'song transport':'scene transport'}` : 'Foot control disabled';
   document.querySelectorAll('[data-cue]').forEach(e => e.classList.toggle('active', Number(e.dataset.cue) === s.scene_index));
   document.querySelectorAll('[data-preset]').forEach(e => e.classList.toggle('active', e.dataset.preset === s.preset_id));
-  const displayWhite = Math.max(white.active_level, white.output_ceiling ? white.output_active_level/white.output_ceiling*0.8 : 0);
-  const frames = Object.values(s.frames); if (frames[0]) draw($('cube-a'),frames[0],displayWhite); if (frames[1]) draw($('cube-b'),frames[1],displayWhite);
+  const frames = Object.entries(s.frames); const whiteParts=white.part_levels||{};
+  if (frames[0]) draw($('cube-a'),frames[0][1],whiteParts[frames[0][0]]||[]);
+  if (frames[1]) draw($('cube-b'),frames[1][1],whiteParts[frames[1][0]]||[]);
   if (s.error || s.notice) notify(s.error || s.notice, Boolean(s.error));
 }
 function newLayer() { return {effect_id:'plasma', fixtures:null, opacity:1, blend_mode:'alpha', parameters:{}}; }

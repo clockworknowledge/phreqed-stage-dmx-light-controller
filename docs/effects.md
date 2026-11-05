@@ -120,8 +120,24 @@ fixture splitting happen in normalized render space. See [Sprite authoring](spri
 - `stickman-step`: alternating walking figures marching across both fixtures.
 - `shape-shifter`: bold triangle outlines travelling right-to-left.
 
-All presets default below the 0.65 global safety ceiling and contain no
-strobe-channel behavior. The added show pack is capped at 0.48 global
+## Scene-aware center-white accents
+
+The browser controller derives a white accent pattern from effect IDs, so built-in
+and user-authored looks behave consistently without putting DMX addresses in an
+effect. `cross-blaster` moves a core and soft wake across both fixtures;
+`flame-jet` retains a left muzzle and turbulent hot front; `dynamic-wave` moves a
+smooth crest; `inside-out-vu` expands from the center using normalized loudness;
+and eye, Pac-Man, and sprite-parade effects receive a restrained travelling
+glint. Other effects deliberately request `dark`.
+
+These patterns are requests, not output commands. They are visible in simulation,
+but physical parts remain zero until browser live, microphone input, and the
+separate white-output toggle are all active. Onset pulse duration/rate limits,
+the operator ceiling, per-part and aggregate clamps, and all disarm paths remain
+outside the effects engine.
+
+All presets default below the 0.65 global safety ceiling and cannot arm
+center-white output. The added show pack is capped at 0.48 global
 brightness and avoids hard full-frame flashing. `acid-mirrors`, `split-signal`,
 and `crossfire` deliberately render different material on each fixture. All
-normal RGB looks keep the center-white DMX channels at zero.
+ordinary RGB rendering keeps center-white DMX channels at zero.
