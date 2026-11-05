@@ -2,7 +2,7 @@
 
 Last updated: 2026-11-05
 
-## Current checkpoint -- Segmented center-white animation in validation
+## Current checkpoint -- Segmented center-white animation accepted
 
 `WHITE-ANIM-001` now treats the two fixtures' commissioned white parts as one
 sixteen-section accent canvas. Effect-driven selection supplies deterministic
@@ -14,8 +14,11 @@ array on each fixture. Existing audio/live/white gates, default 10% ceiling,
 lease/failure/mode/shutdown disarm path remain intact. Windows Python 3.12 passes
 220 tests. A real Chromium simulation selected Wave Rider, reported its pattern,
 rendered visibly separated white sections, exposed no live capability, and had
-zero console errors. The card is in Validation pending a steady 5% physical
-8-to-12-column registration and low-level review of all five pattern families.
+zero console errors. The operator subsequently completed the Pi fixture run and
+confirmed the segmented animation behaved correctly on 2026-11-05, moving the
+card to Done. Exact RGB-column boundaries were not transcribed; the browser's
+equal sections remain a logical preview, while commissioned Part order is the
+authoritative physical mapping.
 
 `RIG-001` remains Backlog until more fixtures are acquired.
 

@@ -613,7 +613,8 @@ Setlist performance modes now also requires whites to be re-armed.
 
 Windows Python 3.12 passes 220 tests. Real Chromium simulation selected Wave
 Rider, exposed its named pattern and segmented monitor rows, retained simulation-
-only controls, and produced no console errors or warnings. Remaining risk is
-physical registration: the eight equal browser sections do not assert their exact
-span over the twelve RGB columns. A steady 5% two-fixture registration and visual
-review of all pattern families are required before the card leaves Validation.
+only controls, and produced no console errors or warnings. The operator then
+completed the Pi fixture run and confirmed correct segmented behavior on both
+units on 2026-11-05. Exact diffuser boundaries over the twelve RGB columns were
+not transcribed, so the equal browser sections remain a logical preview rather
+than a physical-dimension claim.

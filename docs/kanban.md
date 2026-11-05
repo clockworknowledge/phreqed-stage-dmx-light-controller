@@ -38,28 +38,6 @@ No implementation-ready work.
 
 ## Validation
 
-### WHITE-ANIM-001 — Scene-aware segmented white animation (`P1`, visual safety)
-
-The eight commissioned white parts per fixture now form a joined sixteen-part
-accent canvas. Pattern selection follows effect IDs, so built-in and user looks
-share directional blaster, flame muzzle/front, smooth wave, center-out VU, and
-sprite-glint behavior without learning DMX addresses. Other looks explicitly
-remain dark. The browser displays the exact eight normalized sections per fixture;
-simulation never constructs `ArtNetSender`.
-
-Physical output still requires explicit browser live, audio input, and separate
-white arming. Scene requests cannot enable it. Existing 10% default ceiling,
-acknowledged high-output boundary, 0.10-second/4 Hz limiter, per-part/aggregate
-clamps, and blackout/Stop/lease/failure/mode/shutdown disarm paths remain active.
-Automated tests cover deterministic selection, part order, fixture independence,
-energy bounds, simulation isolation, and zero-state recovery.
-
-Acceptance remaining: use the steady 5% commissioning sequence to record each
-part's physical span relative to the twelve RGB columns on both fixtures. Then
-visually validate the five pattern families at the default 5% level with fixtures
-positioned safely and QLC+ blackout ready. Do not raise the white ceiling during
-this registration run.
-
 ### SPRITE-001 — Production sprite renderer (`P2`, visuals)
 
 The former bitmap helper now supports normalized RGB rendering, integer scaling,
@@ -595,6 +573,19 @@ Generate representative simulator images for every effect and preset at fixed
 times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
+
+### WHITE-ANIM-001 — Scene-aware segmented white animation (`P1`, visual safety)
+
+The eight commissioned white parts per fixture form a joined sixteen-part accent
+canvas. Effect-driven blaster, flame, wave, center-out VU, and sprite-glint
+patterns work for built-in and user looks; unsupported looks remain dark. The
+browser previews exact per-part arrays without creating live output. Physical
+output retains separate live/audio/white arming, the 10% default ceiling,
+0.10-second/4 Hz limiter, per-part/aggregate clamps, and every disarm path.
+Automated tests and Chromium simulation passed. The operator completed the Pi
+fixture run and confirmed the segmented animation behaved correctly on
+2026-11-05. Exact RGB-column boundary measurements were not transcribed and are
+informational only; the confirmed Part order remains the physical mapping.
 
 ### SONG-003 - Search songs when adding to a setlist (`P2`, authoring UX)
 

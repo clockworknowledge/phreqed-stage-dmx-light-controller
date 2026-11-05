@@ -62,11 +62,12 @@ its separate physical-white toggle is enabled. Output defaults to 5%, has a hard
 disarmed by blackout, stop, failure, or lease loss. Presets and normal rendering
 still leave all white channels zero.
 
-## Segmented-animation registration
+## Segmented-animation acceptance — 2026-11-05
 
 `WHITE-ANIM-001` uses the confirmed right-to-left order but represents the eight
-parts as equal logical sections in the browser. Before accepting physical
-animation, repeat the steady 5% command above and record the left/right RGB-column
-span covered by every part on each fixture. Do not infer 8-to-12 alignment from
-the browser drawing. Both fixtures must agree; any disagreement blocks animated
-live use but does not affect RGB operation.
+parts as equal logical sections in the browser. The operator completed the Pi
+fixture test and confirmed that the segmented animation behaved correctly across
+both units. Exact left/right RGB-column boundary measurements were not
+transcribed, so the browser's equal 8-to-12 visual spacing remains a logical
+preview rather than a claim about diffuser boundaries. The commissioned Part
+order and two-rows-together behavior remain authoritative.
