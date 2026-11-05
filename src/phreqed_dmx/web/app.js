@@ -299,7 +299,8 @@ function publishCueSheet(){
 function renderSetlists(){
   const library=catalog.song_library,select=$('setlist-select'),previous=selectedSetlistId||select.value;select.replaceChildren();for(const setlist of library.setlists)option(select,setlist.setlist_id,setlist.name);
   selectedSetlistId=library.setlists.some(item=>item.setlist_id===previous)?previous:(library.setlists[0]?.setlist_id||null);select.value=selectedSetlistId||'';
-  const songSelect=$('setlist-song');songSelect.replaceChildren();for(const song of library.songs)option(songSelect,song.song_id,`${song.title} - ${song.artist}`);
+  const songSelect=$('setlist-song'),pendingSongId=songSelect.value;songSelect.replaceChildren();for(const song of library.songs)option(songSelect,song.song_id,`${song.title} - ${song.artist}`);
+  if(library.songs.some(song=>song.song_id===pendingSongId))songSelect.value=pendingSongId;
   const setlist=library.setlists.find(item=>item.setlist_id===selectedSetlistId);$('setlist-songs').replaceChildren();$('delete-setlist').disabled=$('save-setlist').disabled=!setlist;$('add-setlist-song').disabled=!setlist||!library.songs.length;
   if(document.activeElement!==$('setlist-name'))$('setlist-name').value=setlist?.name||'';
   if(!setlist)return;

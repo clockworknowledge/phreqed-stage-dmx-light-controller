@@ -53,6 +53,9 @@ Rehearsal power.
 implemented. The browser **Songs** tab can
 create and edit song metadata, create draft cue-sheet revisions, preview cues
 only in simulation, publish immutable versions, and assemble/reorder setlists.
+The Setlist Builder preserves a pending Add-song selection across its four-second
+catalog refresh; previously each refresh silently reset that dropdown to the
+first song.
 The metadata is atomically stored in `songs.json` beside the user look/scene
 library. A Chromium end-to-end check completed the authoring flow with zero
 console errors.

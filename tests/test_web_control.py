@@ -379,6 +379,8 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn("act('preview_song_cue'", script)
         self.assertIn("act('performance_mode'", script)
         self.assertIn("command('apply_song_style'", script)
+        self.assertIn('pendingSongId=songSelect.value', script)
+        self.assertIn('songSelect.value=pendingSongId', script)
         self.assertIn('Create ${styleName} revision', script)
         self.assertIn('Copy published revision', html)
         self.assertIn("act(state?.performance?.running?'stop_song':'start_song')", script)
