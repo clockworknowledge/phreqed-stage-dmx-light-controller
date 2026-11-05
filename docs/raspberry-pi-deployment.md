@@ -211,10 +211,25 @@ make a higher RGB ceiling available for that live process only:
 ```
 
 Values above 0.65 are rejected in simulation-only `web` and `simulate` modes,
-and are rejected from `live` without the acknowledgement. The browser displays
-the active ceiling but still starts live output at 0.25 or lower. Frame-rise
-and flash-interval limiting remain active. The override applies only to the RGB
-matrix; `scripts/white-zone-check.py` retains its independent hard 10% ceiling.
+and are rejected from `live` without the acknowledgement. The browser still
+starts at 0.25 or lower in the 0.65 Rehearsal profile. After live output starts,
+the Performance panel can separately confirm Show power and unlock the master
+to the configured ceiling. Stop output, browser lease loss, failure, shutdown,
+and restart restore Rehearsal power. Frame-rise and flash-interval limiting
+remain active. The override applies only to the RGB matrix;
+`scripts/white-zone-check.py` retains its independent hard 10% ceiling.
+
+For the managed service, expose the full RGB range only after the exact rig has
+passed stepped validation:
+
+```bash
+sudoedit /etc/default/phreqed-dmx
+```
+
+Set `PHREQED_RGB_CEILING=1.0` and
+`PHREQED_ACKNOWLEDGE_HIGH_OUTPUT=1`, then restart with
+`sudo systemctl restart phreqed-dmx.service`. This makes Show power available;
+it does not select it or start fixture output.
 
 The show controller's center-white peak path also defaults to a separate 10%
 ceiling. After the exact rig has been commissioned at low level, a higher

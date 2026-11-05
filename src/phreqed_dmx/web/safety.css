@@ -8,3 +8,24 @@
   font-size: 12px;
   line-height: 1.6;
 }
+
+.power-mode-control {
+  display: grid;
+  grid-template-columns: minmax(220px, 360px) 1fr;
+  gap: 18px;
+  align-items: end;
+  border-top: 1px solid var(--line);
+  padding-top: 16px;
+  margin-top: -2px;
+}
+
+.power-mode-control .hint {
+  margin: 0 0 16px;
+}
+
+@media (max-width: 760px) {
+  .power-mode-control {
+    grid-template-columns: 1fr;
+    gap: 0;
+  }
+}

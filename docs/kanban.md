@@ -239,12 +239,14 @@ that overall result.
 ### SAFE-002 — Explicit show-time RGB ceiling (`P0`, safety)
 
 The default 0.65 RGB ceiling remains unchanged. A higher process-local ceiling
-now requires the literal `live` command and `--acknowledge-high-output`; both
-the compositor and frame limiter receive the selected value. Browser live still
-starts at 0.25 or lower, displays the elevated ceiling and warning, and rejects
-master levels above it. Saved presets remain capped at 0.65, luminance-rise and
-flash-interval safeguards remain active, and the white commissioning tool keeps
-its independent 10% ceiling.
+requires the literal `live` command and `--acknowledge-high-output`. Browser
+control treats that value only as available capability: it starts at 0.25 or
+lower in Rehearsal power and requires a second Performance-panel confirmation
+after live output starts before Show power changes both compositor and frame
+limiter ceilings. Stop output, lease loss, failure, shutdown, and restart reset
+to Rehearsal power and clamp the master back to 0.65. Saved presets remain
+capped at 0.65, luminance-rise and flash-interval safeguards remain active, and
+the white commissioning tool keeps its independent 10% ceiling.
 
 Acceptance remaining: pull to the Pi, verify default and elevated browser
 slider bounds without fixtures, then perform a deliberate stepped live check on

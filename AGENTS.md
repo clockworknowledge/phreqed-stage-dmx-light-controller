@@ -96,9 +96,12 @@ not effect code, converts those coordinates to physical zone order.
 - Keep the default RGB ceiling at 0.65. A higher ceiling is a temporary
   show-time override only: require explicit `live` mode plus
   `--acknowledge-high-output`, display the selected ceiling to the operator,
-  and retain the luminance-rise and flash-interval limiter. Saved presets stay
-  at or below 0.65. The RGB override must never alter the separately configured
-  white-channel ceiling.
+  and retain the luminance-rise and flash-interval limiter. Browser control
+  must still start in Rehearsal power at 0.65 or below; Show power requires a
+  second in-page confirmation after live output starts and must reset on live
+  stop, lease loss, failure, or process restart. Saved presets stay at or below
+  0.65. The RGB override must never alter the separately configured white-channel
+  ceiling.
 - New default effects must avoid rapid high-intensity full-frame flashes.
 - New configuration must be rejected if a fixture falls outside the 512-channel
   universe or overlaps another fixture.

@@ -41,6 +41,14 @@ offers a persistent 1x-5x slider. It scales only canvas pixels so dim patterns
 remain readable; DMX frames, master brightness, audio dynamics, and output
 ceilings are unchanged.
 
+The Performance panel now separates **Rehearsal** and **Show** RGB power.
+Rehearsal remains the 65% default on every boot and live start. A controller
+started with an explicitly acknowledged ceiling above 65% can unlock Show power
+only after live output starts and after a second browser confirmation. Show
+mode unlocks the master up to the configured ceiling without changing the
+center-white limit; stop, lease loss, failure, shutdown, and restart restore
+Rehearsal power.
+
 `SONG-001`, `SONG-002`, and the software portion of `SHOW-004` are now
 implemented. The browser **Songs** tab can
 create and edit song metadata, create draft cue-sheet revisions, preview cues

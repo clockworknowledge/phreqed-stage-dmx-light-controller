@@ -284,10 +284,14 @@ the following explicit live options:
   --rgb-ceiling 0.85 --acknowledge-high-output
 ```
 
-Browser live still starts at 0.25 or lower; its master slider then shows and
-respects the selected ceiling. The luminance-rise and flash-interval limiter
-remain active. Saved presets remain capped at 0.65, and this RGB override does
-not change the separately configured white-channel ceiling. Use `--effect`
+Browser live still starts at 0.25 or lower and in the 0.65 **Rehearsal** power
+profile. When a higher ceiling was explicitly supplied, the Performance panel
+offers a separately confirmed **Show** power profile that unlocks the master
+slider to that configured ceiling. Stop output, browser lease loss, render
+failure, shutdown, and restart all restore Rehearsal power. The luminance-rise
+and flash-interval limiter remain active. Saved presets remain capped at 0.65,
+and this RGB override does not change the separately configured white-channel
+ceiling. Use `--effect`
 for manual mode, with `--mode mirror|complementary|independent` and
 `--second-effect` where needed. Run `phreqed-dmx --help` for the complete effect
 and preset lists. With no command, the CLI defaults to simulation; network
@@ -295,7 +299,9 @@ output can only be selected with the literal `live` command.
 
 The acknowledged ceiling may be set as high as `1.0` when full RGB range is
 required for a physically checked show. Treat that as available headroom, not a
-recommended starting level; the browser still starts at 25% or lower.
+recommended starting level: start live output, confirm **Show** power in the
+Performance panel, and raise the master gradually. The browser always starts at
+25% or lower in Rehearsal power.
 
 Browser-controlled lighting requires both the explicit live command and web
 option. It still starts with output stopped and requires confirmation in the

@@ -426,6 +426,8 @@ class BrowserControlTests(unittest.TestCase):
                         dict(action='audio_dimming', enabled=True, floor=0.5),
                         dict(action='contrast', value=0.5),
                         dict(action='audio_auto_level', enabled='yes'),
+                        dict(action='rgb_power_mode', value='maximum'),
+                        dict(action='rgb_power_mode', value='show'),
                         dict(action='white_preview', enabled=True, threshold=0.0, level=0.8),
                         dict(action='white_preview', enabled=True, threshold=0.65, level=2.0),
                         dict(action='white_output', enabled=True, level=0.05),
@@ -443,20 +445,48 @@ class BrowserControlTests(unittest.TestCase):
         engine = SceneEngine(
             config.fixtures, compositor=Compositor(maximum_brightness=0.9)
         )
-        control = BrowserControl(Controller(config, engine), self.path)
+        controller = Controller(config, engine)
+        control = BrowserControl(
+            controller, self.path, allow_live=True
+        )
         self.addCleanup(control.close)
 
-        self.assertEqual(control.state()['brightness_ceiling'], 0.9)
-        control.command(dict(action='brightness', value=0.8))
-        self.assertEqual(control.engine.compositor.global_brightness, 0.8)
-        with self.assertRaises(ValueError):
-            control.command(dict(action='brightness', value=0.91))
+        initial = control.state()
+        self.assertEqual(initial['rgb_power_mode'], 'rehearsal')
+        self.assertTrue(initial['show_power_available'])
+        self.assertEqual(initial['brightness_ceiling'], 0.65)
+        self.assertEqual(controller.safety_limiter.maximum_brightness, 0.65)
+        with self.assertRaisesRegex(ValueError, 'start live output'):
+            control.command(dict(action='rgb_power_mode', value='show'))
+
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='start_live'))
+            control.command(dict(action='rgb_power_mode', value='show'))
+            show = control.state()
+            self.assertEqual(show['rgb_power_mode'], 'show')
+            self.assertEqual(show['brightness_ceiling'], 0.9)
+            self.assertEqual(controller.safety_limiter.maximum_brightness, 0.9)
+            control.command(dict(action='brightness', value=0.8))
+            self.assertEqual(control.engine.compositor.global_brightness, 0.8)
+            with self.assertRaises(ValueError):
+                control.command(dict(action='brightness', value=0.91))
+
+            control.command(dict(action='stop_live'))
+            stopped = control.state()
+            self.assertEqual(stopped['rgb_power_mode'], 'rehearsal')
+            self.assertEqual(stopped['brightness_ceiling'], 0.65)
+            self.assertEqual(control.engine.compositor.global_brightness, 0.65)
+            self.assertEqual(controller.safety_limiter.maximum_brightness, 0.65)
+            sender.return_value.close.assert_called_once_with()
 
         html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
         script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
         self.assertIn('id="brightness-ceiling"', html)
+        self.assertIn('id="rgb-power-mode"', html)
+        self.assertIn('id="show-power-dialog"', html)
         self.assertIn("$('master').max = s.brightness_ceiling", script)
-        self.assertIn('HIGH-OUTPUT MODE', script)
+        self.assertIn("act('rgb_power_mode'", script)
+        self.assertIn('SHOW POWER ACTIVE', script)
 
     def test_master_brightness_survives_preset_and_scene_changes(self):
         self.control.command(dict(action='brightness', value=0.41))
@@ -580,7 +610,15 @@ class BrowserControlTests(unittest.TestCase):
             control.command(dict(action='white_output', enabled=True, level=0.61))
 
     def test_live_requires_two_steps_and_watchdog_closes_with_blackout(self):
-        control = BrowserControl(Controller(load_config()), self.path, allow_live=True)
+        config = load_config()
+        controller = Controller(
+            config,
+            SceneEngine(
+                config.fixtures,
+                compositor=Compositor(maximum_brightness=1.0),
+            ),
+        )
+        control = BrowserControl(controller, self.path, allow_live=True)
         self.addCleanup(control.close)
         with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
             control.step()
@@ -588,11 +626,15 @@ class BrowserControlTests(unittest.TestCase):
             control.command(dict(action='start_live'))
             sender.assert_called_once()
             self.assertLessEqual(control.engine.compositor.global_brightness, 0.25)
+            control.command(dict(action='rgb_power_mode', value='show'))
+            self.assertEqual(control.state()['brightness_ceiling'], 1.0)
             control.step(control.lease_deadline + 0.1)
             sender.return_value.close.assert_called_once_with()
             self.assertIsNone(control.sender)
             self.assertTrue(control.engine.blackout_enabled)
             self.assertFalse(control.controller.scenes.playing)
+            self.assertEqual(control.state()['rgb_power_mode'], 'rehearsal')
+            self.assertEqual(control.state()['brightness_ceiling'], 0.65)
             control.command(dict(action='heartbeat'))
             self.assertIsNone(control.sender)
 

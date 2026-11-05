@@ -35,6 +35,7 @@ from .white_output import (
 )
 
 ASSETS = Path(__file__).with_name('web')
+REHEARSAL_RGB_CEILING = 0.65
 
 
 class BrowserFootCommands:
@@ -94,6 +95,19 @@ class BrowserControl:
             blackout_active=lambda: self.engine.blackout_enabled,
         )
         self.performance = PerformanceController(self.song_timeline)
+        # A high CLI ceiling is available capability, not the startup level.
+        # Browser control always begins in the conservative rehearsal profile.
+        self.rgb_show_ceiling = float(
+            self.engine.compositor.maximum_brightness
+        )
+        self.rgb_rehearsal_ceiling = min(
+            REHEARSAL_RGB_CEILING, self.rgb_show_ceiling
+        )
+        self.show_power_enabled = False
+        self.engine.compositor.maximum_brightness = self.rgb_rehearsal_ceiling
+        self.controller.safety_limiter.maximum_brightness = (
+            self.rgb_rehearsal_ceiling
+        )
         # Never raise an explicit lower CLI limit when browser control starts.
         self.engine.set_global_brightness(
             min(
@@ -273,6 +287,15 @@ class BrowserControl:
                             self.engine.compositor.maximum_brightness,
                         ),
                         brightness_ceiling=self.engine.compositor.maximum_brightness,
+                        rgb_power_mode=(
+                            'show' if self.show_power_enabled else 'rehearsal'
+                        ),
+                        show_power_available=(
+                            self.allow_live
+                            and self.rgb_show_ceiling > self.rgb_rehearsal_ceiling
+                        ),
+                        show_power_ceiling=self.rgb_show_ceiling,
+                        rehearsal_power_ceiling=self.rgb_rehearsal_ceiling,
                         contrast=self.engine.compositor.contrast,
                         audio=audio,
                         white_preview=dict(
@@ -333,9 +356,20 @@ class BrowserControl:
 
     def _stop_live(self) -> None:
         self._disable_white_output()
+        self._set_show_power(False)
         sender, self.sender = self.sender, None
         if sender is not None:
             sender.close()
+
+    def _set_show_power(self, enabled: bool) -> None:
+        ceiling = (
+            self.rgb_show_ceiling if enabled else self.rgb_rehearsal_ceiling
+        )
+        self.show_power_enabled = enabled
+        self.engine.compositor.maximum_brightness = ceiling
+        self.controller.safety_limiter.maximum_brightness = ceiling
+        if self.engine.compositor.global_brightness > ceiling:
+            self.engine.set_global_brightness(ceiling)
 
     def _disable_white_output(self) -> None:
         self.white_output_enabled = False
@@ -394,11 +428,37 @@ class BrowserControl:
                 scenes.playing = False
                 self.performance.blackout()
                 self._stop_live()
+                self.notice = (
+                    'Output stopped with blackout; Rehearsal power restored.'
+                )
             elif action == 'brightness':
                 self.engine.set_global_brightness(number(
                     data.get('value'), 'brightness', 0,
                     self.engine.compositor.maximum_brightness,
                 ))
+            elif action == 'rgb_power_mode':
+                mode = data.get('value')
+                if mode not in ('rehearsal', 'show'):
+                    raise ValueError('RGB power mode must be rehearsal or show')
+                if mode == 'show':
+                    if not self.allow_live or (
+                        self.rgb_show_ceiling <= self.rgb_rehearsal_ceiling
+                    ):
+                        raise ValueError(
+                            'show power was not enabled when this controller started'
+                        )
+                    if self.sender is None:
+                        raise ValueError(
+                            'start live output before enabling show power'
+                        )
+                    self._set_show_power(True)
+                    self.notice = (
+                        'Show power unlocked. Raise master brightness gradually; '
+                        'blackout and frame-rise limiting remain active.'
+                    )
+                else:
+                    self._set_show_power(False)
+                    self.notice = 'Rehearsal power restored.'
             elif action == 'contrast':
                 self.engine.compositor.set_contrast(number(
                     data.get('value'), 'contrast', 1.0, 3.0,

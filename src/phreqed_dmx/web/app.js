@@ -81,9 +81,20 @@ function renderState(s) {
   $('current-look').textContent = s.active_name || 'Custom look';
   $('master').max = s.brightness_ceiling;
   $('brightness-ceiling').textContent = `${Math.round(s.brightness_ceiling*100)}%`;
-  $('live-warning').textContent = s.brightness_ceiling > 0.65
+  $('live-warning').textContent = s.rgb_power_mode === 'show'
     ? `HIGH-OUTPUT MODE: the RGB ceiling is ${Math.round(s.brightness_ceiling*100)}%. Confirm the fixtures are safely positioned, people nearby are warned, and QLC+ blackout is available. Output still starts at 25% brightness or lower.`
-    : 'Confirm the fixtures are safely positioned, people nearby are warned, and QLC+ blackout is available. Output starts at 25% brightness or lower.';
+    : `Confirm the fixtures are safely positioned, people nearby are warned, and QLC+ blackout is available. Output starts in rehearsal power at 25% brightness or lower.${s.show_power_available ? ` Show power up to ${Math.round(s.show_power_ceiling*100)}% may be unlocked only after live output starts.` : ''}`;
+  const powerMode=s.rgb_power_mode||'rehearsal',showPowerAvailable=Boolean(s.show_power_available);
+  if(document.activeElement!==$('rgb-power-mode'))$('rgb-power-mode').value=powerMode;
+  $('rgb-power-mode').disabled=!s.live||!showPowerAvailable;
+  $('show-power-option').textContent=`Show · up to ${Math.round((s.show_power_ceiling??0.65)*100)}% ceiling`;
+  $('rgb-power-status').textContent=!showPowerAvailable
+    ? 'Rehearsal ceiling is fixed for this process. Configure and acknowledge a higher RGB ceiling before startup to expose show power.'
+    : powerMode==='show'
+      ? `SHOW POWER ACTIVE · master range unlocked to ${Math.round(s.show_power_ceiling*100)}%. Raise it gradually; BLACKOUT remains active.`
+      : s.live
+        ? `Rehearsal power active · ${Math.round(s.rehearsal_power_ceiling*100)}% ceiling. Select Show only after the room and fixtures are ready.`
+        : `Rehearsal power active · ${Math.round(s.rehearsal_power_ceiling*100)}% ceiling. Start live output before unlocking show power.`;
   if (document.activeElement !== $('master')) { $('master').value = s.brightness; $('master-value').textContent = `${Math.round(s.brightness*100)}%`; }
   if (document.activeElement !== $('contrast')) $('contrast').value = s.contrast ?? 1;
   $('contrast-value').textContent = `${(s.contrast ?? 1).toFixed(2)}x`;
@@ -345,6 +356,14 @@ $('performance-mode').addEventListener('change',event=>{
   const mode=event.target.value,setlistId=mode==='setlist'?($('performance-setlist').value||null):null;
   act('performance_mode',{mode,setlist_id:setlistId});
 });
+$('rgb-power-mode').addEventListener('change',event=>{
+  if(event.target.value==='show'){
+    $('show-power-warning').textContent=`This unlocks the RGB master range up to ${Math.round((state?.show_power_ceiling??1)*100)}% for the live fixtures. Confirm safe fixture placement, warn everyone nearby, and keep BLACKOUT immediately available. Center-white strobes remain separately limited.`;
+    $('show-power-dialog').showModal();
+  }else{
+    act('rgb_power_mode',{value:'rehearsal'});
+  }
+});
 $('performance-setlist').addEventListener('change',event=>act('load_setlist',{setlist_id:event.target.value}));
 $('previous-song').addEventListener('click',()=>act('previous_song'));
 $('next-song').addEventListener('click',()=>act('next_song'));
@@ -379,6 +398,8 @@ $('blackout').addEventListener('click',()=>{if(!token)return;request('/api/comma
 $('start-live').addEventListener('click',()=>$('live-dialog').showModal());
 $('cancel-live').addEventListener('click',()=>$('live-dialog').close());
 $('confirm-live').addEventListener('click',()=>{$('live-dialog').close();act('start_live');});
+$('cancel-show-power').addEventListener('click',()=>{$('show-power-dialog').close();$('rgb-power-mode').value=state?.rgb_power_mode||'rehearsal';});
+$('confirm-show-power').addEventListener('click',()=>{$('show-power-dialog').close();act('rgb_power_mode',{value:'show'});});
 $('new-look').addEventListener('click',()=>openEditor());
 $('close-editor').addEventListener('click',()=>{$('editor').hidden=true;});
 $('add-layer').addEventListener('click',()=>{if(draft.layers.length<8){draft.layers.push(newLayer());renderLayers();}});
