@@ -157,7 +157,10 @@ Ethernet/private-router cable. Power the router first, then the Pi. Join the
 private SSID, open the fixed controller address, confirm audio and pedal status,
 select the opening scene, and only then start live output at low brightness.
 
-At shutdown, use browser blackout and stop output before powering down. A
-physical shutdown button or small UPS is a worthwhile future addition because
-removing Pi power abruptly can corrupt storage and cannot guarantee a final DMX
-blackout frame.
+When the optional browser shutdown capability has been installed and enabled,
+use **Shut down Pi**, type `SHUTDOWN`, and wait for Pi activity to stop before
+removing power. The controller first stops the timeline and requests fixture
+blackout before systemd performs a normal power-off. If that control is not
+enabled or the browser is unavailable, use browser blackout plus Stop output
+and then the physical Pi switch. A small UPS remains worthwhile because sudden
+power loss can corrupt storage and cannot guarantee a final DMX blackout frame.

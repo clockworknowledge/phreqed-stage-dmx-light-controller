@@ -9,6 +9,12 @@
   line-height: 1.6;
 }
 
+button.danger {
+  background: #402120;
+  color: #ffd3cf;
+  border-color: #a55851;
+}
+
 .power-mode-control {
   display: grid;
   grid-template-columns: minmax(220px, 360px) 1fr;

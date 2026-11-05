@@ -11,6 +11,7 @@ import secrets
 import signal
 import threading
 import time
+from typing import Callable
 from urllib.parse import urlsplit
 
 from .artnet import ArtNetSender
@@ -68,6 +69,7 @@ class BrowserControl:
         song_library_path: Path | None = None,
         allow_live: bool = False,
         white_output_ceiling: float = WHITE_OUTPUT_CEILING,
+        system_shutdown: Callable[[], None] | None = None,
     ) -> None:
         if (
             isinstance(white_output_ceiling, bool)
@@ -78,6 +80,8 @@ class BrowserControl:
             raise ValueError('white output ceiling must be above zero and at most 1.0')
         if white_output_ceiling > WHITE_OUTPUT_CEILING and not allow_live:
             raise ValueError('high-output whites require explicit live browser mode')
+        if system_shutdown is not None and not allow_live:
+            raise ValueError('system shutdown requires explicit live browser mode')
         self.controller = controller
         self.engine = controller.engine
         self.library = UserLibrary(library_path, tuple(self.engine.geometry))
@@ -117,6 +121,8 @@ class BrowserControl:
             )
         )
         self.allow_live = allow_live
+        self.system_shutdown = system_shutdown
+        self.shutdown_requested = False
         self.white_output_ceiling = float(white_output_ceiling)
         self.sender: ArtNetSender | None = None
         self.lock = threading.RLock()
@@ -278,6 +284,8 @@ class BrowserControl:
                 for fixture in self.controller.config.fixtures
             )
             return dict(live_allowed=self.allow_live, live=self.sender is not None,
+                        system_shutdown_available=self.system_shutdown is not None,
+                        shutdown_requested=self.shutdown_requested,
                         blackout=self.engine.blackout_enabled, error=self.error, notice=self.notice,
                         preset_id=self.engine.active_preset_id, playing=scenes.playing,
                         active_name=self.engine.presets[self.engine.active_preset_id].name,
@@ -385,6 +393,7 @@ class BrowserControl:
                 'value', 'preset', 'scenes', 'index', 'enabled', 'floor',
                 'threshold', 'level', 'song_library', 'cue_sheet_id',
                 'cue_index', 'setlist_id', 'mode', 'song_id', 'replace',
+                'confirmation',
             },
         )
         action = data['action']
@@ -431,6 +440,33 @@ class BrowserControl:
                 self.notice = (
                     'Output stopped with blackout; Rehearsal power restored.'
                 )
+            elif action == 'system_shutdown':
+                if self.system_shutdown is None:
+                    raise ValueError('system shutdown is disabled for this controller')
+                if data.get('confirmation') != 'SHUTDOWN':
+                    raise ValueError('type SHUTDOWN to confirm system power-off')
+                if self.shutdown_requested:
+                    raise ValueError('system shutdown is already requested')
+                self.engine.set_blackout(True)
+                scenes.playing = False
+                self.performance.blackout()
+                self.controller._transition_from = None
+                self.frames = black_scene(self.engine.geometry)
+                self._stop_live()
+                self.shutdown_requested = True
+                self.notice = (
+                    'Pi shutdown requested after fixture blackout. '
+                    'Wait for the activity LED to stop before removing power.'
+                )
+                try:
+                    self.system_shutdown()
+                except OSError:
+                    self.shutdown_requested = False
+                    self.notice = (
+                        'Output stopped with blackout; system shutdown was not accepted.'
+                    )
+                    self.error = 'System shutdown failed; use the physical Pi switch.'
+                    raise
             elif action == 'brightness':
                 self.engine.set_global_brightness(number(
                     data.get('value'), 'brightness', 0,
@@ -851,7 +887,8 @@ class ControlHandler(BaseHTTPRequestHandler):
 def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1', port: int = 8080,
           allow_network: str = '192.168.1.0/24', allow_live: bool = False,
           foot_midi_device: Path | None = None, foot_midi_channel: int = 1,
-          white_output_ceiling: float = WHITE_OUTPUT_CEILING) -> None:
+          white_output_ceiling: float = WHITE_OUTPUT_CEILING,
+          system_shutdown: Callable[[], None] | None = None) -> None:
     if not 1 <= port <= 65535:
         raise ValueError('browser port must be between 1 and 65535')
     if controller.config.fps > 25:
@@ -861,6 +898,7 @@ def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1'
         library_path,
         allow_live=allow_live,
         white_output_ceiling=white_output_ceiling,
+        system_shutdown=system_shutdown,
     )
     foot_controller = (
         RawMidiFootController(

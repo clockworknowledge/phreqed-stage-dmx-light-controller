@@ -1,0 +1,6 @@
+[Unit]
+Description=Phreqed confirmed clean system power-off
+
+[Service]
+Type=oneshot
+ExecStart=/usr/bin/systemctl poweroff --no-wall

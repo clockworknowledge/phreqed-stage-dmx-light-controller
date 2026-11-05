@@ -1,6 +1,9 @@
+import subprocess
 import unittest
+from pathlib import Path
 from unittest.mock import patch
 
+import phreqed_dmx.app as app
 from phreqed_dmx.app import Controller, build_parser, main
 from phreqed_dmx.config import load_config
 from phreqed_dmx.engine import SceneEngine
@@ -34,6 +37,7 @@ class ConfigurationTests(unittest.TestCase):
         self.assertEqual(args.audio_quiet_floor, 0.03)
         self.assertTrue(args.audio_auto_level)
         self.assertEqual(args.contrast, 1.0)
+        self.assertFalse(args.allow_system_shutdown)
 
     def test_command_line_help_renders_literal_percentages(self) -> None:
         help_text = build_parser().format_help()
@@ -176,6 +180,65 @@ class ConfigurationTests(unittest.TestCase):
                 0,
             )
         self.assertEqual(serve.call_args.kwargs["white_output_ceiling"], 0.60)
+
+    def test_system_shutdown_is_explicit_browser_live_only(self) -> None:
+        for arguments in (
+            ["simulate", "--allow-system-shutdown"],
+            ["web", "--allow-system-shutdown"],
+            ["live", "--allow-system-shutdown"],
+        ):
+            with self.subTest(arguments=arguments), self.assertRaises(SystemExit):
+                main(arguments)
+
+        with (
+            patch("phreqed_dmx.web_control.serve") as serve,
+            patch("phreqed_dmx.app._request_system_poweroff") as poweroff,
+        ):
+            self.assertEqual(
+                main(["live", "--web", "--allow-system-shutdown"]), 0
+            )
+        self.assertIs(serve.call_args.kwargs["system_shutdown"], poweroff)
+
+    def test_system_poweroff_uses_absolute_non_shell_command(self) -> None:
+        with patch("phreqed_dmx.app.subprocess.run") as run:
+            app._request_system_poweroff()
+        self.assertEqual(
+            run.call_args.args[0],
+            (
+                "/usr/bin/systemctl",
+                "start",
+                "--no-block",
+                "phreqed-poweroff.service",
+            ),
+        )
+        self.assertTrue(run.call_args.kwargs["check"])
+        self.assertEqual(run.call_args.kwargs["timeout"], 5.0)
+
+    def test_system_poweroff_reports_systemd_rejection(self) -> None:
+        error = subprocess.CalledProcessError(1, ("/usr/bin/systemctl",))
+        with (
+            patch("phreqed_dmx.app.subprocess.run", side_effect=error),
+            self.assertRaisesRegex(OSError, "systemd rejected"),
+        ):
+            app._request_system_poweroff()
+
+    def test_pi_poweroff_policy_is_limited_to_dedicated_helper(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        policy = (root / "config/polkit/49-phreqed-poweroff.rules").read_text(
+            encoding="utf-8"
+        )
+        helper = (root / "config/systemd/phreqed-poweroff.service").read_text(
+            encoding="utf-8"
+        )
+        installer = (root / "scripts/pi-install-show-service.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn('action.lookup("unit") == "phreqed-poweroff.service"', policy)
+        self.assertIn('action.lookup("verb") == "start"', policy)
+        self.assertIn('subject.system_unit == "phreqed-dmx.service"', policy)
+        self.assertNotIn("reboot", helper.lower())
+        self.assertIn("ExecStart=/usr/bin/systemctl poweroff --no-wall", helper)
+        self.assertIn("phreqed-poweroff.service", installer)
 
     def test_controller_blackout_produces_complete_zero_dmx_frame(self) -> None:
         config = load_config()

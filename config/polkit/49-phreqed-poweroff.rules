@@ -1,0 +1,14 @@
+// Permit only the managed Phreqed service to start the dedicated power-off
+// helper. The browser feature remains separately disabled unless its explicit
+// CLI flag is present. No other unit, verb, reboot, shell, or force path is
+// authorized.
+polkit.addRule(function(action, subject) {
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+            action.lookup("unit") == "phreqed-poweroff.service" &&
+            action.lookup("verb") == "start" &&
+            subject.user == "mmorley" &&
+            subject.system_unit == "phreqed-dmx.service" &&
+            subject.no_new_privileges) {
+        return polkit.Result.YES;
+    }
+});

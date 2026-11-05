@@ -645,6 +645,80 @@ class BrowserControlTests(unittest.TestCase):
             control.command(dict(action='heartbeat'))
             self.assertIsNone(control.sender)
 
+    def test_system_shutdown_requires_opt_in_phrase_and_blackouts_first(self):
+        self.assertFalse(self.control.state()['system_shutdown_available'])
+        with self.assertRaisesRegex(ValueError, 'disabled'):
+            self.control.command(dict(
+                action='system_shutdown', confirmation='SHUTDOWN'
+            ))
+        with self.assertRaisesRegex(ValueError, 'explicit live browser'):
+            BrowserControl(
+                Controller(load_config()), self.path, system_shutdown=Mock()
+            )
+
+        request_shutdown = Mock()
+        control = BrowserControl(
+            Controller(load_config()), self.path,
+            allow_live=True, system_shutdown=request_shutdown,
+        )
+        self.addCleanup(control.close)
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='start_live'))
+            with self.assertRaisesRegex(ValueError, 'type SHUTDOWN'):
+                control.command(dict(
+                    action='system_shutdown', confirmation='shutdown'
+                ))
+            request_shutdown.assert_not_called()
+
+            control.command(dict(
+                action='system_shutdown', confirmation='SHUTDOWN'
+            ))
+            sender.return_value.close.assert_called_once_with()
+
+        request_shutdown.assert_called_once_with()
+        state = control.state()
+        self.assertTrue(state['system_shutdown_available'])
+        self.assertTrue(state['shutdown_requested'])
+        self.assertTrue(state['blackout'])
+        self.assertFalse(state['live'])
+        self.assertFalse(state['performance']['running'])
+        self.assertEqual(state['frames']['Cube A'], [[[0, 0, 0]] * 12] * 4)
+        with self.assertRaisesRegex(ValueError, 'already requested'):
+            control.command(dict(
+                action='system_shutdown', confirmation='SHUTDOWN'
+            ))
+
+        html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
+        script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
+        for control_id in (
+            'shutdown-system', 'shutdown-dialog', 'shutdown-confirmation',
+            'confirm-shutdown',
+        ):
+            self.assertIn(f'id="{control_id}"', html)
+        self.assertIn("command('system_shutdown',{confirmation})", script)
+
+    def test_system_shutdown_rejection_stays_safely_stopped(self):
+        control = BrowserControl(
+            Controller(load_config()), self.path,
+            allow_live=True, system_shutdown=Mock(side_effect=OSError('denied')),
+        )
+        self.addCleanup(control.close)
+        with (
+            patch('phreqed_dmx.web_control.ArtNetSender') as sender,
+            self.assertRaisesRegex(OSError, 'denied'),
+        ):
+            control.command(dict(action='start_live'))
+            control.command(dict(
+                action='system_shutdown', confirmation='SHUTDOWN'
+            ))
+        sender.return_value.close.assert_called_once_with()
+        state = control.state()
+        self.assertFalse(state['shutdown_requested'])
+        self.assertFalse(state['live'])
+        self.assertTrue(state['blackout'])
+        self.assertIn('not accepted', state['notice'])
+        self.assertIn('physical Pi switch', state['error'])
+
     def test_browser_lease_loss_stops_setlist_timeline_without_resume(self):
         path = self.path.with_name('lease-loss-library.json')
         control = BrowserControl(Controller(load_config()), path, allow_live=True)

@@ -324,6 +324,14 @@ Live browser output is capped at 25% when first enabled and stops with blackout
 if browser heartbeats are absent for five seconds. Keep QLC+ blackout available;
 the lease is an additional safeguard, not a substitute for physical controls.
 
+An optional browser **Shut down Pi** control can request a clean systemd
+power-off after first stopping the song timeline and blacking out/closing live
+output. It is disabled by default, requires a narrowly authorized root-owned
+power-off helper and the `--allow-system-shutdown` startup flag, and then
+requires typing `SHUTDOWN` in
+the page. It is never available in simulation-only browser mode. See the
+deployment guide before enabling it.
+
 Center-white output is an additional explicit step after browser live starts.
 It requires an active microphone and the **Enable physical white peak output**
 toggle. The default level is 5% and the default ceiling is 10%. Blackout, Stop

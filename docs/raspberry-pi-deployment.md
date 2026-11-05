@@ -231,6 +231,36 @@ Set `PHREQED_RGB_CEILING=1.0` and
 `sudo systemctl restart phreqed-dmx.service`. This makes Show power available;
 it does not select it or start fixture output.
 
+### Optional clean shutdown from the browser
+
+Browser OS shutdown is disabled by default. After updating this feature, install
+the root-owned one-shot helper, narrow polkit rule, and current service assets:
+
+```bash
+cd ~/phreqed-stage-dmx-light-controller
+bash scripts/pi-install-show-service.sh
+sudoedit /etc/default/phreqed-dmx
+```
+
+Set `PHREQED_ALLOW_SYSTEM_SHUTDOWN=1`, then apply it:
+
+```bash
+sudo systemctl restart phreqed-dmx.service
+```
+
+The installed policy authorizes only the `mmorley` process inside the managed
+`phreqed-dmx.service`, and only the start verb for
+`phreqed-poweroff.service`. The application uses an absolute, no-shell command
+to start that root-owned helper; the helper requests normal systemd power-off.
+No other unit, reboot, forced power-off, or inhibit override is authorized.
+
+Test with fixture output already stopped: press **Shut down Pi**, confirm that a
+dialog appears, verify lowercase text does not enable the action, then type
+`SHUTDOWN`. The controller must request blackout before the Pi powers off. Wait
+for Pi activity to stop before removing power. If the Pi remains on, inspect
+`journalctl -u phreqed-dmx.service -u phreqed-poweroff.service -b` and continue
+using the physical switch; do not broaden the policy rule.
+
 The show controller's center-white peak path also defaults to a separate 10%
 ceiling. After the exact rig has been commissioned at low level, a higher
 process-local ceiling requires every explicit option below:

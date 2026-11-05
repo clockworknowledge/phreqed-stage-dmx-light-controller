@@ -56,5 +56,8 @@ fi
 if is_true "${PHREQED_ACKNOWLEDGE_HIGH_OUTPUT_WHITES:-0}"; then
     arguments+=(--acknowledge-high-output-whites)
 fi
+if is_true "${PHREQED_ALLOW_SYSTEM_SHUTDOWN:-0}"; then
+    arguments+=(--allow-system-shutdown)
+fi
 
 exec "${CONTROLLER}" "${arguments[@]}"

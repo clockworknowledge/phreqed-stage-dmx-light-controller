@@ -5,14 +5,18 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 SERVICE_SOURCE="${REPO_ROOT}/config/systemd/phreqed-dmx.service"
+POWEROFF_SOURCE="${REPO_ROOT}/config/systemd/phreqed-poweroff.service"
 ENV_SOURCE="${REPO_ROOT}/config/systemd/phreqed-dmx.env.example"
 SERVICE_TARGET="/etc/systemd/system/phreqed-dmx.service"
+POWEROFF_TARGET="/etc/systemd/system/phreqed-poweroff.service"
 ENV_TARGET="/etc/default/phreqed-dmx"
 QLC_SOURCE="${REPO_ROOT}/config/qlc/qlcplus.service"
 QLC_TARGET="/etc/systemd/system/qlcplus.service"
 QLC_BACKUP="/etc/systemd/system/qlcplus.service.before-show-sequence"
 UDEV_SOURCE="${REPO_ROOT}/config/udev/70-phreqed-ampero.rules"
 UDEV_TARGET="/etc/udev/rules.d/70-phreqed-ampero.rules"
+POLKIT_SOURCE="${REPO_ROOT}/config/polkit/49-phreqed-poweroff.rules"
+POLKIT_TARGET="/etc/polkit-1/rules.d/49-phreqed-poweroff.rules"
 MIDI_LINK="/dev/snd/phreqed-ampero-midi"
 START_NOW=0
 
@@ -48,7 +52,7 @@ if [[ ! -f "/home/mmorley/.qlcplus/autostart.qxw" ]]; then
 fi
 
 echo "Validating systemd units"
-systemd-analyze verify "${QLC_SOURCE}" "${SERVICE_SOURCE}"
+systemd-analyze verify "${QLC_SOURCE}" "${SERVICE_SOURCE}" "${POWEROFF_SOURCE}"
 
 if sudo test -f "${QLC_TARGET}" \
         && ! sudo test -f "${QLC_BACKUP}" \
@@ -61,8 +65,12 @@ echo "Installing ${QLC_TARGET}"
 sudo install -m 0644 "${QLC_SOURCE}" "${QLC_TARGET}"
 echo "Installing ${SERVICE_TARGET}"
 sudo install -m 0644 "${SERVICE_SOURCE}" "${SERVICE_TARGET}"
+echo "Installing ${POWEROFF_TARGET}"
+sudo install -m 0644 "${POWEROFF_SOURCE}" "${POWEROFF_TARGET}"
 echo "Installing ${UDEV_TARGET}"
 sudo install -m 0644 "${UDEV_SOURCE}" "${UDEV_TARGET}"
+echo "Installing ${POLKIT_TARGET}"
+sudo install -m 0644 "${POLKIT_SOURCE}" "${POLKIT_TARGET}"
 sudo udevadm control --reload-rules
 for midi_device in /sys/class/sound/midiC*D*; do
     if [[ -e "${midi_device}" ]]; then
@@ -101,6 +109,10 @@ cat <<EOF
 
 Review the active settings:
   sudoedit ${ENV_TARGET}
+
+To expose the confirmed browser shutdown control, set:
+  PHREQED_ALLOW_SYSTEM_SHUTDOWN=1
+Then restart the controller service. It remains disabled by default.
 
 Check the boot sequence:
   systemctl status qlcplus.service phreqed-dmx.service --no-pager

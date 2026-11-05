@@ -42,7 +42,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
 - `src/phreqed_dmx/simulator.py`: local Tkinter preview; never opens a UDP socket.
 - `src/phreqed_dmx/web_control.py`: dependency-free browser preview/control with
   explicit live enablement, a disconnect watchdog, performance-mode controls,
-  and simulation-only song cue authoring/preview backed by `SongLibrary`.
+  simulation-only song cue authoring/preview backed by `SongLibrary`, and an
+  optional confirmed clean-Pi-shutdown boundary.
 - `src/phreqed_dmx/app.py`: application controller, timing, and mode selection.
 - `config/fixtures.toml`: hardware and controller configuration.
 - `tests/`: hardware-free unit tests.
@@ -113,6 +114,13 @@ not effect code, converts those coordinates to physical zone order.
 - Browser simulation must never construct `ArtNetSender`. Browser live control
   requires the literal `live --web` combination, an in-page confirmation, and
   an active heartbeat lease; losing the lease must stop with blackout.
+- Browser system shutdown is disabled by default and available only in explicit
+  `live --web` mode with its separate CLI flag. It must require the exact typed
+  confirmation, stop timelines, blackout and close Art-Net before requesting a
+  normal systemd power-off, and never expose reboot, forced shutdown, shell
+  execution, or an inhibit override. Pi authorization must be restricted to the
+  managed `phreqed-dmx.service` starting only the root-owned
+  `phreqed-poweroff.service` helper.
 - Foot control is disabled unless an explicit raw-MIDI device path is supplied.
   MIDI input must not enable live output or bypass the browser live gate.
   Initial absence or later loss of that path must not stop browser/audio

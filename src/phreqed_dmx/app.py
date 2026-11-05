@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 import math
+import subprocess
 import sys
 import time
 from dataclasses import replace
@@ -23,6 +24,27 @@ from .render import compose_dmx
 from .show_control import ShowController
 from .scenes import SceneSequencer
 from .white_output import MAX_WHITE_OUTPUT_CEILING, WHITE_OUTPUT_CEILING
+
+
+def _request_system_poweroff() -> None:
+    """Start the narrowly authorized clean-power-off helper without a shell."""
+    command = (
+        "/usr/bin/systemctl",
+        "start",
+        "--no-block",
+        "phreqed-poweroff.service",
+    )
+    try:
+        subprocess.run(
+            command,
+            check=True,
+            timeout=5.0,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        raise OSError("systemd rejected the clean power-off request") from exc
 
 
 class Controller:
@@ -275,6 +297,11 @@ def build_parser() -> argparse.ArgumentParser:
         "--duration", type=_positive, help="optional live-mode run time in seconds"
     )
     parser.add_argument("--web", action="store_true", help="browser control for explicit live mode")
+    parser.add_argument(
+        "--allow-system-shutdown",
+        action="store_true",
+        help="expose confirmed Pi power-off in explicit live browser mode",
+    )
     parser.add_argument("--host", default="127.0.0.1", help="browser listen address")
     parser.add_argument("--port", type=int, default=8080, help="browser port (default 8080)")
     parser.add_argument(
@@ -386,6 +413,8 @@ def main(argv: list[str] | None = None) -> int:
     args = parser.parse_args(argv)
     if args.web and args.command != "live":
         parser.error("--web requires the explicit live command; use web for browser simulation")
+    if args.allow_system_shutdown and not (args.command == "live" and args.web):
+        parser.error("--allow-system-shutdown requires explicit live --web mode")
     if (args.command == "web" or args.web) and args.duration is not None:
         parser.error("--duration is not supported by browser control")
     if args.command == "simulate" and args.duration is not None:
@@ -468,7 +497,12 @@ def main(argv: list[str] | None = None) -> int:
                   allow_network=args.allow_network, allow_live=args.command == "live",
                   foot_midi_device=args.foot_midi_device,
                   foot_midi_channel=args.foot_midi_channel,
-                  white_output_ceiling=args.white_ceiling)
+                  white_output_ceiling=args.white_ceiling,
+                  system_shutdown=(
+                      _request_system_poweroff
+                      if args.allow_system_shutdown
+                      else None
+                  ))
         elif args.command == "live":
             _run_live(controller, args.duration)
         else:

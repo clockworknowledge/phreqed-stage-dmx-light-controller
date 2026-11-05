@@ -2,7 +2,18 @@
 
 Last updated: 2026-11-05
 
-## Current checkpoint -- Rehearsal accepted; setlist search complete
+## Current checkpoint -- Browser clean shutdown awaiting Pi acceptance
+
+`OPS-004` now implements an optional clean Raspberry Pi shutdown from the
+browser. It is unavailable by default and in simulation. Explicit managed-live
+enablement plus a typed `SHUTDOWN` phrase is required; the backend stops song
+playback, blackouts and closes Art-Net, resets white/show power, then invokes a
+normal asynchronous systemd power-off without a shell or force flags. A polkit
+rule narrows authorization to the `mmorley` process inside
+`phreqed-dmx.service` starting only the root-owned
+`phreqed-poweroff.service` helper. Windows passes 209 tests, and Chromium
+confirmation/cancel validation has zero console errors. Physical Pi power-off
+ordering remains the acceptance step; see `docs/raspberry-pi-deployment.md`.
 
 The operator completed a full band rehearsal on 2026-11-04 and accepted the
 current visual pack plus shared audio dynamics. On 2026-11-05 the explicit Show

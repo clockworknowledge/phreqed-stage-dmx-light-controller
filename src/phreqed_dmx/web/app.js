@@ -103,6 +103,8 @@ function renderState(s) {
   $('blackout-status').textContent = s.blackout ? 'Blackout is active.' : s.live ? 'Fixture output is live.' : 'Simulation. Fixtures are off.';
   $('release-blackout').hidden = !s.blackout; $('blackout').classList.toggle('latched',s.blackout);
   $('start-live').disabled = !s.live_allowed || s.live || Boolean(s.error); $('stop-live').disabled = !s.live;
+  $('shutdown-system').disabled = !s.system_shutdown_available || Boolean(s.shutdown_requested);
+  $('shutdown-system').textContent = s.shutdown_requested ? 'Shutdown requested' : 'Shut down Pi';
   $('live-help').textContent = s.live ? 'Live output active. Keep this page connected; loss of all browser heartbeats stops output after 5 seconds.' : s.live_allowed ? 'Live is available. Output stays off until you choose Start live.' : 'Simulation only. Start the Pi controller with live --web to make live output available.';
   const cues = catalog?.library.scenes || [], cue = cues[s.scene_index];
   $('current-scene').textContent = cue ? `${s.scene_index+1}. ${cue.name}` : 'Manual control';
@@ -406,6 +408,10 @@ $('cancel-live').addEventListener('click',()=>$('live-dialog').close());
 $('confirm-live').addEventListener('click',()=>{$('live-dialog').close();act('start_live');});
 $('cancel-show-power').addEventListener('click',()=>{$('show-power-dialog').close();$('rgb-power-mode').value=state?.rgb_power_mode||'rehearsal';});
 $('confirm-show-power').addEventListener('click',()=>{$('show-power-dialog').close();act('rgb_power_mode',{value:'show'});});
+$('shutdown-system').addEventListener('click',()=>{$('shutdown-confirmation').value='';$('confirm-shutdown').disabled=true;$('shutdown-dialog').showModal();$('shutdown-confirmation').focus();});
+$('shutdown-confirmation').addEventListener('input',event=>{$('confirm-shutdown').disabled=event.target.value!=='SHUTDOWN';});
+$('cancel-shutdown').addEventListener('click',()=>$('shutdown-dialog').close());
+$('confirm-shutdown').addEventListener('click',()=>{const confirmation=$('shutdown-confirmation').value;$('shutdown-dialog').close();command('system_shutdown',{confirmation}).catch(()=>{});});
 $('new-look').addEventListener('click',()=>openEditor());
 $('close-editor').addEventListener('click',()=>{$('editor').hidden=true;});
 $('add-layer').addEventListener('click',()=>{if(draft.layers.length<8){draft.layers.push(newLayer());renderLayers();}});
@@ -421,7 +427,7 @@ async function poll() {
     const s=await request('/api/state');renderState(s);
     if(Date.now()-lastBeat>1000){await request('/api/command',{method:'POST',headers:{'Content-Type':'application/json','X-Control-Token':token},body:JSON.stringify({action:'heartbeat'})});lastBeat=Date.now();}
     if(catalog&&Date.now()-(poll.lastCatalog||0)>4000){await loadCatalog();poll.lastCatalog=Date.now();}
-  }catch(error){connected=false;token='';$('connection').textContent='Disconnected';$('connection').className='badge live';$('start-live').disabled=true;$('blackout-status').textContent='Controller connection lost.';$('safety-detail').textContent='Live output stops after 5 seconds without browser heartbeats.';notify('Connection lost. Reconnecting… Live output will not restart automatically.',true);}
+  }catch(error){connected=false;token='';$('connection').textContent='Disconnected';$('connection').className='badge live';$('start-live').disabled=true;$('blackout-status').textContent=state?.shutdown_requested?'Pi shutdown in progress.':'Controller connection lost.';$('safety-detail').textContent=state?.shutdown_requested?'Wait for Pi activity to stop before removing power.':'Live output stops after 5 seconds without browser heartbeats.';notify(state?.shutdown_requested?'Pi is shutting down. This page will disconnect.':'Connection lost. Reconnecting… Live output will not restart automatically.',!state?.shutdown_requested);}
   setTimeout(poll,250);
 }
 poll();

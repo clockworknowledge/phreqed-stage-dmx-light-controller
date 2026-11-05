@@ -95,6 +95,31 @@ boot with external Wi-Fi unavailable and confirm QLC+ plus port 8080 recover
 while fixtures stay dark. Verify documented no-audio startup behavior. Record
 the private SSID/key outside Git.
 
+### OPS-004 — Confirmed browser clean shutdown (`P0`, deployment safety)
+
+The browser now exposes an opt-in **Shut down Pi** action only when the process
+was started with explicit `live --web --allow-system-shutdown`. The action
+requires typing the exact phrase `SHUTDOWN`; its backend independently checks
+that phrase, stops the song timeline, blackouts and closes live output, resets
+white/show-power state, and then requests a normal asynchronous systemd
+power-off. Simulation cannot receive shutdown authority. The OS command is an
+absolute argument vector with no shell, force, reboot, or inhibit override.
+
+The managed installation includes a root-owned one-shot
+`phreqed-poweroff.service` plus a polkit rule restricted to user `mmorley`,
+system unit `phreqed-dmx.service`, `NoNewPrivileges`, and only the exact start
+verb for that helper. The environment switch defaults off. Windows passes 209
+tests, and Chromium verified disabled confirmation for incorrect
+text, enabled confirmation for exact text, cancellation, responsive layout, and
+zero console errors without executing power-off.
+
+Acceptance remaining: install the helper and policy on the Pi, enable
+`PHREQED_ALLOW_SYSTEM_SHUTDOWN=1`, restart the service, and perform one
+deliberate shutdown with fixtures already stopped. Confirm the Pi powers off cleanly and
+the service journal contains no authorization error. Then repeat once from live
+at conservative brightness with QLC+ blackout available and visually confirm
+fixtures black out before the Pi loses power.
+
 ### HW-002 — Guarded audio peak output for commissioned whites (`P0`, safety)
 
 Browser live can now separately arm audio-onset accents across all eight white
