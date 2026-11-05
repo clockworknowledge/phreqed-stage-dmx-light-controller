@@ -68,5 +68,7 @@ blackout immediately available.
    setlist at a conservative RGB ceiling. Verify Stop output and global blackout
    both stop the timeline and request fixture blackout.
 
-Record the date, revision, network topology, bank results, and any reconnect
-events in the Kanban evidence before moving SHOW-004 to Done.
+SHOW-004 was operator-accepted on the deployed Pi after the full rehearsal and
+Setlist-mode check reported on 2026-11-05. Bank-duplication soak remains tracked
+separately by CONTROL-003, and private-network/offline-boot checks remain
+OPS-003; neither reopens the accepted performance-mode implementation.

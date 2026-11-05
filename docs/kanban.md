@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-11-04
+Last reviewed: 2026-11-05
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -62,39 +62,6 @@ bank; deliberately exercise adjacent-switch navigation; and pass a
 rehearsal-length USB soak. Do not rely on simultaneous-switch chords for new
 performance commands.
 
-### SHOW-004 - Manual/setlist performance modes (`P1`, performance control)
-
-The browser now has an explicit Manual/Setlist selector and a large Setlist
-Performance view with current/next song, position, state, previous/next, and
-start/stop. `PerformanceController` keeps mode and performer commands separate
-from rendering and transport. Setlist selection only arms a song; start is
-explicit, and completion may arm the next song but never starts it.
-
-Ampero commands are routed by active mode: FS1/FS2 select scenes in Manual mode
-or songs in Setlist mode, FS3 is tap tempo or song start/stop, and FS4 remains
-the global blackout. Blackout, Stop output, browser-lease loss, render failure,
-and shutdown stop the timeline without automatic resume. A restart defaults to
-Manual mode, no active timeline, and output stopped. Recovery is documented in
-[`setlist-performance.md`](setlist-performance.md).
-
-Windows validation passes all 203 tests, including deterministic selection,
-explicit start/stop, no-next-song autostart, blackout cancellation, lease-loss
-cancellation, reboot-safe defaults, Manual-mode compatibility, serialized foot
-commands, and no Art-Net construction in simulation. Chromium validation
-completed mode selection, arm, start, position advance, stop, and return to
-Manual mode with zero console errors or warnings.
-
-Acceptance remaining: deploy to the Pi and validate startup defaults, USB pedal
-disconnect/reconnect, song skipping, a complete multi-song setlist, browser
-loss, and recovery in simulation. Then perform a low-brightness live fixture
-check with QLC+ blackout immediately available. Do not infer pedal readiness
-from device enumeration; require a mapped event from the intended Ampero bank.
-
-The repeatable Pi sequence is now documented in `setlist-performance.md`, and
-`scripts/show-readiness.py --startup-defaults` checks that fixture output is
-stopped and the runtime is Manual/inactive/stopped after boot. Physical
-acceptance remains intentionally open.
-
 ### OPS-003 — Unattended show startup and private control LAN (`P0`, deployment)
 
 A separate `phreqed-dmx.service` now starts after headless QLC+ without waiting
@@ -147,6 +114,10 @@ the toggle. Only then validate an elevated ceiling in deliberate small steps;
 the browser warning, threshold control, and dynamic slider bound must remain
 visible throughout.
 
+The operator reports that normal show operation is covered. Keep this card in
+Validation until the lost-browser disarm behavior is deliberately observed and
+recorded; that safety boundary should not be inferred from a general rehearsal.
+
 ### REL-002 — Persistent show controls and MIDI recovery (`P0`, reliability)
 
 Browser preset and scene changes now preserve the operator's master brightness
@@ -188,94 +159,6 @@ now recoverable: browser/audio control stays running, disconnected status is
 visible, and the worker retries only the operator-selected path. A changed ALSA
 card number still requires the operator to select the current node or complete
 the stable udev-link acceptance item.
-
-### EFFECT-003 — Music-driven stage look expansion (`P1`, visuals)
-
-The expanded deterministic scene pack includes Matrix Rain, a cross-fixture
-blaster, a fixed-source flame jet, a dynamics-driven sine ribbon, Pac-Man,
-Watchful Eyes, and an inside-out VU. Flame Thrower now has a compact hot muzzle
-at the far left of Cube A and five independently varying strands crossing
-continuously into Cube B instead of reading as uniform bars. Wave Rider keeps a
-stable sine carrier and lets bounded music dynamics vary travel velocity around
-the tapped-tempo baseline without changing spatial frequency. Inferno Rise places its heat source on logical
-row 3 (the confirmed physical bottom) and advects turbulence upward. Automated
-tests cover geometry, determinism, fixture independence, RGB ranges, directional
-flame continuity and variation, Pac-Man travel, and zero white-channel output.
-
-Acceptance remaining: review all five looks in browser simulation, confirm the
-revised Flame Thrower reads as a left-origin jet across both fixtures, confirm
-Inferno Rise rises upward with fixtures upright and printed text readable, and
-run a low-brightness live scene check. The added standalone effect expands the
-current bench catalog to 40 looks, so rerun the socket-blocked timing gate.
-
-Windows validation passes 139 tests. A clean browser preview shows the anchored
-source and cross-cube strands, and a short socket-blocked 40-look smoke reports
-zero missed slots, zero over-budget frames, zero reserved-channel output, and a
-zero shutdown blackout. Operator review on the Pi remains the visual authority.
-
-Matrix Rain now uses sparse columns with bright heads, short dim tails, explicit
-top-to-bottom movement, and randomized blank gaps. Blaster Sweep now fires a
-compact muzzle/projectile cycle and exposes left-to-right, right-to-left, and
-center-out direction choices. The new Watchful Eyes preset adds a synchronized
-opening/blinking eye to each fixture. These additions bring the catalog to 24
-effects and 18 presets. Pac-Man Chase adds one cross-fixture sprite effect and
-preset, bringing the current catalog to 25 effects, 19 presets, and 44 soak
-looks. The 159-test Windows suite passes. Browser simulation confirms the stable
-Wave Rider curve and visibly broken-up Flame Thrower strands, and a short
-socket-blocked 44-look smoke reports zero missed/over-budget frames, zero
-reserved-channel output, and zero shutdown blackout. Pi visual acceptance and
-the full five-second-per-look timing gate remain authoritative.
-
-The current 39-look Pi bench passed render timing at 25 FPS with zero reported
-missed slots, zero reserved-channel output, and successful shutdown blackout.
-Flame Thrower was the heaviest reported preset at 16.182 ms maximum render time,
-leaving more than 23 ms within the 40 ms frame budget.
-
-On 2026-10-22 the operator reported the current browser-controlled two-fixture
-show working well during a live band test. Detailed per-look visual acceptance
-and a current 44-look timing report remain open rather than being inferred from
-that overall result.
-
-### SAFE-002 — Explicit show-time RGB ceiling (`P0`, safety)
-
-The default 0.65 RGB ceiling remains unchanged. A higher process-local ceiling
-requires the literal `live` command and `--acknowledge-high-output`. Browser
-control treats that value only as available capability: it starts at 0.25 or
-lower in Rehearsal power and requires a second Performance-panel confirmation
-after live output starts before Show power changes both compositor and frame
-limiter ceilings. Stop output, lease loss, failure, shutdown, and restart reset
-to Rehearsal power and clamp the master back to 0.65. Saved presets remain
-capped at 0.65, luminance-rise and flash-interval safeguards remain active, and
-the white commissioning tool keeps its independent 10% ceiling.
-
-Acceptance remaining: pull to the Pi, verify default and elevated browser
-slider bounds without fixtures, then perform a deliberate stepped live check on
-the physically secured show rig with QLC+ blackout immediately available.
-
-### AUDIO-003 — Shared tempo and dynamics clock (`P1`, music)
-
-All registered effects now use a shared continuous animation clock. Tap tempo
-sets the baseline rate, `--speed` remains an operator trim, and smoothed music
-dynamics provide a bounded 0.7x-1.5x motion multiplier. Audio also modulates
-output from 55%-100% of the manual master without raising the RGB ceiling.
-The browser exposes both live multipliers and an opt-in deep-dim mode with an
-adjustable 0%-25% quiet floor. Slow automatic input leveling now restores
-analysis headroom when sustained venue volume pins loudness or a frequency band;
-the browser exposes its state and current gain. A hue-preserving compositor
-contrast control restores visual depth in fill-heavy looks without raising the
-master or RGB ceiling. Silence preserves tempo-driven motion. No new runtime
-dependency was added.
-
-Acceptance remaining: visually validate every preset with rehearsal-level
-Snowball input, tune the response curves, and confirm 25 FPS timing in the Pi
-soak before calling the dynamics model performance-ready.
-
-The 2026-10-21 current-catalog bench confirmed 25 FPS timing across all 39
-looks. Visual response and rehearsal-level curve tuning remain open.
-
-The 2026-10-22 live band test exercised the Snowball-driven show at actual band
-volume and was reported working well. A longer measured run and recorded
-response-curve observations remain before this card is performance-complete.
 
 ### AUDIO-002 — Real-time audio synchronization (`P1`, music)
 
@@ -421,21 +304,6 @@ hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
 
-### SONG-003 - Search songs when adding to a setlist (`P2`, authoring UX)
-
-Add a search/filter field to the Setlist Builder's **Add song** control so a
-large song library can be narrowed by title and artist before insertion. The
-filtered result must remain distinct from the ordered songs already in the
-setlist, and choosing a result must not modify the setlist until the operator
-explicitly adds it.
-
-Acceptance: matching is case-insensitive and updates without losing unsaved
-setlist edits; clearing the query restores the full library; empty and no-match
-states are obvious; keyboard and touch operation remain accessible; repeated
-songs are still permitted for encores; search never changes playback, active
-song, or output state; and automated plus Chromium tests cover filtering and
-insertion into a long representative library.
-
 ### CONTROL-002 — Ampero configuration backup and inspection (`P2`, reliability)
 
 Build a separately scoped tool for detecting, inspecting, verifying, backing
@@ -531,6 +399,14 @@ Determine whether the commissioned Ampero exposes documented, reversible host
 feedback or arbitrary display control. The browser remains the required large
 song-number/name display. Do not equate the pedal's bank number with the setlist
 index and do not transmit reverse-engineered writes during a show.
+
+The [official firmware-1.13 support listing](https://cdn.hotoneaudio.com/support/1)
+and [current product description](https://shop.hotoneaudio.com/products/ampero-control)
+document a programmable controller that sends MIDI over DIN, USB, or Bluetooth;
+they do not document arbitrary host-to-pedal display text or song-number
+feedback. Treat a writable song display as unsupported unless later protocol
+research proves a reversible input path. The practical show solution remains
+the phone browser or a dedicated small Pi display.
 
 Acceptance: official capability or a safely captured protocol is documented;
 unsupported hardware falls back to the browser or a dedicated small display;
@@ -637,6 +513,46 @@ Generate representative simulator images for every effect and preset at fixed
 times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
+
+### SONG-003 - Search songs when adding to a setlist (`P2`, authoring UX)
+
+The Setlist Builder now filters its Add song selector by title or artist with a
+case-insensitive search field. Filtering leaves the ordered setlist untouched
+until Add song is pressed, preserves a selected result through periodic catalog
+refresh, supports repeated songs, reports result counts, and disables insertion
+with an explicit no-match message. Search does not call a performance or output
+action. The 203-test suite passes. Chromium exercised a 12-song library,
+case-insensitive artist filtering, refresh persistence, correct insertion, and
+the no-match state with zero console errors or warnings.
+
+### SHOW-004 - Manual/setlist performance modes (`P1`, performance control)
+
+Manual and Setlist modes provide current/next song, explicit song start/stop,
+safe no-autostart progression, and mode-aware Ampero routing while retaining
+global blackout. Automated and Chromium acceptance passed, and the operator
+confirmed the deployed Setlist mode working in rehearsal on 2026-11-05.
+
+### SAFE-002 — Explicit show-time RGB ceiling (`P0`, safety)
+
+Rehearsal power remains capped while explicitly acknowledged Show power exposes
+the configured higher RGB ceiling without changing the independent white limit.
+Reset paths, saved-preset bounds, and frame safeguards remain active. The
+operator completed the deliberate Pi/fixture check and reported it solid on
+2026-11-05.
+
+### EFFECT-003 — Music-driven stage look expansion (`P1`, visuals)
+
+The deterministic Matrix Rain, Blaster Sweep, Flame Thrower, Wave Rider,
+Pac-Man Chase, Watchful Eyes, and Inside-Out VU additions are covered by geometry,
+range, independence, reserved-channel, and timing checks. Browser simulation and
+the full band rehearsal provided the final visual acceptance on 2026-11-04.
+
+### AUDIO-003 — Shared tempo and dynamics clock (`P1`, music)
+
+Tap tempo supplies the baseline, bounded audio dynamics modulate shared motion
+and brightness below the operator ceiling, and auto-level/deep-dim/contrast
+controls retain their safety boundaries. Bench timing passed and the operator
+accepted the response during a full band rehearsal on 2026-11-04.
 
 ### SONG-004 - Style-based default song timelines (`P1`, authoring)
 

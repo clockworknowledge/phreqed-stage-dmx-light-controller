@@ -1,8 +1,31 @@
 # Codex Resume: Live Show Baseline and Song/Setlist Roadmap
 
-Last updated: 2026-11-04
+Last updated: 2026-11-05
 
-## Current checkpoint -- Show acceptance and private-LAN tooling ready
+## Current checkpoint -- Rehearsal accepted; setlist search complete
+
+The operator completed a full band rehearsal on 2026-11-04 and accepted the
+current visual pack plus shared audio dynamics. On 2026-11-05 the explicit Show
+power path (`SAFE-002`) was reported solid and Manual/Setlist performance mode
+(`SHOW-004`) was confirmed working. These cards, `EFFECT-003`, and `AUDIO-003`
+are now Done. `OPS-003` private/offline-network acceptance and `CONTROL-003`
+duplicate-bank validation remain operator tasks. `HW-002` normal operation is
+reported covered, but its deliberate lost-browser white-output disarm check
+remains open.
+
+`SONG-003` is complete. The Setlist Builder filters the Add song selector by
+title or artist without touching the ordered setlist until Add song is pressed.
+It preserves the chosen filtered result through the four-second catalog refresh,
+reports result counts and no matches, and remains simulation/output neutral.
+Windows Python 3.12 passes 203 tests. A real Chromium run against 12 songs
+validated case-insensitive artist search, refresh persistence, correct insertion,
+and the disabled no-match state with zero console errors or warnings.
+
+The Ampero Control's official firmware-1.13 support material documents outbound
+programmable MIDI but no arbitrary host-controlled song title/number display.
+The browser remains the authoritative current/next-song display. `CONTROL-004`
+retains optional protocol research, with a dedicated small Pi display as the
+safe hardware fallback.
 
 The 2026-10-22 unattended live-band checkpoint remains the current physical
 baseline: headless QLC+, browser control, two fixtures, Snowball audio response,
@@ -20,7 +43,7 @@ reachable performance bank safe or disable bank navigation if the supported
 configuration allows it. `CONTROL-002` is reduced to optional backup/inspection
 research.
 
-`CONTROL-003`, `SHOW-004`, and `OPS-003` now have repeatable acceptance tools.
+`CONTROL-003`, `SHOW-004`, and `OPS-003` have repeatable acceptance tools.
 `scripts/ampero-bank-check.py` validates every expected Note/CC action for one
 selected bank without creating Art-Net output. `scripts/show-readiness.py`
 checks service state, stopped fixture output, optional boot defaults, audio,
@@ -31,10 +54,9 @@ and it refuses to drop an SSH session routed over the same Wi-Fi interface.
 The iPhone joins that SSID directly and opens `http://10.42.0.1:8080`; no venue
 Wi-Fi or internet is required. Secrets remain outside Git.
 
-Windows Python 3.12 now passes 203 tests and all changed shell/Python scripts
-pass syntax compilation. The three cards remain in Validation because the Pi
-hotspot, duplicate Ampero banks, offline boot, complete setlist run, browser
-lease loss, and low-brightness fixture sequence require operator hardware.
+Windows Python 3.12 passes 203 tests. The Pi hotspot/offline boot, duplicate
+Ampero banks, and the explicit HW-002 browser-lease-loss check remain in
+Validation because they require operator hardware.
 
 The Stage Monitor now defaults to a browser-only 2x display brightness and
 offers a persistent 1x-5x slider. It scales only canvas pixels so dim patterns
@@ -69,9 +91,8 @@ Manual mode, no active timeline, and output stopped. Chromium validation passed
 the arm/start/stop/manual workflow with zero console errors, and the complete
 Windows Python 3.12 suite passes 198 tests.
 
-`SHOW-004` now sits in Validation pending Pi startup, Ampero disconnect/reconnect,
-multi-song completion, browser-loss, and low-brightness fixture acceptance. The
-operating and recovery procedure is in `docs/setlist-performance.md`.
+`SHOW-004` is Done after automated, Chromium, Pi, and rehearsal acceptance. The
+operating and recovery procedure remains in `docs/setlist-performance.md`.
 
 Song authoring now supports Punk, Rock, Mellow, Funk, Metal, Alternative,
 Blues, Reggae, and Electronic styles.

@@ -205,6 +205,9 @@ an ordered Setlist Builder. Metadata is saved atomically in `songs.json` beside
 the configured user library; no audio media is stored there. Start the safe
 browser simulator, open **Songs**, create a song, create a cue-sheet revision,
 preview and publish it, then add the song to a setlist.
+The Setlist Builder's search field filters the Add song selector by title or
+artist; selecting a match does not change the setlist until **Add song** is
+pressed.
 
 Each song can optionally be tagged **Punk**, **Rock**, **Mellow**, **Funk**,
 **Metal**, **Alternative**, **Blues**, **Reggae**, or **Electronic**.
@@ -236,6 +239,10 @@ FS3 taps tempo; in Setlist mode FS1/FS2 select songs and FS3 starts or stops the
 selected song. FS4 remains the global blackout in both modes. Blackout, Stop
 output, a lost browser lease, or application shutdown stops the song timeline
 and releasing blackout does not resume it.
+
+The browser is the authoritative current/next-song display. The documented
+Ampero Control interface does not expose arbitrary host-controlled display text,
+so do not depend on its bank number as the setlist position.
 
 Song playback will always require an explicit performer start; completion may
 arm the next song but will not start it automatically. AI is planned only as an

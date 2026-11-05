@@ -299,9 +299,13 @@ function publishCueSheet(){
 function renderSetlists(){
   const library=catalog.song_library,select=$('setlist-select'),previous=selectedSetlistId||select.value;select.replaceChildren();for(const setlist of library.setlists)option(select,setlist.setlist_id,setlist.name);
   selectedSetlistId=library.setlists.some(item=>item.setlist_id===previous)?previous:(library.setlists[0]?.setlist_id||null);select.value=selectedSetlistId||'';
-  const songSelect=$('setlist-song'),pendingSongId=songSelect.value;songSelect.replaceChildren();for(const song of library.songs)option(songSelect,song.song_id,`${song.title} - ${song.artist}`);
-  if(library.songs.some(song=>song.song_id===pendingSongId))songSelect.value=pendingSongId;
-  const setlist=library.setlists.find(item=>item.setlist_id===selectedSetlistId);$('setlist-songs').replaceChildren();$('delete-setlist').disabled=$('save-setlist').disabled=!setlist;$('add-setlist-song').disabled=!setlist||!library.songs.length;
+  const songSelect=$('setlist-song'),pendingSongId=songSelect.value,query=$('setlist-song-search').value.trim().toLocaleLowerCase(),songs=library.songs.filter(song=>`${song.title} ${song.artist}`.toLocaleLowerCase().includes(query));songSelect.replaceChildren();
+  for(const song of songs)option(songSelect,song.song_id,`${song.title} - ${song.artist}`);
+  if(songs.some(song=>song.song_id===pendingSongId))songSelect.value=pendingSongId;
+  if(!songs.length)option(songSelect,'',query?'No matching songs':'No songs in library');
+  songSelect.disabled=!songs.length;
+  $('setlist-song-filter-status').textContent=query?(songs.length?`${songs.length} of ${library.songs.length} songs shown.`:`No songs match “${$('setlist-song-search').value.trim()}”.`):`${library.songs.length} song${library.songs.length===1?'':'s'} available.`;
+  const setlist=library.setlists.find(item=>item.setlist_id===selectedSetlistId);$('setlist-songs').replaceChildren();$('delete-setlist').disabled=$('save-setlist').disabled=!setlist;$('add-setlist-song').disabled=!setlist||!songs.length;
   if(document.activeElement!==$('setlist-name'))$('setlist-name').value=setlist?.name||'';
   if(!setlist)return;
   setlist.song_ids.forEach((songId,index)=>{const song=songById(songId),card=node('article',undefined,'cue'),info=node('div');info.append(node('h3',song?.title||songId),node('p',song?.artist||'Missing song','hint'));const row=node('div',undefined,'row');
@@ -338,6 +342,7 @@ $('song-cue-editor').addEventListener('submit',event=>{
   saveSongDocument(document,'Song cue saved.',clearSongCueEdit);
 });
 $('setlist-select').addEventListener('change',event=>{selectedSetlistId=event.target.value||null;renderSetlists();});
+$('setlist-song-search').addEventListener('input',renderSetlists);
 $('new-setlist').addEventListener('click',()=>{
   if(!catalog.song_library.songs.length){notify('Add a song before creating a setlist.',true);return;}
   const name=prompt('Setlist name','New setlist')?.trim();if(!name)return;
@@ -345,7 +350,7 @@ $('new-setlist').addEventListener('click',()=>{
   const firstSongId=selectedSongId||$('setlist-song').value||catalog.song_library.songs[0].song_id;
   document.setlists.push({setlist_id:setlistId,name,song_ids:[firstSongId],notes:''});selectedSetlistId=setlistId;saveSongDocument(document,'Setlist created.');
 });
-$('add-setlist-song').addEventListener('click',()=>updateSetlist(setlist=>setlist.song_ids.push($('setlist-song').value),'Song added to setlist.'));
+$('add-setlist-song').addEventListener('click',()=>{const songId=$('setlist-song').value;if(!songId)return;updateSetlist(setlist=>setlist.song_ids.push(songId),'Song added to setlist.');});
 $('save-setlist').addEventListener('click',()=>{
   const name=$('setlist-name').value.trim();if(!name){notify('Give the setlist a name.',true);return;}updateSetlist(setlist=>{setlist.name=name;},'Setlist saved.');
 });

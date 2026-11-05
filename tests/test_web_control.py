@@ -370,6 +370,7 @@ class BrowserControlTests(unittest.TestCase):
         for control_id in (
             'song-list', 'song-editor', 'timeline-editor', 'song-cue-editor',
             'publish-cue-sheet', 'setlist-select', 'setlist-songs',
+            'setlist-song-search', 'setlist-song-filter-status',
             'performance-mode', 'performance-setlist', 'performance-song-title',
             'previous-song', 'toggle-song', 'next-song',
             'song-style', 'apply-style-default',
@@ -381,6 +382,10 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn("command('apply_song_style'", script)
         self.assertIn('pendingSongId=songSelect.value', script)
         self.assertIn('songSelect.value=pendingSongId', script)
+        self.assertIn("toLocaleLowerCase().includes(query)", script)
+        self.assertIn("'setlist-song-search').addEventListener('input',renderSetlists)", script)
+        self.assertIn('No matching songs', script)
+        self.assertIn('Filtering never changes the ordered setlist', html)
         self.assertIn('Create ${styleName} revision', script)
         self.assertIn('Copy published revision', html)
         self.assertIn("act(state?.performance?.running?'stop_song':'start_song')", script)
