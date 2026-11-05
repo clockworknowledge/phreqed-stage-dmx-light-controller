@@ -18,6 +18,16 @@ nonzero blackout. Low-brightness physical readability across the real diffusers
 and Cube A/B seam remains the acceptance step. Authoring guidance is in
 `docs/sprites.md`.
 
+The operator accepted the sprite silhouettes as useful at the current
+resolution and identified segmented center-white animation as the next visual
+opportunity. `WHITE-ANIM-001` is now Ready: it first registers the exact spatial
+span of all eight commissioned parts per fixture, then adds scene-requested but
+separately armed patterns for blaster, flame, wave, VU, and sprite accents under
+the existing ceiling, pulse, blackout, lease, and shutdown gates. `RIG-001`
+tracks future fixture expansion: up to three 152-channel fixtures fit one DMX
+universe; a fourth requires multi-universe transport, QLC+, output hardware, and
+dynamic browser layout work.
+
 `OPS-004` now implements an optional clean Raspberry Pi shutdown from the
 browser. It is unavailable by default and in simulation. Explicit managed-live
 enablement plus a typed `SHUTDOWN` phrase is required; the backend stops song

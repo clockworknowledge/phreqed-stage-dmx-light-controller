@@ -34,7 +34,31 @@ No active implementation.
 
 ## Ready
 
-No work is currently queued as Ready.
+### WHITE-ANIM-001 — Scene-aware segmented white animation (`P1`, visual safety)
+
+Use the commissioned eight independently dimmed white parts on each fixture as
+a 16-segment auxiliary canvas instead of driving every part at one shared level.
+First run a steady 5% registration sequence that records each part's physical
+span relative to the 12 RGB columns; right-to-left order and two-rows-together
+behavior are known, but exact 8-to-12 alignment is not yet recorded.
+
+Add normalized per-part white frames behind the existing explicit browser-live
+arm gate. Presets may request a pattern but must never enable physical whites.
+Initial patterns should include directional bolt/core travel for Blaster Sweep,
+a low sustained muzzle/hot-tip accent for Flame Thrower, a smoothly moving Wave
+Rider crest, center-out Inside-Out VU peaks, and restrained sprite glints. Most
+looks should continue to leave whites dark so the accents retain impact.
+
+Safety acceptance: the default process ceiling remains 10%; higher ceilings
+still require the existing startup acknowledgement and persistent warning;
+steady/spatial motion uses bounded fades and minimum holds rather than rapid
+hard switching; hard onset accents remain no longer than 0.10 seconds and no
+faster than 4 Hz; per-part and aggregate levels are clamped; blackout, Stop,
+lease loss, render failure, mode change, and shutdown immediately zero and
+disarm every part. Simulation previews the exact eight-part arrays without
+constructing `ArtNetSender`. Tests cover fixture independence, part order,
+scene selection, rate/energy limits, reserved-channel isolation, and zero-state
+recovery before any physical animated test.
 
 ## Validation
 
@@ -342,6 +366,27 @@ available, follow `docs/pi-script-import.md`: copy it into a new dated directory
 hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
+
+### RIG-001 — Multi-fixture and multi-universe expansion (`P2`, scaling)
+
+Generalize fixture layout, browser previews, scene targeting, and Art-Net output
+for future LF4808 additions. The effect API already receives fixture index and
+count, so continuous logical-canvas motion can extend naturally. The current
+controller, configuration, browser layout, and sender still assume two fixtures
+inside one 512-channel universe.
+
+At 152 channels each, three LF4808 fixtures fit in universe 0 at starts 1, 153,
+and 305 (ending at channel 456). A fourth would end at channel 608 and therefore
+requires a second Art-Net/DMX universe and matching QLC+ output hardware/config.
+Do not silently wrap fixture addresses or split a fixture across universes.
+
+Acceptance: an ordered fixture layout defines logical placement independently
+of DMX addresses; previews are generated dynamically; effects remain continuous
+or explicitly targeted across any configured fixture count; complete 512-byte
+ArtDMX frames are built independently per universe; blackout covers every
+universe; missing output hardware fails dark; and Windows tests cover both a
+three-fixture single-universe rig and a four-fixture multi-universe rig before
+physical expansion.
 
 ### CONTROL-002 — Ampero configuration backup and inspection (`P2`, reliability)
 
