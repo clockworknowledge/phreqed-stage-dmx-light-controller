@@ -17,6 +17,16 @@ WHITE_PULSE_SECONDS = 0.08
 
 WHITE_PATTERN_LABELS = {
     "dark": "Dark by design",
+    "bloom": "Expanding bloom",
+    "lava": "Slow molten highlights",
+    "rain": "Sparse falling accents",
+    "energy": "Travelling energy burst",
+    "current": "Slow current crest",
+    "mirrors": "Mirrored highlights",
+    "collision": "Inward phase collision",
+    "blades": "Sweeping white blades",
+    "embers": "Scattered ember peaks",
+    "tunnel": "Expanding tunnel bands",
     "blaster": "Directional blaster core",
     "flame": "Flame muzzle and hot front",
     "wave": "Flowing wave crest",
@@ -25,6 +35,25 @@ WHITE_PATTERN_LABELS = {
 }
 
 _EFFECT_PATTERNS = {
+    "plasma": "bloom",
+    "rings": "bloom",
+    "lava-lamp": "lava",
+    "digital-rain": "rain",
+    "glitch": "rain",
+    "energy-transfer": "energy",
+    "flow-noise": "current",
+    "vortex": "mirrors",
+    "kaleidoscope": "mirrors",
+    "interference": "collision",
+    "checkerboard": "blades",
+    "bars": "blades",
+    "fire": "embers",
+    "sparks": "embers",
+    "tunnel": "tunnel",
+    "radial-pulse": "bloom",
+    "pulse": "bloom",
+    "chase": "energy",
+    "cross-cube": "energy",
     "cross-blaster": "blaster",
     "flame-jet": "flame",
     "dynamic-wave": "wave",
@@ -32,6 +61,24 @@ _EFFECT_PATTERNS = {
     "blinking-eye": "glint",
     "sprite-parade": "glint",
     "pacman": "glint",
+}
+
+_PATTERN_PRIORITY = {
+    "blaster": 0,
+    "flame": 0,
+    "wave": 0,
+    "vu": 0,
+    "glint": 1,
+    "energy": 2,
+    "collision": 3,
+    "blades": 3,
+    "tunnel": 3,
+    "mirrors": 4,
+    "embers": 4,
+    "rain": 4,
+    "bloom": 5,
+    "lava": 5,
+    "current": 6,
 }
 
 
@@ -128,13 +175,17 @@ def select_white_pattern(effect_ids: Sequence[str]) -> str:
 
     if isinstance(effect_ids, (str, bytes)):
         raise TypeError("white effect IDs must be a sequence of strings")
+    selected = "dark"
     for effect_id in effect_ids:
         if not isinstance(effect_id, str):
             raise TypeError("white effect IDs must be strings")
         pattern_id = _EFFECT_PATTERNS.get(effect_id)
-        if pattern_id is not None:
-            return pattern_id
-    return "dark"
+        if pattern_id is not None and (
+            selected == "dark"
+            or _PATTERN_PRIORITY[pattern_id] < _PATTERN_PRIORITY[selected]
+        ):
+            selected = pattern_id
+    return selected
 
 
 def _smooth_peak(position: float, center: float, width: float) -> float:
@@ -146,9 +197,78 @@ def _global_pattern(
     part_count: int,
     animation_time: float,
     loudness: float,
+    onset: float,
 ) -> tuple[float, ...]:
     if pattern_id == "dark":
         return (0.0,) * part_count
+    center = (part_count - 1) / 2.0
+    if pattern_id == "bloom":
+        radius = (animation_time * 2.2) % (center + 2.0)
+        return tuple(min(0.68, 0.62 * _smooth_peak(abs(x - center), radius, 0.75)
+                         + 0.16 * _smooth_peak(x, center, 1.4))
+                     for x in range(part_count))
+    if pattern_id == "lava":
+        first = (center + center * math.sin(animation_time * 0.47))
+        second = (center + center * math.sin(animation_time * 0.31 + 2.2))
+        return tuple(min(0.55, 0.46 * _smooth_peak(x, first, 1.55)
+                         + 0.34 * _smooth_peak(x, second, 2.1))
+                     for x in range(part_count))
+    if pattern_id == "rain":
+        # Three soft, staggered heads keep the white row sparse.
+        heads = (
+            (animation_time * 1.1) % part_count,
+            (animation_time * 0.73 + part_count * 0.37) % part_count,
+            (animation_time * 0.51 + part_count * 0.71) % part_count,
+        )
+        return tuple(min(0.48, sum(
+            gain * _smooth_peak(x, head, 0.48)
+            for gain, head in zip((0.48, 0.34, 0.26), heads)
+        )) for x in range(part_count))
+    if pattern_id == "energy":
+        # Follow the packet, then widen into symmetric wings on a strong onset.
+        packet = (animation_time * 3.2) % (part_count + 4.0) - 2.0
+        spread = 0.8 + onset * 3.2
+        wing_gain = 0.16 + onset * 0.34
+        return tuple(min(1.0, 0.82 * _smooth_peak(x, packet, 0.7)
+                         + wing_gain * _smooth_peak(x, packet - spread, 0.8)
+                         + wing_gain * _smooth_peak(x, packet + spread, 0.8))
+                     for x in range(part_count))
+    if pattern_id == "current":
+        crest = (animation_time * 0.72) % (part_count + 6.0) - 3.0
+        return tuple(min(0.38, 0.34 * _smooth_peak(x, crest, 2.3)
+                         + 0.16 * _smooth_peak(x, crest - 5.0, 2.8))
+                     for x in range(part_count))
+    if pattern_id == "mirrors":
+        offset = (0.5 + 0.5 * math.sin(animation_time * 1.25)) * center
+        return tuple(min(0.58, 0.52 * _smooth_peak(abs(x - center), offset, 0.72))
+                     for x in range(part_count))
+    if pattern_id == "collision":
+        phase = (animation_time * 1.55) % 2.0
+        distance = center * abs(1.0 - phase)
+        impact = max(0.0, 1.0 - distance / 1.8)
+        return tuple(min(0.78, 0.62 * _smooth_peak(abs(x - center), distance, 0.68)
+                         + 0.32 * impact * _smooth_peak(x, center, 1.25))
+                     for x in range(part_count))
+    if pattern_id == "blades":
+        first = (animation_time * 2.6) % part_count
+        second = (first + part_count * 0.48) % part_count
+        return tuple(min(0.62, 0.58 * _smooth_peak(x, first, 0.5)
+                         + 0.38 * _smooth_peak(x, second, 0.62))
+                     for x in range(part_count))
+    if pattern_id == "embers":
+        values = []
+        for x in range(part_count):
+            flicker = 0.5 + 0.5 * math.sin(x * 4.13 + animation_time * 3.7)
+            envelope = 0.35 + 0.65 * (0.5 + 0.5 * math.sin(
+                x * 1.71 - animation_time * 0.83
+            ))
+            values.append(0.48 * flicker ** 5 * envelope)
+        return tuple(values)
+    if pattern_id == "tunnel":
+        radius = (animation_time * 2.8) % (center + 1.0)
+        return tuple(min(0.64, 0.58 * _smooth_peak(abs(x - center), radius, 0.55)
+                         + 0.18 * _smooth_peak(abs(x - center), radius - 2.6, 0.8))
+                     for x in range(part_count))
     if pattern_id == "blaster":
         # A soft core crosses the joined fixture canvas with a decaying wake.
         travel = (animation_time * 4.0) % (part_count + 8.0) - 4.0
@@ -174,7 +294,6 @@ def _global_pattern(
             for x in range(part_count)
         )
     if pattern_id == "vu":
-        center = (part_count - 1) / 2.0
         reach = 0.65 + loudness * (center + 0.35)
         # A soft edge avoids hard multi-section switching at level boundaries.
         return tuple(
@@ -193,6 +312,7 @@ def animated_white_pattern(
     animation_time: float,
     *,
     loudness: float = 0.0,
+    onset: float = 0.0,
 ) -> dict[str, tuple[float, ...]]:
     """Render normalized white parts in physical DMX Part 1-through-8 order.
 
@@ -203,20 +323,28 @@ def animated_white_pattern(
 
     if pattern_id not in WHITE_PATTERN_LABELS:
         raise ValueError(f"unknown white animation pattern: {pattern_id}")
-    for name, value in (("animation time", animation_time), ("loudness", loudness)):
+    for name, value in (
+        ("animation time", animation_time),
+        ("loudness", loudness),
+        ("onset", onset),
+    ):
         if isinstance(value, bool) or not isinstance(value, (int, float)) or not math.isfinite(value):
             raise ValueError(f"white {name} must be finite")
     if animation_time < 0.0:
         raise ValueError("white animation time must be nonnegative")
     if not 0.0 <= loudness <= 1.0:
         raise ValueError("white loudness must be normalized")
+    if not 0.0 <= onset <= 1.0:
+        raise ValueError("white onset must be normalized")
     if not fixtures:
         return {}
     for fixture in fixtures:
         if not fixture.white_commissioned or not fixture.white_rows_together:
             raise RuntimeError(f"white zones are not commissioned for {fixture.name}")
     total = sum(fixture.white_zone_count for fixture in fixtures)
-    global_levels = _global_pattern(pattern_id, total, animation_time, loudness)
+    global_levels = _global_pattern(
+        pattern_id, total, animation_time, loudness, onset
+    )
     result: dict[str, tuple[float, ...]] = {}
     offset = 0
     for fixture in fixtures:

@@ -618,3 +618,20 @@ completed the Pi fixture run and confirmed correct segmented behavior on both
 units on 2026-11-05. Exact diffuser boundaries over the twelve RGB columns were
 not transcribed, so the equal browser sections remain a logical preview rather
 than a physical-dimension claim.
+
+### Curated white accents across the show pack -- 2026-11-05
+
+`WHITE-ANIM-002` replaces the dark fallback for known effects with restrained,
+scene-aware families: bloom, lava, falling rain, current crests, mirrored
+highlights, phase collisions, sweeping blades, ember peaks, tunnel bands, and a
+travelling energy burst. Energy Bridge follows its packet across the joined
+fixtures and grows outward wings on stronger audio onsets. Explicit priority
+keeps foreground signature motion dominant when user looks combine layers.
+
+The transport and safety boundary is unchanged: these normalized patterns do
+not arm physical output and still pass through the independent audio-onset gate,
+operator level, white ceiling, pulse-rate limiter, clamps, and shutdown/disarm
+paths. Windows Python 3.12 passes 223 tests. Chromium simulation verified Energy
+Bridge and representative rain, collision, blade, ember, and tunnel scenes,
+with no live capability or console errors. The expanded mappings require a
+low-level physical visual review after Pi deployment.

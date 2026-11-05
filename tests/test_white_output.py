@@ -1,7 +1,10 @@
 import unittest
 
 from phreqed_dmx.config import load_config
+from phreqed_dmx.effect_library import EFFECT_REGISTRY
+from phreqed_dmx.presets import PRESETS
 from phreqed_dmx.white_output import (
+    WHITE_PATTERN_LABELS,
     WhitePeakLimiter,
     animated_white_pattern,
     commissioned_white_levels,
@@ -53,7 +56,48 @@ class WhiteOutputTests(unittest.TestCase):
         self.assertEqual(select_white_pattern(("dynamic-wave",)), "wave")
         self.assertEqual(select_white_pattern(("inside-out-vu",)), "vu")
         self.assertEqual(select_white_pattern(("sprite-parade",)), "glint")
-        self.assertEqual(select_white_pattern(("plasma", "rings")), "dark")
+        self.assertEqual(select_white_pattern(("plasma", "rings")), "bloom")
+        self.assertEqual(select_white_pattern(("unknown-effect",)), "dark")
+
+    def test_every_builtin_scene_has_a_curated_white_pattern(self) -> None:
+        for preset_id, preset in PRESETS.items():
+            with self.subTest(preset=preset_id):
+                pattern = select_white_pattern(tuple(
+                    layer.effect_id for layer in preset.layers
+                ))
+                self.assertIn(pattern, WHITE_PATTERN_LABELS)
+                self.assertNotEqual(pattern, "dark")
+        for effect_id in (metadata.effect_id for metadata in EFFECT_REGISTRY.metadata()):
+            with self.subTest(effect=effect_id):
+                self.assertNotEqual(select_white_pattern((effect_id,)), "dark")
+
+    def test_every_pattern_is_deterministic_normalized_and_spatially_varied(self) -> None:
+        fixtures = load_config().fixtures
+        for pattern_id in WHITE_PATTERN_LABELS:
+            with self.subTest(pattern=pattern_id):
+                first = animated_white_pattern(
+                    fixtures, pattern_id, 2.5, loudness=0.6, onset=0.85
+                )
+                second = animated_white_pattern(
+                    fixtures, pattern_id, 2.5, loudness=0.6, onset=0.85
+                )
+                self.assertEqual(first, second)
+                values = tuple(value for parts in first.values() for value in parts)
+                self.assertTrue(all(0.0 <= value <= 1.0 for value in values))
+                if pattern_id != "dark":
+                    self.assertGreater(max(values), 0.0)
+                    self.assertGreater(len(set(values)), 1)
+
+    def test_energy_bridge_tracks_then_expands_more_on_strong_peaks(self) -> None:
+        fixtures = load_config().fixtures
+        quiet = animated_white_pattern(
+            fixtures, "energy", 2.5, loudness=0.5, onset=0.0
+        )
+        peak = animated_white_pattern(
+            fixtures, "energy", 2.5, loudness=0.5, onset=1.0
+        )
+        self.assertGreater(sum(map(sum, peak.values())), sum(map(sum, quiet.values())))
+        self.assertNotEqual(peak, quiet)
 
     def test_segmented_patterns_are_deterministic_bounded_and_fixture_independent(self) -> None:
         fixtures = load_config().fixtures

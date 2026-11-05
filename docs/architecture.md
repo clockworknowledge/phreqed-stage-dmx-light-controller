@@ -169,9 +169,10 @@ The browser canvas represents the two white rows between the upper and lower
 RGB row pairs as eight independently shaded sections per fixture. Preview
 remains available in simulation and exposes the same normalized arrays used at
 the output boundary. Effect IDs select a transport-independent pattern across
-the joined sixteen-part canvas: directional blaster core, flame muzzle/front,
-wave crest, inside-out VU, or sprite glint. Unsupported effects select an
-explicit dark pattern. Physical output remains a separate browser-live state:
+the joined sixteen-part canvas. Every registered effect maps to a curated family;
+signature motion covers blaster, flame, wave, VU, sprite, energy, bloom, rain,
+current, mirror, collision, blade, ember, lava, and tunnel accents. Unknown
+future effects use an explicit dark fallback. Physical output remains a separate browser-live state:
 presets cannot arm it, and it requires an audio source plus the explicit toggle.
 The normalized pattern is multiplied by the short threshold-crossing pulse,
 operator level, and independent ceiling before DMX quantization. Pulses remain

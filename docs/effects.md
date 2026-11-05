@@ -128,7 +128,23 @@ effect. `cross-blaster` moves a core and soft wake across both fixtures;
 `flame-jet` retains a left muzzle and turbulent hot front; `dynamic-wave` moves a
 smooth crest; `inside-out-vu` expands from the center using normalized loudness;
 and eye, Pac-Man, and sprite-parade effects receive a restrained travelling
-glint. Other effects deliberately request `dark`.
+glint. The rest of the catalog uses deliberately lower-gain families:
+
+- Plasma and radial rings expand symmetrically from the joined center.
+- Lava Lamp follows two slow molten highlights.
+- Digital Rain and Glitch expose only three sparse moving heads.
+- Energy Transfer follows its packet and widens into outward wings as onset rises.
+- Flow Noise uses a broad, low current crest.
+- Vortex and Kaleidoscope mirror highlights around the joined center.
+- Interference drives two inward waves and a restrained collision core.
+- Checkerboard and Bars receive two narrow sweeping blades.
+- Fire and Sparks scatter deterministic ember peaks.
+- Tunnel emits smooth center-out bands.
+
+Every registered effect therefore has a curated pattern. A priority table lets
+signature foreground effects such as Blaster, Flame, Wave, or VU override a
+background pattern in a layered user look. `dark` remains only as a defensive
+fallback for an unknown future effect.
 
 These patterns are requests, not output commands. They are visible in simulation,
 but physical parts remain zero until browser live, microphone input, and the

@@ -337,10 +337,11 @@ deployment guide before enabling it.
 
 Center-white output is an additional explicit step after browser live starts.
 It requires an active microphone and the **Enable physical segmented white
-output** toggle. Supported looks use the sixteen commissioned parts as one
-left-to-right accent canvas: Blaster, Flame Jet, Wave Rider, Inside-Out VU, and
-sprite-family effects each select a deterministic pattern. Other looks keep the
-whites dark by design. Presets select only a pattern; they cannot arm output.
+output** toggle. Every registered effect now selects a deterministic pattern on
+the sixteen-part left-to-right accent canvas. Signature motion includes blaster,
+flame, wave, VU, sprite, energy-transfer, bloom, rain, current, collision, blade,
+ember, mirror, lava, and tunnel accents. Presets select only a pattern; they
+cannot arm output.
 The default level is 5% and the default ceiling is 10%. Blackout, Stop output,
 performance-mode changes, render failure, or browser-lease loss disarms it; it
 never activates in the simulation-only `web` command or ordinary non-browser

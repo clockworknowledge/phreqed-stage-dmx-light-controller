@@ -574,6 +574,22 @@ times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
 
+### WHITE-ANIM-002 — Curated white accents across the show pack (`P1`, visuals)
+
+Every registered effect and built-in scene now has a deterministic segmented
+white pattern. Lower-gain bloom, lava, rain, current, mirror, collision, blade,
+ember, and tunnel families complement the original signature animations. Energy
+Bridge follows the travelling packet and widens into outward wings on stronger
+onsets. Layered custom looks use explicit priority so foreground signature motion
+wins over background texture. All additions remain behind the existing
+audio-onset gate, operator level, independent ceiling, 0.10-second/4 Hz limiter,
+and physical-white arm control. Automated coverage verifies every catalog effect,
+normalization, determinism, spatial variation, and peak-dependent energy spread.
+Windows Python 3.12 passes 223 tests. Chromium simulation verified Energy Bridge,
+rain, collision, blade, ember, and tunnel selections expose the expected pattern
+labels while live controls remain unavailable. A low-level Pi visual review of
+the extended scene set remains the deployment acceptance step.
+
 ### WHITE-ANIM-001 — Scene-aware segmented white animation (`P1`, visual safety)
 
 The eight commissioned white parts per fixture form a joined sixteen-part accent

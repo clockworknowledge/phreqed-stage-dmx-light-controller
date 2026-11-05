@@ -154,7 +154,7 @@ function renderState(s) {
     : '';
   $('white-output-hint').textContent = highWhite
     ? 'This process was explicitly armed above the normal 10% ceiling. Pulses remain onset-thresholded, at most 0.10 seconds and 4 Hz, and stop on blackout, output stop, failure, or lease loss.'
-    : 'Supported scenes animate all eight parts per fixture; other scenes stay dark by design. Physical whites require live output and this separate toggle. The default ceiling is 10%; pulses remain onset-thresholded, no more than 0.10 seconds or 4 Hz, and stop on blackout, mode change, output stop, failure, or lease loss.';
+    : 'Every built-in scene has a curated eight-part-per-fixture accent. Physical whites require live output and this separate toggle. The default ceiling is 10%; pulses remain onset-thresholded, no more than 0.10 seconds or 4 Hz, and stop on blackout, mode change, output stop, failure, or lease loss.';
   if (highWhite) {
     $('live-warning').textContent += ` HIGH-OUTPUT CENTER WHITES are also available up to ${Math.round(white.output_ceiling*100)}% and require their separate in-page toggle.`;
   }

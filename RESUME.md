@@ -2,21 +2,26 @@
 
 Last updated: 2026-11-05
 
-## Current checkpoint -- Segmented center-white animation accepted
+## Current checkpoint -- Curated center-white animation across all scenes
 
-`WHITE-ANIM-001` now treats the two fixtures' commissioned white parts as one
-sixteen-section accent canvas. Effect-driven selection supplies deterministic
-blaster, flame, wave, inside-out VU, and sprite-glint patterns; unsupported
-looks explicitly remain dark. Pattern selection is address-free, works for user
-looks, and cannot arm physical output. The browser draws the exact eight-part
+`WHITE-ANIM-001` treats the two fixtures' commissioned white parts as one
+sixteen-section accent canvas. `WHITE-ANIM-002` extends curated behavior to every
+registered effect and built-in scene: lower-gain bloom, lava, rain, current,
+mirror, collision, blade, ember, and tunnel patterns complement the original
+blaster, flame, wave, inside-out VU, energy, and sprite families. Energy Bridge
+tracks its packet and expands outward on stronger peaks. Pattern selection is
+address-free, works for user looks, uses foreground priority in layered looks,
+and cannot arm physical output. The browser draws the exact eight-part
 array on each fixture. Existing audio/live/white gates, default 10% ceiling,
 0.10-second/4 Hz limiter, high-output acknowledgement, and every blackout/Stop/
 lease/failure/mode/shutdown disarm path remain intact. Windows Python 3.12 passes
-220 tests. A real Chromium simulation selected Wave Rider, reported its pattern,
-rendered visibly separated white sections, exposed no live capability, and had
-zero console errors. The operator subsequently completed the Pi fixture run and
-confirmed the segmented animation behaved correctly on 2026-11-05, moving the
-card to Done. Exact RGB-column boundaries were not transcribed; the browser's
+223 tests. A real Chromium simulation verified Energy Bridge plus representative
+rain, collision, blade, ember, and tunnel scenes reported their curated patterns,
+exposed no live capability, and had zero console errors. The operator subsequently
+completed the Pi fixture run and confirmed the initial segmented animation behaved
+correctly on 2026-11-05; the extended scene set still needs a low-level physical
+visual review.
+Exact RGB-column boundaries were not transcribed; the browser's
 equal sections remain a logical preview, while commissioned Part order is the
 authoritative physical mapping.
 

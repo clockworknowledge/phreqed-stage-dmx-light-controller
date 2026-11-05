@@ -758,6 +758,7 @@ class BrowserControl:
                     self.white_pattern_id,
                     self.controller.animation_time,
                     loudness=analysis.loudness if analysis is not None else 0.0,
+                    onset=analysis.onset if analysis is not None else 0.0,
                 )
                 preview_parts = scale_white_pattern(
                     fixtures, normalized_pattern,
