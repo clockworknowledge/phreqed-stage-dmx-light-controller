@@ -25,11 +25,12 @@ Exact RGB-column boundaries were not transcribed; the browser's
 equal sections remain a logical preview, while commissioned Part order is the
 authoritative physical mapping.
 
-For `OPS-003` acceptance, `local_network.sh` now provides the requested
-single-command local-console activation of the already configured Pi hotspot.
-It delegates to the existing SSH-safe helper, runs the startup/stage-LAN
-readiness check, and prints the iPhone controller and QLC+ recovery URLs. It
-does not store a Wi-Fi key, enable autostart, or enable fixture output.
+For `OPS-003` acceptance, `local_network.sh` now provides a numbered local-
+console menu for the already configured Pi hotspot, saved private/home Wi-Fi,
+status, and the stage boot preference. It delegates to the existing SSH-safe
+helper, runs the startup/stage-LAN readiness check after stage activation, and
+prints the iPhone controller and QLC+ recovery URLs. It does not store a Wi-Fi
+key or enable fixture output.
 The hotspot helper's status and disable paths use list-mode `nmcli` fields for
 compatibility with the commissioned Pi's NetworkManager; detailed connection
 mode rejects summary fields such as `NAME` on that version.
