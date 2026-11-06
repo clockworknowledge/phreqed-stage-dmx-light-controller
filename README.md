@@ -1,6 +1,6 @@
 # Phreqed Stage DMX Light Controller
 
-A simulation-first Python 3.11+ visual engine for a Calgary rock band's two
+A simulation-first Python 3.11+ visual engine for a Calgary rock band [Phreqed!](https://www.phreqed.com) two
 Betopper LF4808 RGB matrix fixtures. It provides deterministic procedural
 effects, normalized RGB layer compositing, presets, an interactive two-cube
 simulator, a dependency-free browser show controller, and explicit live
