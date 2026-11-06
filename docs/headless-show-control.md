@@ -53,6 +53,21 @@ bash scripts/pi-stage-hotspot.sh enable
 sudo reboot
 ```
 
+For the first local-console activation, the repository also includes a short
+wrapper. Configure the hotspot over SSH as above, move to the Pi's attached
+keyboard/screen, and run:
+
+```bash
+cd ~/phreqed-stage-dmx-light-controller
+bash local_network.sh
+```
+
+It activates the existing profile through the guarded helper, prints network
+status, runs the safe-startup/stage-LAN readiness checks, and displays the
+iPhone controller URL. It does not configure a password, enable the profile at
+boot, or enable fixture output. The same SSH-path protection remains active, so
+it refuses to replace `wlan0` when that interface carries the current session.
+
 The Pi's built-in Wi-Fi becomes the access point and is no longer a client of
 home or venue Wi-Fi. SSH from the iPhone-connected network uses
 `mmorley@10.42.0.1`. To return it to normal Wi-Fi-client operation, use an

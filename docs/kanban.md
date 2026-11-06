@@ -95,6 +95,10 @@ Pi-hosted access point at `10.42.0.1`: configure, activate, and boot enablement
 are separate actions, and activation/disable refuses an SSH path using the same
 Wi-Fi interface. iPhone join and no-internet behavior are documented. The
 read-only readiness check can require either commissioned stage-LAN address.
+The root-level `local_network.sh` wrapper now reduces the first local-console
+test to one guarded command: it activates the existing profile, shows network
+status, runs startup/stage-LAN readiness, and prints the iPhone URLs without
+configuring a key, enabling boot startup, or enabling fixture output.
 
 Pi evidence on 2026-10-22: both enabled services survived an unattended reboot.
 QLC+ started first and Phreqed followed five seconds later; the browser logged

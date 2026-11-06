@@ -25,6 +25,12 @@ Exact RGB-column boundaries were not transcribed; the browser's
 equal sections remain a logical preview, while commissioned Part order is the
 authoritative physical mapping.
 
+For `OPS-003` acceptance, `local_network.sh` now provides the requested
+single-command local-console activation of the already configured Pi hotspot.
+It delegates to the existing SSH-safe helper, runs the startup/stage-LAN
+readiness check, and prints the iPhone controller and QLC+ recovery URLs. It
+does not store a Wi-Fi key, enable autostart, or enable fixture output.
+
 `RIG-001` remains Backlog until more fixtures are acquired.
 
 ## Prior checkpoint -- Sprite renderer and browser shutdown in validation
