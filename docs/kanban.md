@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-11-05
+Last reviewed: 2026-11-06
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -346,6 +346,34 @@ available, follow `docs/pi-script-import.md`: copy it into a new dated directory
 hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
+
+### DISPLAY-001 — Local stage touchscreen and kiosk interface (`P1`, operations)
+
+Add a dedicated local-only performer display for a 7-inch Pi touchscreen, with
+800×480 as the minimum supported landscape viewport. It should auto-launch a
+high-contrast kiosk page against `127.0.0.1`, remain usable without Wi-Fi, and
+leave the existing headless services unchanged when no display is attached.
+The primary view shows a very large song number/title, current and next song,
+current scene, elapsed/remaining time, live/blackout state, and concise QLC+,
+audio, pedal, network, and fixture-output health.
+
+A separate local Operations view may expose the guarded stage/private-Wi-Fi
+switching already implemented by `local_network.sh`. Network mutation must be
+authorized only for a loopback-origin local display through fixed, root-owned
+actions; it must never become a general remote browser or shell endpoint. The
+local page remains connected over loopback while `wlan0` changes, which avoids
+the self-disconnecting remote-browser workflow. Include large touch targets,
+screen brightness/dim controls, explicit confirmation for disruptive actions,
+and visible recovery guidance. Fixture output remains stopped after boot and
+network changes.
+
+Acceptance: Chromium tests cover 800×480 and the official display resolution;
+kiosk startup cannot delay QLC+ or the controller; missing GUI/display falls
+back to headless operation; remote clients cannot invoke local operations;
+network changes preserve loopback status and never enable Art-Net; song and
+health state remain readable at stage distance; and Pi testing covers reboot,
+hotspot/private-Wi-Fi switching, touch input, display blank/wake, and clean
+shutdown before the screen becomes show-critical.
 
 ### RIG-001 — Multi-fixture and multi-universe expansion (`P2`, scaling)
 

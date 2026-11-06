@@ -36,6 +36,9 @@ compatibility with the commissioned Pi's NetworkManager; detailed connection
 mode rejects summary fields such as `NAME` on that version.
 
 `RIG-001` remains Backlog until more fixtures are acquired.
+`DISPLAY-001` now tracks the local 7-inch touchscreen/kiosk solution, including
+large setlist status and loopback-only guarded network switching. No remote
+browser network-mutation endpoint is planned.
 
 ## Prior checkpoint -- Sprite renderer and browser shutdown in validation
 
