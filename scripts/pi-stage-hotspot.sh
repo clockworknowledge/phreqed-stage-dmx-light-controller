@@ -114,7 +114,7 @@ disable() {
     }
     refuse_ssh_drop
     sudo nmcli connection modify "${CONNECTION_NAME}" connection.autoconnect no
-    if [[ "$(nmcli -g GENERAL.STATE connection show "${CONNECTION_NAME}" 2>/dev/null || true)" == activated* ]]; then
+    if nmcli -t -f NAME connection show --active | grep -Fqx "${CONNECTION_NAME}"; then
         sudo nmcli connection down "${CONNECTION_NAME}"
     fi
     echo "Hotspot stopped and disabled at boot. The saved profile and key remain on the Pi."
@@ -125,7 +125,8 @@ status() {
     echo "SSID: ${SSID}"
     echo "Expected controller: http://10.42.0.1:8080"
     if profile_exists; then
-        nmcli -f NAME,TYPE,DEVICE,AUTOCONNECT connection show "${CONNECTION_NAME}"
+        nmcli -t -f NAME,TYPE,DEVICE,AUTOCONNECT connection show \
+            | grep -F "${CONNECTION_NAME}:" || true
     else
         echo "State: not configured"
     fi

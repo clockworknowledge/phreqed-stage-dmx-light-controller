@@ -1,6 +1,6 @@
 # Codex Resume: Live Show Baseline and Song/Setlist Roadmap
 
-Last updated: 2026-11-05
+Last updated: 2026-11-06
 
 ## Current checkpoint -- Curated center-white animation across all scenes
 
@@ -30,6 +30,9 @@ single-command local-console activation of the already configured Pi hotspot.
 It delegates to the existing SSH-safe helper, runs the startup/stage-LAN
 readiness check, and prints the iPhone controller and QLC+ recovery URLs. It
 does not store a Wi-Fi key, enable autostart, or enable fixture output.
+The hotspot helper's status and disable paths use list-mode `nmcli` fields for
+compatibility with the commissioned Pi's NetworkManager; detailed connection
+mode rejects summary fields such as `NAME` on that version.
 
 `RIG-001` remains Backlog until more fixtures are acquired.
 
