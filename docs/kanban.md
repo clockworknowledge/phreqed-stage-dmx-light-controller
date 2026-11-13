@@ -34,6 +34,13 @@ browser-based Studio authoring application is sequenced in
 detailed user stories, package/sync rules, and sprint acceptance. The cards
 below remain independently movable and are the source of truth for status.
 
+Pause checkpoint (2026-11-13): no implementation is active. Perform touch
+polish, timeline editing, venue-profile shortcuts, prepared-white adjustment,
+and the Pac-Man ghost/power-pellet cycle are committed and covered by the
+248-test Windows Python 3.12 suite. Remaining touchscreen work is physical Pi
+and Waveshare validation; Pi thermal telemetry is recorded below as optional
+follow-up work and is not a show-control dependency.
+
 ## In progress
 
 No active implementation.
@@ -81,9 +88,16 @@ complete regression suite on the target OS.
 
 Perform includes manual and setlist layouts, current/next song, progress and
 remaining time, current scene, transport, master, output state, power profile,
-lease count, structured health, compact fixture previews, and blackout. At
-1280 x 800 Chromium measured both document and viewport at exactly 800 pixels,
-with no Perform workspace overflow.
+lease count, structured health, compact fixture previews, and blackout. Setlist
+mode is the default, the active-song time bar keeps elapsed and remaining time
+visible, and Start/Stop output sit in the persistent bottom safety row beside
+blackout. The stage bar exposes the three built-in venue profiles plus up to two
+operator-selected custom shortcuts and touch-sized prepared-white minus/plus
+controls that cannot arm physical whites. Song metadata and live-monitor labels
+remain inside their cards at the target and phone breakpoints. At 1280 x 800
+Chromium measured both document and viewport at exactly 800 pixels, with no
+Perform workspace overflow; the 390 x 844 phone layout retained usable safety
+controls and reported no application console errors.
 
 Acceptance remaining: touch accuracy, glare/readability, wake behavior, and a
 full rehearsal on the commissioned display.
@@ -115,7 +129,12 @@ ordering, LCD blank/wake, and resource measurements on Raspberry Pi OS.
 Songs, cue sheets, and ordered Setlists have a top-level Setlist workspace.
 Build contains searchable Looks and the Scene editor. Settings groups RGB,
 contrast, preview, audio, whites, persistent bounded venue profiles, and output
-controls. Phone and desktop share the same commands and application logic.
+controls. Setlist and Song builders are separate full-width task screens;
+Setlists can be copied, and cue timelines expose large duration, transition,
+and Up/Down sequence controls without nested scrolling. User venue profiles can
+be updated in place and up to two can opt into the Perform shortcut bar while
+legacy profile files remain compatible. Phone and desktop share the same
+commands and application logic.
 
 Acceptance remaining: complete representative create/edit/publish/reorder
 workflows on phone, touchscreen, and desktop Chromium, then confirm persistence
@@ -326,6 +345,23 @@ available, follow `docs/pi-script-import.md`: copy it into a new dated directory
 hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
+
+### OPS-008 — Pi thermal telemetry in Operations (`P2`, diagnostics)
+
+Expose the Raspberry Pi CPU temperature as read-only structured health using
+`/sys/class/thermal/thermal_zone0/temp` when available. Operations should show
+the measured degrees Celsius plus a non-color state label; missing, malformed,
+or non-Pi sources must report `unknown` without affecting output, leases,
+timelines, startup, or headless operation. Do not invoke a shell or require
+`vcgencmd` for the primary path.
+
+User outcome: an operator can spot a thermally stressed controller before a
+show without adding a service or live-output dependency.
+
+Acceptance: use an injected/read-only reader with Windows-compatible tests;
+bound and validate millidegree parsing; define and document the informational
+state thresholds before implementation; expose the value through structured
+health and the Operations UI; and verify the reading on the commissioned Pi.
 
 ### STUDIO-000 — Phreqed Studio and Stage separation umbrella (`P1`, architecture)
 
@@ -875,6 +911,12 @@ The deterministic Matrix Rain, Blaster Sweep, Flame Thrower, Wave Rider,
 Pac-Man Chase, Watchful Eyes, and Inside-Out VU additions are covered by geometry,
 range, independence, reserved-channel, and timing checks. Browser simulation and
 the full band rehearsal provided the final visual acceptance on 2026-11-04.
+Pac-Man Chase now adds colored ghosts with directional eyes, a deterministic
+power pellet, and a bounded frightened interval in which the ghosts turn blue
+and reverse smoothly before resuming the chase. Its commissioned-white pattern
+uses sparse travelling pellets, but physical whites remain behind the existing
+explicit browser-live, audio-onset, level/ceiling, blackout, lease, and shutdown
+gates. Fixed-time frames and the complete 248-test suite cover the enhancement.
 
 ### AUDIO-003 — Shared tempo and dynamics clock (`P1`, music)
 

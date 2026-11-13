@@ -2,6 +2,33 @@
 
 Last updated: 2026-11-13
 
+## Pause checkpoint -- Perform polish and Pac-Man power cycle
+
+Implementation is paused cleanly after `7a56739` on `main`; no feature work is
+currently active. The latest Perform pass keeps song number and time labels
+inside the active-song card, restores the prominent elapsed/remaining time bar,
+keeps the live-monitor footer within its panel, and places Start/Stop output in
+the bottom safety row beside blackout. The stage bar exposes Rehearsal, Small
+Stage, and Large Stage plus up to two custom profiles explicitly marked for
+Perform. Its prepared-white minus/plus controls adjust the bounded stored level
+without arming physical output or bypassing live, audio, blackout, lease, or
+ceiling gates.
+
+Pac-Man Chase now includes red, pink, cyan, and optional orange ghosts with
+eyes, a deterministic power pellet, and a smooth blue frightened/reversal
+interval before the chase resumes. Sparse travelling center-white pellets are
+selected by the effect, but actual white output remains under the commissioned
+physical-white safety boundary. Fixed-time visual inspection and the full
+Windows Python 3.12 suite pass with 248 tests.
+
+The next release-critical action is the physical `DISPLAY-003` Pi/Waveshare
+acceptance run: touch accuracy, 100%/200% zoom, kiosk/browser recovery,
+blank/wake continuity, service ordering, local network/backlight operations,
+lease loss, guarded shutdown, and a rehearsal with fixtures safely positioned.
+`OPS-008` separately records optional read-only Pi CPU-temperature telemetry for
+Operations; it is not implemented and must never affect show output. Pull the
+latest `main` and rerun the managed Pi update before that hardware pass.
+
 ## Current checkpoint -- Adaptive touchscreen and multi-surface control
 
 The shared stage-control application now has Perform, Setlist, Build, Settings, and
@@ -45,7 +72,7 @@ allowlists; they are absent unless explicit `live --web` local-operation
 authority is enabled, and network mutation is blocked while output or a song
 timeline is active.
 
-Windows Python 3.12 now passes 243 tests. The software work is in Validation
+Windows Python 3.12 now passes 248 tests. The software work is in Validation
 pending the Raspberry Pi touch, Chromium
 crash/restart, blank/wake, NetworkManager, backlight, service-order, and guarded
 shutdown run in `docs/touchscreen-control-roadmap.md`. `OPS-005` remains in
