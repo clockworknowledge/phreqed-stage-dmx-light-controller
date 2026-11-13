@@ -70,6 +70,11 @@ if [[ ! -f "/home/mmorley/.qlcplus/autostart.qxw" ]]; then
     exit 1
 fi
 
+echo "Installing local-operation helpers required by unit validation"
+sudo install -d -m 0755 /usr/local/libexec
+sudo install -m 0755 "${NETWORK_HELPER_SOURCE}" "${NETWORK_HELPER_TARGET}"
+sudo install -m 0755 "${BACKLIGHT_HELPER_SOURCE}" "${BACKLIGHT_HELPER_TARGET}"
+
 echo "Validating systemd units"
 systemd-analyze verify \
     "${QLC_SOURCE}" "${SERVICE_SOURCE}" "${INHIBIT_SOURCE}" "${POWEROFF_SOURCE}" \
@@ -95,8 +100,6 @@ sudo install -m 0644 "${KIOSK_SOURCE}" "${KIOSK_TARGET}"
 echo "Installing local operation helper units"
 sudo install -m 0644 "${NETWORK_UNIT_SOURCE}" "${NETWORK_UNIT_TARGET}"
 sudo install -m 0644 "${BACKLIGHT_UNIT_SOURCE}" "${BACKLIGHT_UNIT_TARGET}"
-sudo install -m 0755 "${NETWORK_HELPER_SOURCE}" "${NETWORK_HELPER_TARGET}"
-sudo install -m 0755 "${BACKLIGHT_HELPER_SOURCE}" "${BACKLIGHT_HELPER_TARGET}"
 echo "Installing ${UDEV_TARGET}"
 sudo install -m 0644 "${UDEV_SOURCE}" "${UDEV_TARGET}"
 echo "Installing ${POLKIT_TARGET}"

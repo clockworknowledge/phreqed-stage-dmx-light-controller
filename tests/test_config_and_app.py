@@ -274,6 +274,14 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("After=graphical.target phreqed-dmx.service", kiosk)
         self.assertNotIn("Requires=phreqed-kiosk.service", kiosk)
         self.assertIn("--enable-kiosk", installer)
+        self.assertLess(
+            installer.index('sudo install -m 0755 "${NETWORK_HELPER_SOURCE}"'),
+            installer.index("systemd-analyze verify"),
+        )
+        self.assertLess(
+            installer.index('sudo install -m 0755 "${BACKLIGHT_HELPER_SOURCE}"'),
+            installer.index("systemd-analyze verify"),
+        )
         self.assertIn("phreqed-network@stage.service", policy)
         self.assertIn("phreqed-backlight@100.service", policy)
         self.assertNotIn("action.lookup(\"unit\").startsWith", policy)
