@@ -320,6 +320,40 @@ class EffectLibraryTests(unittest.TestCase):
 
         self.assertLess(bright_centroid(1.2), bright_centroid(2.0))
 
+    def test_pacman_chase_has_distinct_colored_ghosts_and_eyes(self) -> None:
+        effect = EFFECT_REGISTRY.get("pacman")
+        parameters = EFFECT_REGISTRY.parameters("pacman", {
+            "palette": "ember", "direction": "left-right",
+            "ghost_count": 3.0, "ghost_spacing": 5.0,
+        })
+        frame = []
+        for global_x in range(24):
+            fixture = FixtureIdentity(
+                "Cube A" if global_x < 12 else "Cube B", global_x // 12, 2
+            )
+            for y in range(4):
+                frame.append(effect.sample(
+                    global_x % 12, y, 12, 4, 6.0, fixture, parameters,
+                    self.context,
+                ))
+
+        self.assertTrue(any(
+            color.red > 0.5 and color.green < 0.15 and color.blue < 0.15
+            for color in frame
+        ))
+        self.assertTrue(any(
+            color.red > 0.5 and color.blue > 0.25 and color.green < 0.25
+            for color in frame
+        ))
+        self.assertTrue(any(
+            color.green > 0.4 and color.blue > 0.5 and color.red < 0.15
+            for color in frame
+        ))
+        self.assertTrue(any(
+            color.red > 0.5 and color.green > 0.5 and color.blue > 0.5
+            for color in frame
+        ))
+
     def test_digital_rain_is_sparse_and_heads_move_downward(self) -> None:
         effect = EFFECT_REGISTRY.get("digital-rain")
         parameters = EFFECT_REGISTRY.parameters(

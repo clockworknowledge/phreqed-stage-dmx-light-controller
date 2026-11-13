@@ -35,7 +35,7 @@ ceiling of 0.65.
 | `cross-blaster` | Cross-Cube Blaster | cross-fixture | `direction` left-right/right-left/center-out, `rate` 1-24, `trail` 1-18, `core_width` 0.25-4, `spread` 0.2-3 |
 | `flame-jet` | Anchored Flame Jet | cross-fixture | `length` 0.45-1.25, `turbulence` 0.25-2, `strand_width` 0.18-1.2, `muzzle_size` 0.4-3 |
 | `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5, `pulse_frequency` 0-1.5 (music velocity), `cosine_morph` 0-1 (legacy key; onset phase push) |
-| `pacman` | Pac-Man Chase | sprite | `direction` left-right/right-left, `travel_rate` 0.5-10, `radius` 1.1-2.2, `mouth_rate` 0.3-4, `dot_spacing` 2-6 |
+| `pacman` | Pac-Man Ghost Chase | sprite | `direction` left-right/right-left, `travel_rate` 0.5-10, `radius` 1.1-2.2, `mouth_rate` 0.3-4, `dot_spacing` 2-6, `ghost_count` 1-4, `ghost_spacing` 4-8 |
 | `blinking-eye` | Blinking Eye | sprite | `blink_rate` 0.08-1.5, `blink_duration` 0.08-0.5, `iris_size` 0.16-0.65, `gaze` -0.5-0.5 |
 | `sprite-parade` | Sprite Parade | sprite | `character` bird/stickman/triangle/circle/diamond, `direction` left-right/right-left, `travel_rate` 0.25-12, `animation_rate` 0.1-4, `spacing` 1-16 |
 | `inside-out-vu` | Inside-Out VU | musical | `sensitivity` 0.25-2.5, `peak_width` 0.015-0.25 |
@@ -70,8 +70,10 @@ between 0.7x and 1.5x and add only a small phase push. Audio never changes the
 wave's spatial frequency or morphs its carrier, so the shape remains readable.
 
 `pacman` treats both fixtures as one 24-by-4 sprite surface. A yellow character
-opens and closes its mouth while following a dim dotted path across the fixture
-seam. Direction and travel/chomp rates remain deterministic and editable.
+opens and closes its mouth while leading a train of red, pink, cyan, and
+optionally orange ghosts across the fixture seam. Each ghost uses a crisp
+five-by-four silhouette with bright, widely spaced eyes. Direction, ghost count and
+spacing, and travel/chomp rates remain deterministic and editable.
 
 `digital-rain` uses a sparse deterministic column mask. Bright pale-green heads
 move from logical row 0 toward row 3, leave short darker tails, disappear for a
@@ -112,7 +114,8 @@ fixture splitting happen in normalized render space. See [Sprite authoring](spri
   across the full combined display.
 - `wave-rider`: a stable tempo-led sine ribbon whose travel velocity follows
   restrained musical dynamics.
-- `pacman-chase`: a yellow chomping character following a dotted cross-fixture path.
+- `pacman-chase`: Pac-Man leading a colourful ghost train along a dotted
+  cross-fixture path.
 - `inside-out-vu`: music energy growing from the shared centre to both outer edges.
 - `watchful-eyes`: a synchronized eye on each fixture opening, watching, and
   blinking.

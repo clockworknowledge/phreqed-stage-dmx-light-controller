@@ -478,7 +478,7 @@ EXAMPLE_PRESETS = (
     VisualPreset(
         "pacman-chase",
         "Pac-Man Chase",
-        "A chomping yellow character follows a dotted path across both fixtures.",
+        "Pac-Man leads red, pink, and cyan ghosts across both fixtures.",
         (
             EffectLayerSpec(
                 "pacman",
@@ -491,6 +491,8 @@ EXAMPLE_PRESETS = (
                     "radius": 1.75,
                     "mouth_rate": 1.6,
                     "dot_spacing": 3.0,
+                    "ghost_count": 3.0,
+                    "ghost_spacing": 5.0,
                 },
             ),
         ),

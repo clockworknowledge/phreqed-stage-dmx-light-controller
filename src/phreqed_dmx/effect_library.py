@@ -603,15 +603,18 @@ def _pacman_chase(
     fixture: FixtureIdentity, parameters: EffectParameters,
     context: PerformanceContext | None,
 ) -> NormalizedRGB:
-    """Render one continuous Pac-Man chase across the combined fixture width."""
+    """Render Pac-Man and a coloured ghost train across the combined width."""
     del context
     t = _time(animation_time, parameters)
     total_width = width * fixture.count
     global_x = x + fixture.index * width
     radius = parameters.number("radius")
     travel_rate = parameters.number("travel_rate")
+    ghost_count = int(round(parameters.number("ghost_count")))
+    ghost_spacing = parameters.number("ghost_spacing")
     direction = parameters.choice("direction")
-    path_length = total_width + radius * 2.0 + 2.0
+    trailing_span = radius + ghost_spacing * ghost_count
+    path_length = total_width + radius * 2.0 + trailing_span + 2.0
     progress = (t * travel_rate) % path_length - radius - 1.0
     facing = 1.0
     center_x = progress
@@ -637,6 +640,31 @@ def _pacman_chase(
     if distance <= radius and not in_mouth and not in_eye:
         edge = _clamp((radius + 0.45 - distance) / 0.45)
         return _paint(0.92, edge, parameters)
+
+    # A five-by-four silhouette stays legible on the commissioned four-row
+    # fixtures.  Quantizing only the character position keeps the bitmap crisp;
+    # the shared animation clock still advances the train continuously across
+    # the fixture seam.  Widely spaced eyes distinguish the characters without
+    # approaching full output.
+    ghost_rows = (".###.", "#####", "#####", "#.#.#")
+    ghost_colors = (
+        NormalizedRGB(1.0, 0.08, 0.08),
+        NormalizedRGB(1.0, 0.28, 0.58),
+        NormalizedRGB(0.05, 0.85, 1.0),
+        NormalizedRGB(1.0, 0.48, 0.05),
+    )
+    ghost_y = min(3, int(y * 4 / height))
+    level = parameters.number("brightness")
+    eye_columns = (1, 3)
+    for ghost_index in range(ghost_count):
+        ghost_center = center_x - facing * ghost_spacing * (ghost_index + 1)
+        center_pixel = math.floor(ghost_center + 0.5)
+        ghost_x = global_x - center_pixel + 2
+        if not 0 <= ghost_x < 5 or ghost_rows[ghost_y][ghost_x] != "#":
+            continue
+        if ghost_y == 1 and ghost_x in eye_columns:
+            return NormalizedRGB(0.88, 0.92, 1.0).scaled(level * 0.9)
+        return ghost_colors[ghost_index % len(ghost_colors)].scaled(level * 0.82)
 
     ahead = (global_x - center_x) * facing
     dot_spacing = parameters.number("dot_spacing")
@@ -933,12 +961,14 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("pulse_frequency", "Music velocity", 0.35, 0.0, 1.5, 0.05, "Dynamic phase movement without changing wave frequency"),
             number("cosine_morph", "Hit push", 0.2, 0.0, 1.0, 0.05, "Short forward phase push on musical onsets"),
         ), brightness=0.64), _dynamic_wave),
-        ProceduralEffect(_metadata("pacman", "Pac-Man Chase", "A chomping character follows a dotted path across both fixtures.", "sprite", (
+        ProceduralEffect(_metadata("pacman", "Pac-Man Ghost Chase", "A chomping character leads colourful ghosts along a dotted path across both fixtures.", "sprite", (
             ParameterSpec("direction", "Direction", "left-right", "Chase travel direction", choices=("left-right", "right-left")),
             number("travel_rate", "Travel rate", 3.2, 0.5, 10.0, 0.1, "Horizontal cells per animation second"),
             number("radius", "Character size", 1.75, 1.1, 2.2, 0.05, "Radius of the Pac-Man character"),
             number("mouth_rate", "Chomp rate", 1.6, 0.3, 4.0, 0.1, "Mouth cycles per animation second"),
             number("dot_spacing", "Dot spacing", 3.0, 2.0, 6.0, 0.25, "Distance between path dots"),
+            number("ghost_count", "Ghosts", 3.0, 1.0, 4.0, 1.0, "Number of coloured ghosts following Pac-Man"),
+            number("ghost_spacing", "Ghost spacing", 5.0, 4.0, 8.0, 0.5, "Cells between following ghosts"),
         ), brightness=0.72), _pacman_chase),
         ProceduralEffect(_metadata("blinking-eye", "Blinking Eye", "A stylized eye opens, watches, and blinks on each fixture.", "sprite", (
             number("blink_rate", "Blink rate", 0.32, 0.08, 1.5, 0.02, "Complete blink cycles per animation second"),
