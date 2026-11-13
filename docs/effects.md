@@ -35,7 +35,7 @@ ceiling of 0.65.
 | `cross-blaster` | Cross-Cube Blaster | cross-fixture | `direction` left-right/right-left/center-out, `rate` 1-24, `trail` 1-18, `core_width` 0.25-4, `spread` 0.2-3 |
 | `flame-jet` | Anchored Flame Jet | cross-fixture | `length` 0.45-1.25, `turbulence` 0.25-2, `strand_width` 0.18-1.2, `muzzle_size` 0.4-3 |
 | `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5, `pulse_frequency` 0-1.5 (music velocity), `cosine_morph` 0-1 (legacy key; onset phase push) |
-| `pacman` | Pac-Man Ghost Chase | sprite | `direction` left-right/right-left, `travel_rate` 0.5-10, `radius` 1.1-2.2, `mouth_rate` 0.3-4, `dot_spacing` 2-6, `ghost_count` 1-4, `ghost_spacing` 4-8 |
+| `pacman` | Pac-Man Ghost Chase | sprite | `direction` left-right/right-left, `travel_rate` 0.5-10, `radius` 1.1-2.2, `mouth_rate` 0.3-4, `dot_spacing` 2-6, `ghost_count` 1-4, `ghost_spacing` 4-8, `power_interval` 10-24, `fright_seconds` 2-6 |
 | `blinking-eye` | Blinking Eye | sprite | `blink_rate` 0.08-1.5, `blink_duration` 0.08-0.5, `iris_size` 0.16-0.65, `gaze` -0.5-0.5 |
 | `sprite-parade` | Sprite Parade | sprite | `character` bird/stickman/triangle/circle/diamond, `direction` left-right/right-left, `travel_rate` 0.25-12, `animation_rate` 0.1-4, `spacing` 1-16 |
 | `inside-out-vu` | Inside-Out VU | musical | `sensitivity` 0.25-2.5, `peak_width` 0.015-0.25 |
@@ -72,8 +72,17 @@ wave's spatial frequency or morphs its carrier, so the shape remains readable.
 `pacman` treats both fixtures as one 24-by-4 sprite surface. A yellow character
 opens and closes its mouth while leading a train of red, pink, cyan, and
 optionally orange ghosts across the fixture seam. Each ghost uses a crisp
-five-by-four silhouette with bright, widely spaced eyes. Direction, ghost count and
-spacing, and travel/chomp rates remain deterministic and editable.
+five-by-four silhouette with bright, widely spaced eyes. A larger deterministic
+power pellet periodically turns every ghost blue and sends the train through a
+smooth run-away-and-return arc before normal pursuit resumes without a position
+jump. This mode change is deliberately clocked rather than audio-triggered, so
+musical peaks cannot make the chase unstable. Direction, ghost count and
+spacing, power timing, and travel/chomp rates remain deterministic and editable.
+
+The commissioned center-white pattern for `pacman` is a sparse travelling pill
+row. It remains independently gated: physical pill accents occur only through
+explicit browser-live white enablement and the existing onset, 0.10-second,
+4 Hz, level, blackout, lease-loss, and shutdown safeguards.
 
 `digital-rain` uses a sparse deterministic column mask. Bright pale-green heads
 move from logical row 0 toward row 3, leave short darker tails, disappear for a

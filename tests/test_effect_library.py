@@ -333,7 +333,7 @@ class EffectLibraryTests(unittest.TestCase):
             )
             for y in range(4):
                 frame.append(effect.sample(
-                    global_x % 12, y, 12, 4, 6.0, fixture, parameters,
+                    global_x % 12, y, 12, 4, 5.5, fixture, parameters,
                     self.context,
                 ))
 
@@ -353,6 +353,73 @@ class EffectLibraryTests(unittest.TestCase):
             color.red > 0.5 and color.green > 0.5 and color.blue > 0.5
             for color in frame
         ))
+
+    def test_pacman_power_pellet_is_stable_and_ghosts_reverse_blue(self) -> None:
+        effect = EFFECT_REGISTRY.get("pacman")
+        parameters = EFFECT_REGISTRY.parameters("pacman", {
+            "palette": "ember", "direction": "left-right",
+            "power_interval": 14.0, "fright_seconds": 3.5,
+        })
+
+        def blue_centroid(animation_time: float) -> float:
+            weighted = 0.0
+            total = 0.0
+            for global_x in range(24):
+                fixture = FixtureIdentity(
+                    "Cube A" if global_x < 12 else "Cube B",
+                    global_x // 12, 2,
+                )
+                for y in range(4):
+                    color = effect.sample(
+                        global_x % 12, y, 12, 4, animation_time, fixture,
+                        parameters, self.context,
+                    )
+                    if color.blue > 0.35 and color.blue > color.red * 2:
+                        weighted += global_x * color.blue
+                        total += color.blue
+            self.assertGreater(total, 0.0)
+            return weighted / total
+
+        normal = []
+        for global_x in range(24):
+            fixture = FixtureIdentity(
+                "Cube A" if global_x < 12 else "Cube B", global_x // 12, 2
+            )
+            for y in range(4):
+                normal.append(effect.sample(
+                    global_x % 12, y, 12, 4, 5.5, fixture, parameters,
+                    self.context,
+                ))
+        self.assertTrue(any(
+            color.red > 0.5 and color.green < 0.15 and color.blue < 0.15
+            for color in normal
+        ))
+        power_pellet = effect.sample(
+            7, 1, 12, 4, 5.0, FixtureIdentity("Cube B", 1, 2),
+            parameters, self.context,
+        )
+        self.assertGreater(power_pellet.red, 0.5)
+        self.assertGreater(power_pellet.green, 0.5)
+        self.assertGreater(power_pellet.blue, 0.3)
+        self.assertGreater(blue_centroid(6.1), blue_centroid(6.7))
+
+        first = [
+            effect.sample(
+                x % 12, y, 12, 4, 6.7,
+                FixtureIdentity("Cube A" if x < 12 else "Cube B", x // 12, 2),
+                parameters, self.context,
+            )
+            for x in range(24) for y in range(4)
+        ]
+        second = [
+            effect.sample(
+                x % 12, y, 12, 4, 6.7,
+                FixtureIdentity("Cube A" if x < 12 else "Cube B", x // 12, 2),
+                parameters, self.context,
+            )
+            for x in range(24) for y in range(4)
+        ]
+        self.assertEqual(first, second)
 
     def test_digital_rain_is_sparse_and_heads_move_downward(self) -> None:
         effect = EFFECT_REGISTRY.get("digital-rain")

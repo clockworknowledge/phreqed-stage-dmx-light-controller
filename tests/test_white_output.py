@@ -56,6 +56,7 @@ class WhiteOutputTests(unittest.TestCase):
         self.assertEqual(select_white_pattern(("dynamic-wave",)), "wave")
         self.assertEqual(select_white_pattern(("inside-out-vu",)), "vu")
         self.assertEqual(select_white_pattern(("sprite-parade",)), "glint")
+        self.assertEqual(select_white_pattern(("pacman",)), "pellets")
         self.assertEqual(select_white_pattern(("plasma", "rings")), "bloom")
         self.assertEqual(select_white_pattern(("unknown-effect",)), "dark")
 
@@ -98,6 +99,17 @@ class WhiteOutputTests(unittest.TestCase):
         )
         self.assertGreater(sum(map(sum, peak.values())), sum(map(sum, quiet.values())))
         self.assertNotEqual(peak, quiet)
+
+    def test_pacman_pills_move_deterministically_across_white_parts(self) -> None:
+        fixtures = load_config().fixtures
+        first = animated_white_pattern(fixtures, "pellets", 1.0)
+        repeated = animated_white_pattern(fixtures, "pellets", 1.0)
+        later = animated_white_pattern(fixtures, "pellets", 2.0)
+        self.assertEqual(first, repeated)
+        self.assertNotEqual(first, later)
+        self.assertTrue(any(
+            value > 0.2 for parts in first.values() for value in parts
+        ))
 
     def test_segmented_patterns_are_deterministic_bounded_and_fixture_independent(self) -> None:
         fixtures = load_config().fixtures

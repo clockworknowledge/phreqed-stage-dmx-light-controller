@@ -612,6 +612,8 @@ def _pacman_chase(
     travel_rate = parameters.number("travel_rate")
     ghost_count = int(round(parameters.number("ghost_count")))
     ghost_spacing = parameters.number("ghost_spacing")
+    power_interval = parameters.number("power_interval")
+    fright_seconds = parameters.number("fright_seconds")
     direction = parameters.choice("direction")
     trailing_span = radius + ghost_spacing * ghost_count
     path_length = total_width + radius * 2.0 + trailing_span + 2.0
@@ -621,6 +623,26 @@ def _pacman_chase(
     if direction == "right-left":
         facing = -1.0
         center_x = total_width - 1 - progress
+
+    # The power-pellet cycle is deliberately clocked rather than audio-driven.
+    # A larger pellet remains fixed on the path while Pac-Man approaches it,
+    # then the ghosts turn blue and make one smooth run-away-and-return arc.
+    # The sine offset is zero at both boundaries, so normal chase motion resumes
+    # without a position jump.
+    power_phase = t % power_interval
+    fright_start = min(6.0, power_interval - fright_seconds)
+    fright_end = fright_start + fright_seconds
+    frightened = fright_start <= power_phase < fright_end
+    fright_elapsed = power_phase - fright_start if frightened else 0.0
+    run_away = (
+        math.sin(math.pi * fright_elapsed / fright_seconds) * 6.0
+        if frightened else 0.0
+    )
+    pellet_approach = 2.0
+    power_pellet_visible = fright_start - pellet_approach <= power_phase < fright_start
+    power_pellet_x = center_x + facing * (
+        radius + 0.55 + (fright_start - power_phase) * travel_rate
+    )
 
     center_y = (height - 1) / 2
     dx = (global_x - center_x) * facing
@@ -657,14 +679,28 @@ def _pacman_chase(
     level = parameters.number("brightness")
     eye_columns = (1, 3)
     for ghost_index in range(ghost_count):
-        ghost_center = center_x - facing * ghost_spacing * (ghost_index + 1)
+        ghost_center = (
+            center_x - facing * ghost_spacing * (ghost_index + 1)
+            - facing * run_away
+        )
         center_pixel = math.floor(ghost_center + 0.5)
         ghost_x = global_x - center_pixel + 2
         if not 0 <= ghost_x < 5 or ghost_rows[ghost_y][ghost_x] != "#":
             continue
         if ghost_y == 1 and ghost_x in eye_columns:
             return NormalizedRGB(0.88, 0.92, 1.0).scaled(level * 0.9)
-        return ghost_colors[ghost_index % len(ghost_colors)].scaled(level * 0.82)
+        body_color = (
+            NormalizedRGB(0.08, 0.18, 1.0)
+            if frightened else ghost_colors[ghost_index % len(ghost_colors)]
+        )
+        return body_color.scaled(level * 0.82)
+
+    if (
+        power_pellet_visible
+        and abs(global_x - power_pellet_x) < 0.8
+        and abs(dy) < 0.8
+    ):
+        return NormalizedRGB(1.0, 0.92, 0.62).scaled(level * 0.9)
 
     ahead = (global_x - center_x) * facing
     dot_spacing = parameters.number("dot_spacing")
@@ -969,6 +1005,8 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("dot_spacing", "Dot spacing", 3.0, 2.0, 6.0, 0.25, "Distance between path dots"),
             number("ghost_count", "Ghosts", 3.0, 1.0, 4.0, 1.0, "Number of coloured ghosts following Pac-Man"),
             number("ghost_spacing", "Ghost spacing", 5.0, 4.0, 8.0, 0.5, "Cells between following ghosts"),
+            number("power_interval", "Power-pellet interval", 14.0, 10.0, 24.0, 0.5, "Deterministic seconds between power pellets"),
+            number("fright_seconds", "Frightened duration", 3.5, 2.0, 6.0, 0.5, "Seconds ghosts turn blue and run away"),
         ), brightness=0.72), _pacman_chase),
         ProceduralEffect(_metadata("blinking-eye", "Blinking Eye", "A stylized eye opens, watches, and blinks on each fixture.", "sprite", (
             number("blink_rate", "Blink rate", 0.32, 0.08, 1.5, 0.02, "Complete blink cycles per animation second"),

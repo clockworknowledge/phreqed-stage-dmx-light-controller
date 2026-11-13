@@ -32,6 +32,7 @@ WHITE_PATTERN_LABELS = {
     "wave": "Flowing wave crest",
     "vu": "Inside-out level peak",
     "glint": "Sprite glint",
+    "pellets": "Arcade pill chase",
 }
 
 _EFFECT_PATTERNS = {
@@ -60,7 +61,7 @@ _EFFECT_PATTERNS = {
     "inside-out-vu": "vu",
     "blinking-eye": "glint",
     "sprite-parade": "glint",
-    "pacman": "glint",
+    "pacman": "pellets",
 }
 
 _PATTERN_PRIORITY = {
@@ -69,6 +70,7 @@ _PATTERN_PRIORITY = {
     "wave": 0,
     "vu": 0,
     "glint": 1,
+    "pellets": 1,
     "energy": 2,
     "collision": 3,
     "blades": 3,
@@ -303,6 +305,15 @@ def _global_pattern(
     if pattern_id == "glint":
         center = (animation_time * 1.7) % part_count
         return tuple(_smooth_peak(x, center, 0.72) for x in range(part_count))
+    if pattern_id == "pellets":
+        # Three restrained pill points travel across the joined white strips.
+        # Physical output remains subject to the independent onset limiter, so
+        # this spatial pattern cannot create sustained or unrestricted whites.
+        head = (animation_time * 2.2) % (part_count + 4.0) - 2.0
+        return tuple(min(0.82, sum(
+            gain * _smooth_peak(x, head - spacing, 0.48)
+            for gain, spacing in ((0.82, 0.0), (0.48, 4.0), (0.3, 8.0))
+        )) for x in range(part_count))
     raise ValueError(f"unknown white animation pattern: {pattern_id}")
 
 

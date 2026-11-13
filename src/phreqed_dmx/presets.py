@@ -493,6 +493,8 @@ EXAMPLE_PRESETS = (
                     "dot_spacing": 3.0,
                     "ghost_count": 3.0,
                     "ghost_spacing": 5.0,
+                    "power_interval": 14.0,
+                    "fright_seconds": 3.5,
                 },
             ),
         ),
