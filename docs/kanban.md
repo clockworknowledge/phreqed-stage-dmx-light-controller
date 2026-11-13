@@ -28,6 +28,12 @@ The planned Song Builder and setlist work is sequenced in
 [`song-setlist-roadmap.md`](song-setlist-roadmap.md). Its sprint numbers express
 dependency order; the cards below remain the source of truth for status.
 
+The planned separation between the show-critical Stage appliance and the
+browser-based Studio authoring application is sequenced in
+[`studio-stage-roadmap.md`](studio-stage-roadmap.md). That roadmap contains the
+detailed user stories, package/sync rules, and sprint acceptance. The cards
+below remain independently movable and are the source of truth for status.
+
 ## In progress
 
 No active implementation.
@@ -143,9 +149,16 @@ backup, and schema-migration gates are documented in
 [`relate-ai-memory-spike.md`](relate-ai-memory-spike.md). Relate is not installed
 and the JSON libraries remain authoritative.
 
-Acceptance remaining: ARM64 installation, memory and 25 FPS coexistence,
-durability/recovery, read-only MCP, migration, and removable JSON export. A
-failure is a no-go for on-Pi deployment and does not block show control.
+The Studio/Stage boundary makes the Studio host the preferred first adoption
+target. The graph may help Studio recall and reconcile relationships, but
+revisioned packages and reviewed change sets remain the sync protocol. An
+optional Pi sidecar is a separate optimization and never a Stage dependency.
+
+Acceptance remaining: on the selected Studio host, record installation,
+memory, durability/recovery, read-only MCP, migration, and removable JSON
+export. If an on-Pi sidecar is still pursued, also complete ARM64 installation
+and 25 FPS coexistence. A host-specific failure is a no-go for that deployment
+target and does not block show control or ordinary Studio publishing.
 
 ### OPS-005 — Prevent Pi suspend during managed shows (`P0`, reliability)
 
@@ -313,6 +326,212 @@ available, follow `docs/pi-script-import.md`: copy it into a new dated directory
 hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
+
+### STUDIO-000 — Phreqed Studio and Stage separation umbrella (`P1`, architecture)
+
+Separate advanced authoring from the show-critical runtime before lighting,
+video, projection, analysis, and AI workflows make the Stage application too
+complex. Phreqed Studio will own editable library history and publish immutable,
+validated show packages. Phreqed Stage will run an explicitly activated package
+and record bounded local changes in a separate adjustment journal for reviewed
+return sync.
+
+Children: `STUDIO-001`, `PUBLISH-001`, `SYNC-002`, `STUDIO-002`, `STUDIO-003`,
+`MEDIA-001`, `STUDIO-004`, `AI-DATA-002`, `STAGE-001`, and `STUDIO-005`.
+Existing `PROJ-001`, `PROJ-002`, `SHOW-002`, `VIDEO-001`, `AI-DATA-001`,
+`ANALYSIS-001`, and `AI-SONG-001` remain linked implementation or research
+cards rather than being duplicated. Detailed user stories and Sprints 0-8 are
+in [`studio-stage-roadmap.md`](studio-stage-roadmap.md).
+
+Umbrella acceptance: one complete Studio -> package -> Stage -> local
+adjustment -> reviewed Studio revision loop passes over LAN and removable media;
+the previous package can be restored; projection failure remains isolated; and
+Stage starts and runs a lighting-only show with Studio, graph, and media services
+absent.
+
+### STUDIO-001 — Shared domain identity and revision model (`P1`, architecture)
+
+Define stable IDs, object and library revisions, schema versions, origin
+identity, supersession metadata, and explicit migrations for shows, songs,
+setlists, looks, scenes, cues, fixtures, projection designs, and assets. Existing
+Pi `library.json`, `songs.json`, and `tuning-profiles.json` remain authoritative
+and must migrate without loss, live behavior changes, or overwrite.
+
+User outcome: designers retain references through edits, operators can identify
+the exact loaded revision, and maintainers can round-trip legacy libraries.
+
+Acceptance: core models stay independent of HTTP, graph, Art-Net, and media
+decode; duplicate IDs, broken references, revision regressions, unknown schemas,
+fixture overflow, and reserved-channel violations are rejected; migration is
+backed up, idempotent, and covered by representative legacy fixtures.
+
+Dependency: none. This is Sprint 0 and blocks all new Studio, package, sync, and
+graph-integration cards.
+
+### PUBLISH-001 — Immutable show package lifecycle (`P1`, deployment)
+
+Create deterministic package manifests containing show revisions, fixture
+requirements, cues, asset hashes, compatibility bounds, and integrity data.
+Stage imports packages into a staging area, validates them completely, activates
+only through an explicit stopped-output operation, and retains a known-good
+rollback package.
+
+User outcome: a designer sees errors before transfer, while an operator can
+import without affecting the current show, activate deliberately, and roll back
+using either trusted LAN or removable media.
+
+Acceptance: interrupted or rejected import leaves the active show unchanged;
+activation is blocked while output or a timeline is active and never starts
+playback; path traversal, unbounded archives, duplicate entries, executable
+content, missing assets, and incompatible fixtures are rejected.
+
+Dependency: `STUDIO-001`. Planned Sprint 1.
+
+### SYNC-002 — Stage adjustment journal and reviewed return sync (`P1`, synchronization)
+
+Record allowlisted venue changes separately from the immutable package. The
+first allowlist covers setlist order/omission, cue timing, bounded scene/master
+scaling, tuning-profile selection/copy, approved fixture substitution, and
+operator notes. Export the same change-set format over LAN or removable media.
+
+User outcome: performers can make necessary local corrections and designers can
+bring them back to Studio without silently overwriting newer work.
+
+Acceptance: every change records unit, package, base revision, object, old/new
+values, and time; corrupt journals are quarantined; Studio performs a three-way
+comparison and exposes clean changes and conflicts; every accept, reject, or
+manual resolution is explicit and accepted changes create a new revision.
+
+Dependencies: `STUDIO-001`, then `PUBLISH-001` for end-to-end transfer. Planned
+Sprint 2.
+
+### STUDIO-002 — Browser Studio foundation and authoring migration (`P1`, authoring)
+
+Build the desktop/browser Studio shell for library and show navigation, search,
+master-detail editing, autosaved drafts, validation, revision history, and
+explicit publish. Move songs, setlists, looks, scenes, and tuning-profile design
+into Studio through shared domain/validation code rather than duplicated
+controller logic.
+
+User outcome: show design receives a spacious dedicated application without
+live-output controls, and existing operators can import their current libraries
+instead of rebuilding them.
+
+Acceptance: Studio cannot construct `ArtNetSender` or acquire a Stage control
+lease; current libraries import and export through a normalized representation;
+representative workflows reach capability parity before any Stage authoring is
+deprecated; package publishing uses `PUBLISH-001`.
+
+Dependencies: `STUDIO-001`, `PUBLISH-001`. Planned Sprint 3.
+
+### STUDIO-003 — Lighting timeline and preview designer (`P1`, authoring)
+
+Provide a zoomable, multi-lane timeline with cue and scene lanes, selection
+inspector, snapping, keyboard/touch editing, undo/redo, copy/paste, validation
+markers, and injected-time simulator scrubbing. The shared clock can align a
+future projection lane without moving media work into the DMX renderer.
+
+User outcome: lighting designers can build and inspect a show visually without
+long forms, nested scrolling, or fixture output.
+
+Acceptance: preview cannot enable Art-Net, commissioned whites, or projector
+hardware; missing and superseded references are visible before publish; cues
+reference explicit immutable revisions or drafts; a lighting-only package is
+published and run before media integration begins.
+
+Dependencies: `STUDIO-001`, `STUDIO-002`. Planned Sprint 4.
+
+### MEDIA-001 — Content-addressed media asset library (`P1`, media)
+
+Store imported video, image, and later audio bytes outside the repository under
+an operator-configured asset root, addressed by content hash. Keep original
+names as display metadata and record size, type, duration/dimensions where
+available, provenance, and compatibility information.
+
+User outcome: designers can reuse and transfer assets without accidental
+duplicates, and Stage can prove all required media is present before activation.
+
+Acceptance: no remote URL or embedded command is executable; missing, changed,
+unsupported, and oversized assets fail package validation; asset removal is
+explicit and reference-aware; retained packages and revisions protect their
+assets from garbage collection.
+
+Dependencies: `STUDIO-001`, `PUBLISH-001`. Planned Sprint 5.
+
+### STUDIO-004 — Video and projection design surface (`P2`, media authoring)
+
+Add clips, stills, black frames, and projection presets to the unified Studio
+timeline, with preview controls for crop, fit, loop, opacity, fades, intensity,
+and bounded overlays. Reuse the existing projection runtime and unified-cue
+cards rather than creating a second playback architecture.
+
+User outcome: designers can prepare synchronized lighting and projection in one
+show while an absent or failed clip remains black and never delays lighting.
+
+Acceptance: the package manifest carries versioned projection interpretation
+and content-addressed asset references; preview and Stage agree on timing and
+fallback; a conservative test clip completes Studio publish and Pi playback;
+the simultaneous 25 FPS DMX soak retains its existing safety limits.
+
+Dependencies: `STUDIO-003`, `MEDIA-001`, `PROJ-001`, and the required subset of
+`SHOW-002`; later work uses `PROJ-002`. Planned Sprints 5-6.
+
+### AI-DATA-002 — Studio knowledge graph and agent-memory integration (`P2`, AI/data)
+
+Index Studio revisions, song analysis, sections, evidence, cue proposals,
+reviews, assets, packages, and returned Stage changes in an optional graph
+sidecar. Stable library IDs remain the join boundary, and authoritative Studio
+stores plus exported evidence must be sufficient to rebuild the graph.
+
+User outcome: designers can trace why a cue was proposed and how it relates to
+song structure and prior decisions, while reviewers can distinguish measured,
+generated, superseded, approved, and published information.
+
+Acceptance: one controlled writer and read-only agent access where possible;
+generated cues remain drafts requiring ordinary review and publish; JSON export
+and rebuild are tested; graph loss never blocks ordinary package publishing;
+media bytes, credentials, leases, and mutable Stage runtime state never enter
+the graph.
+
+Dependencies: `STUDIO-001` and the relevant `AI-DATA-001` feasibility gates.
+Parallel Sprint A after Sprint 0; linked to `ANALYSIS-001` and `AI-SONG-001`.
+
+### STAGE-001 — Runtime-focused Stage interface (`P1`, operations)
+
+After Studio reaches feature parity, focus the touchscreen on Perform, Shows,
+Adjust, Settings, and Operations. Shows manages installed packages, validation,
+activation, and rollback. Adjust exposes only `SYNC-002` changes and clearly
+marks them as unreviewed differences from the published revision.
+
+User outcome: performers see only stage-critical controls, while technicians
+retain bounded local correction and existing users are not cut off during the
+transition.
+
+Acceptance: activation remains stopped-output-only; local adjustments cannot
+raise ceilings or auto-arm whites; persistent blackout and local-only operations
+remain unchanged; Setlist/Build authoring is hidden or removed only after
+migration, publish, rollback, adjustment, and return-sync evidence is recorded.
+
+Dependencies: `STUDIO-002`, `PUBLISH-001`, `SYNC-002`. Planned Sprint 7.
+
+### STUDIO-005 — End-to-end Studio/Stage release validation (`P0`, release)
+
+Validate the complete design, package, transfer, activation, rehearsal, local
+correction, return sync, republish, and rollback lifecycle. Include lighting-only
+operation, media/projection operation, and operation with Studio and graph
+services unavailable.
+
+User outcome: an operator has a documented, recoverable workflow from show
+design through performance and back to the authoritative library.
+
+Acceptance: exercise LAN/removable-media transfer, interrupted and invalid
+imports, clean and conflicting sync, corrupt journal recovery, missing media,
+player crash, projector disconnect, package rollback, and all existing
+automated/Chromium/Pi/25 FPS/lease/blackout/white/reserved-channel/kiosk/shutdown
+suites. Publish the operating handbook before reducing Stage authoring.
+
+Dependencies: all `STUDIO-000` children plus the linked projection cards used by
+the first release. Planned Sprint 8.
 
 ### RIG-001 — Multi-fixture and multi-universe expansion (`P2`, scaling)
 

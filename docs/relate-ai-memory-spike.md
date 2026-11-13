@@ -10,6 +10,13 @@ existing atomic `library.json` and `songs.json` stores remain authoritative,
 and only reviewed, explicitly published cue sheets may cross into live-show
 data.
 
+The planned Studio/Stage split makes the Studio workstation the preferred first
+host. Relate may index library revisions, package manifests, analysis evidence,
+and returned Stage adjustment change sets, but it does not replicate Stage
+state or perform synchronization. Immutable packages and explicit reviewed
+change sets remain the transfer boundary described in
+[`studio-stage-roadmap.md`](studio-stage-roadmap.md).
+
 This boundary is architectural, not temporary. Relate holds the complete graph
 in RAM, one process owns a writable store, and there is no replication or
 cluster failover. Those properties fit one analysis tool on one Pi or
