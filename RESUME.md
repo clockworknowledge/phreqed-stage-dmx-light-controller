@@ -4,7 +4,7 @@ Last updated: 2026-11-13
 
 ## Current checkpoint -- Adaptive touchscreen and multi-surface control
 
-The shared stage-control application now has Perform, Setlist, Build, Tune, and
+The shared stage-control application now has Perform, Setlist, Build, Settings, and
 Operations workspaces across the 1280 x 800 Waveshare target, phones, and
 desktop browsers. Perform contains manual/setlist transport, master brightness,
 compact fixture previews, structured health, output state, and persistent
@@ -12,8 +12,10 @@ blackout in one touchscreen viewport. Chromium measured document and viewport
 height at exactly 800 pixels with no Perform overflow; a 390 x 844 phone exposed
 all workspace tabs and the Operations boundary with zero console errors.
 
-Songs, cue sheets, and ordered setlists now have their own top-level Setlist
-workspace; Build contains only Looks and Scenes. Tune now provides immutable
+Songs and cue sheets now use a full-width touch screen inside the top-level
+Setlist workspace; ordered setlist editing is a separate full-width screen so
+neither builder is compressed into a split pane. Build contains only Looks and
+Scenes. Settings now provides immutable
 Rehearsal (25%), Small Stage (49%, approximately three quarters of the safe
 range), and Large Stage (65%, the full persistent safe range) profiles plus
 atomic user profiles. Applying a profile cannot unlock Show power or raise a
@@ -29,7 +31,7 @@ allowlists; they are absent unless explicit `live --web` local-operation
 authority is enabled, and network mutation is blocked while output or a song
 timeline is active.
 
-Windows Python 3.12 now passes 241 tests. The software work is in Validation
+Windows Python 3.12 now passes 242 tests. The software work is in Validation
 pending the Raspberry Pi touch, Chromium
 crash/restart, blank/wake, NetworkManager, backlight, service-order, and guarded
 shutdown run in `docs/touchscreen-control-roadmap.md`. `OPS-005` remains in

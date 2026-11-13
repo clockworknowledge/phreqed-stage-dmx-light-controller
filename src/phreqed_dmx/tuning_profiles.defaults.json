@@ -10,6 +10,7 @@
       "audio_auto_level": true,
       "deep_dim_enabled": false,
       "quiet_floor": 0.03,
+      "white_preview_enabled": false,
       "white_threshold": 0.75,
       "white_preview_level": 0.6,
       "white_output_level": 0.03
@@ -23,6 +24,7 @@
       "audio_auto_level": true,
       "deep_dim_enabled": false,
       "quiet_floor": 0.03,
+      "white_preview_enabled": true,
       "white_threshold": 0.7,
       "white_preview_level": 0.75,
       "white_output_level": 0.05
@@ -36,6 +38,7 @@
       "audio_auto_level": true,
       "deep_dim_enabled": false,
       "quiet_floor": 0.03,
+      "white_preview_enabled": true,
       "white_threshold": 0.65,
       "white_preview_level": 0.9,
       "white_output_level": 0.08

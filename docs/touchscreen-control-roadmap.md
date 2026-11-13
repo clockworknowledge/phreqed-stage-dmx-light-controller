@@ -13,15 +13,16 @@ viewport is 1280 x 800 landscape. The shared application has five workspaces:
   output state, health, and blackout in one view. Setlist mode replaces scene
   transport with current/next song, progress, remaining time, and explicit
   start/stop. Selection never starts playback.
-- **Setlist** contains Songs, cue-sheet authoring, and the ordered Setlist
-  master-detail workflow.
+- **Setlist** separates Songs/cue-sheet authoring and ordered Setlist editing
+  into two full-width touch screens. Neither workflow shares a compressed split
+  pane with the other.
 - **Build** contains searchable Looks and the focused manual Scene editor.
   Editors are panels or drawers rather than one long stack of unrelated controls.
-- **Tune** contains RGB power, contrast, browser-only preview brightness, audio
+- **Settings** contains RGB power, contrast, browser-only preview brightness, audio
   response, segmented whites, venue tuning profiles, and the live-output
   boundary. Rehearsal is 25%, Small Stage is 49% (approximately three quarters
   of the persistent safe range), and Large Stage is the full persistent 65%
-  range. Atomic user profiles capture the current bounded Tune settings.
+  range. Atomic user profiles capture the current bounded Settings values.
 - **Operations** contains structured health, local display brightness, four
   fixed network actions, recovery status, and confirmed clean shutdown.
 
@@ -34,13 +35,16 @@ At 1280 x 800 and 100% zoom, automated Chromium inspection records a document
 height of 800 pixels, a viewport height of 800 pixels, and equal Perform
 workspace scroll/client heights. Perform therefore has no vertical scroll.
 The 390 x 844 layout exposes all five workspaces, persistent blackout, and
-reachable Build/Tune/Operations controls. Both layouts produced zero browser
+reachable Build/Settings/Operations controls. Both layouts produced zero browser
 console errors in simulation.
 
 ## Interaction and accessibility contract
 
 - Primary actions have a minimum 56-pixel touch target; other buttons are at
   least 52 pixels and stage transport is 62 pixels.
+- Scrollbars use a 20-pixel touch target, native select controls are avoided for
+  frequently used profile selection, and Settings controls are at least 56
+  pixels high.
 - Every state has text as well as color. The health strip and detailed health
   view report `healthy`, `warning`, `offline`, or `unknown` semantics.
 - Keyboard focus is visible. Every action is a button, input, or select; no
@@ -93,7 +97,7 @@ separate exact `SHUTDOWN` confirmation and helper.
 3. **Trusted kiosk control:** implemented with automated lease tests; Pi
    Chromium crash, blank/wake, and service-order tests remain.
 4. **Browser and authoring parity:** implemented and browser-validated.
-5. **Tune and local Operations:** implemented; Pi backlight and NetworkManager
+5. **Settings and local Operations:** implemented; Pi backlight and NetworkManager
    helper validation remains.
 6. **Hardware hardening:** not complete. The display must not become
    show-critical until the acceptance run below is recorded.

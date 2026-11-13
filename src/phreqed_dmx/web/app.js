@@ -10,6 +10,7 @@ const surface = new URLSearchParams(location.search).get('surface');
 const localHost = ['127.0.0.1', 'localhost', '::1', '[::1]'].includes(location.hostname);
 const leaseId = globalThis.crypto?.randomUUID?.() || `browser-${Date.now()}-${Math.random().toString(16).slice(2)}`;
 let currentWorkspace = 'perform', pendingWorkspace = null, pendingBuildTab = 'looks';
+let pendingSetlistPanel = 'songs', tuningProfileDirty = false;
 let pendingNetworkAction = null;
 let pendingTuningProfileId = null;
 function savedMonitorBrightness() {
@@ -35,11 +36,23 @@ function option(select, value, text) { const o = node('option', text); o.value =
 function applyBuildTab(name) {
   pendingBuildTab = name;
   for (const e of document.querySelectorAll('.build-panel')) e.hidden = e.id !== name;
-  for (const e of document.querySelectorAll('.tab')) {
+  for (const e of document.querySelectorAll('[data-tab]')) {
     const active = e.dataset.tab === name;
     e.classList.toggle('active', active);
     e.setAttribute('aria-selected', String(active));
   }
+}
+function applySetlistPanel(name) {
+  pendingSetlistPanel = name;
+  for (const panel of document.querySelectorAll('[data-setlist-panel-content]')) {
+    panel.hidden = panel.dataset.setlistPanelContent !== name;
+  }
+  for (const button of document.querySelectorAll('[data-setlist-panel]')) {
+    const active = button.dataset.setlistPanel === name;
+    button.classList.toggle('active', active);
+    button.setAttribute('aria-selected', String(active));
+  }
+  window.scrollTo({top: 0, behavior: 'smooth'});
 }
 function showWorkspace(name, force = false) {
   if (!force && state?.live && currentWorkspace === 'perform' && name !== 'perform') {
@@ -55,6 +68,7 @@ function showWorkspace(name, force = false) {
   }
   currentWorkspace = name;
   if (name === 'build') applyBuildTab(pendingBuildTab);
+  if (name === 'setlist') applySetlistPanel(pendingSetlistPanel);
   window.scrollTo({top: 0, behavior: 'smooth'});
   return true;
 }
@@ -62,7 +76,8 @@ function tab(name) {
   pendingBuildTab = name;
   if (showWorkspace('build')) applyBuildTab(name);
 }
-for (const e of document.querySelectorAll('.tab')) e.addEventListener('click', () => tab(e.dataset.tab));
+for (const e of document.querySelectorAll('[data-tab]')) e.addEventListener('click', () => tab(e.dataset.tab));
+for (const e of document.querySelectorAll('[data-setlist-panel]')) e.addEventListener('click', () => applySetlistPanel(e.dataset.setlistPanel));
 for (const e of document.querySelectorAll('.workspace-tab')) e.addEventListener('click', () => showWorkspace(e.dataset.workspace));
 function fillPresets(select, selected) { select.replaceChildren(); for (const p of catalog.presets.filter(p => p.builtin || catalog.library.presets.some(u => u.preset_id === p.preset_id))) option(select, p.preset_id, p.name); if (selected) select.value = selected; }
 async function loadCatalog() { catalog = await request('/api/catalog'); renderCatalog(); }
@@ -94,17 +109,35 @@ function renderTuningProfileSelection() {
   const profile=tuningProfileById($('tuning-profile').value);
   if(!profile)return;
   $('tuning-profile-description').textContent=profile.description||'Saved operator tuning profile.';
-  $('tuning-profile-summary').textContent=`RGB master ${Math.round(profile.master_level*100)}% · contrast ${profile.contrast.toFixed(2)}x · white level ${Math.round(profile.white_output_level*100)}% · onset ${Math.round(profile.white_threshold*100)}%`;
-  $('update-tuning-profile').disabled=Boolean(profile.builtin);
+  $('tuning-profile-summary').textContent=`RGB master ${Math.round(profile.master_level*100)}% · contrast ${profile.contrast.toFixed(2)}x · white preview ${profile.white_preview_enabled?'on':'off'} · prepared white ${Math.round(profile.white_output_level*100)}% · onset ${Math.round(profile.white_threshold*100)}%`;
+  for(const choice of $('tuning-profile-choices').querySelectorAll('[data-profile-id]')){
+    const active=choice.dataset.profileId===profile.profile_id;
+    choice.classList.toggle('active',active);
+    choice.setAttribute('aria-selected',String(active));
+  }
+  const applied=state?.active_tuning_profile_id===profile.profile_id&&!tuningProfileDirty;
+  $('tuning-profile-state').textContent=tuningProfileDirty
+    ? 'Settings changed · save them or reapply the selected profile.'
+    : applied ? 'Applied to the current controller settings.' : 'Selected · press Apply profile to use these values.';
+  $('apply-tuning-profile').textContent=applied?'Applied':'Apply profile';
+  $('apply-tuning-profile').disabled=applied;
+  $('update-tuning-profile').textContent=profile.builtin?'Save changed copy':'Save changes';
+  $('update-tuning-profile').disabled=!tuningProfileDirty;
   $('delete-tuning-profile').disabled=Boolean(profile.builtin);
 }
 function renderTuningProfiles() {
-  const select=$('tuning-profile'),previous=state?.active_tuning_profile_id||select.value||'rehearsal';
-  select.replaceChildren();
-  for(const profile of catalog?.tuning_profiles||[])option(select,profile.profile_id,`${profile.name}${profile.builtin?' · built-in':''}`);
+  const select=$('tuning-profile'),previous=(tuningProfileDirty?select.value:state?.active_tuning_profile_id)||select.value||'rehearsal';
+  const choices=$('tuning-profile-choices');choices.replaceChildren();
+  for(const profile of catalog?.tuning_profiles||[]){
+    const choice=button(profile.name,()=>{select.value=profile.profile_id;tuningProfileDirty=false;renderTuningProfileSelection();},'profile-choice');
+    choice.dataset.profileId=profile.profile_id;choice.setAttribute('role','option');
+    if(profile.builtin)choice.append(node('small','BUILT-IN'));
+    choices.append(choice);
+  }
   select.value=tuningProfileById(previous)?previous:'rehearsal';
   renderTuningProfileSelection();
 }
+function markTuningProfileDirty(){tuningProfileDirty=true;renderTuningProfileSelection();}
 function tuningProfileSnapshot(profileId,name,description='') {
   const audio=state?.audio||{},white=state?.white_preview||{};
   return {
@@ -114,6 +147,7 @@ function tuningProfileSnapshot(profileId,name,description='') {
     audio_auto_level:Boolean(audio.auto_level_enabled),
     deep_dim_enabled:Boolean(audio.deep_dim_enabled),
     quiet_floor:Number(audio.quiet_floor??.03),
+    white_preview_enabled:Boolean(white.enabled),
     white_threshold:Number(white.threshold??.65),
     white_preview_level:Number(white.level??.8),
     white_output_level:Math.min(.10,Number(white.output_level??.05)),
@@ -172,6 +206,7 @@ function renderState(s) {
   $('stage-power-label').textContent = `${s.rgb_power_mode === 'show' ? 'Show' : 'Rehearsal'} power · ${s.control_leases?.active || 0} control lease${s.control_leases?.active === 1 ? '' : 's'}`;
   $('current-look').textContent = s.active_name || 'Custom look';
   $('master').max = s.brightness_ceiling;
+  $('settings-master').max = s.brightness_ceiling;
   $('brightness-ceiling').textContent = `${Math.round(s.brightness_ceiling*100)}%`;
   $('live-warning').textContent = s.rgb_power_mode === 'show'
     ? `HIGH-OUTPUT MODE: the RGB ceiling is ${Math.round(s.brightness_ceiling*100)}%. Confirm the fixtures are safely positioned, people nearby are warned, and QLC+ blackout is available. Output still starts at 25% brightness or lower.`
@@ -188,9 +223,11 @@ function renderState(s) {
         ? `Rehearsal power active · ${Math.round(s.rehearsal_power_ceiling*100)}% ceiling. Select Show only after the room and fixtures are ready.`
         : `Rehearsal power active · ${Math.round(s.rehearsal_power_ceiling*100)}% ceiling. Start live output before unlocking show power.`;
   if (document.activeElement !== $('master')) { $('master').value = s.brightness; $('master-value').textContent = `${Math.round(s.brightness*100)}%`; }
+  if (document.activeElement !== $('settings-master')) $('settings-master').value = s.brightness;
+  $('settings-master-value').textContent = `${Math.round(s.brightness*100)}%`;
   if (document.activeElement !== $('contrast')) $('contrast').value = s.contrast ?? 1;
   $('contrast-value').textContent = `${(s.contrast ?? 1).toFixed(2)}x`;
-  if(s.active_tuning_profile_id&&document.activeElement!==$('tuning-profile')&&tuningProfileById(s.active_tuning_profile_id)){
+  if(!tuningProfileDirty&&s.active_tuning_profile_id&&tuningProfileById(s.active_tuning_profile_id)){
     $('tuning-profile').value=s.active_tuning_profile_id;
     renderTuningProfileSelection();
   }
@@ -224,7 +261,10 @@ function renderState(s) {
   $('performance-heading').textContent=setlistMode?'Setlist performance':'Manual scene control';
   if(performance.setlist_id&&document.activeElement!==$('performance-setlist'))$('performance-setlist').value=performance.setlist_id;
   $('performance-song-number').textContent=performance.song_index===null?'NO SONG SELECTED':`${String(performance.song_index+1).padStart(2,'0')} / ${String(performance.song_count).padStart(2,'0')}`;
-  $('performance-song-title').textContent=performance.song_title||'Choose a setlist';
+  const songTitle=$('performance-song-title'),songTitleText=performance.song_title||'Choose a setlist';
+  songTitle.textContent=songTitleText;
+  songTitle.classList.toggle('long-title',songTitleText.length>40&&songTitleText.length<=64);
+  songTitle.classList.toggle('very-long-title',songTitleText.length>64);
   const performanceMessage=!performance.song_title?'Selection and mode changes never start playback.':!performance.playable?'No published cue sheet. Publish one in Song Builder before starting.':performance.running?'Running prepared cue timeline.':performance.state==='complete'?'Setlist complete. Start restarts the selected final song.':performance.state==='armed'?'Armed and waiting for explicit start.':'Stopped. Start begins again from the first cue.';
   $('performance-song-detail').textContent=performanceMessage;
   $('performance-song-progress').max=Math.max(1,performance.duration_seconds);$('performance-song-progress').value=performance.elapsed_seconds;
@@ -257,7 +297,7 @@ function renderState(s) {
     : '';
   $('white-output-hint').textContent = highWhite
     ? 'This process was explicitly armed above the normal 10% ceiling. Pulses remain onset-thresholded, at most 0.10 seconds and 4 Hz, and stop on blackout, output stop, failure, or lease loss.'
-    : 'Every built-in scene has a curated eight-part-per-fixture accent. Physical whites require live output and this separate toggle. The default ceiling is 10%; pulses remain onset-thresholded, no more than 0.10 seconds or 4 Hz, and stop on blackout, mode change, output stop, failure, or lease loss.';
+    : 'White-strip preview and the prepared physical level can be stored without fixture output. Physical whites remain disarmed until explicit live output, configured audio, released blackout, and the separate output toggle. The default ceiling is 10%; pulses remain onset-thresholded, no more than 0.10 seconds or 4 Hz.';
   if (highWhite) {
     $('live-warning').textContent += ` HIGH-OUTPUT CENTER WHITES are also available up to ${Math.round(white.output_ceiling*100)}% and require their separate in-page toggle.`;
   }
@@ -272,7 +312,7 @@ function renderState(s) {
   $('white-threshold').disabled = !(white.enabled || white.output_enabled);
   $('white-level').disabled = !white.enabled;
   $('white-output').disabled = !white.output_available;
-  $('white-output-level').disabled = !white.output_available;
+  $('white-output-level').disabled = false;
   const whitePattern = white.pattern_name || 'Dark by design';
   $('white-preview-status').textContent = white.output_active_level > 0 ? `LIVE · ${whitePattern}` : white.output_enabled ? `Armed · ${whitePattern} · max ${Math.round(white.output_ceiling*100)}%` : white.commissioned ? `Preview · ${whitePattern}` : 'Physical output locked';
   const foot = s.foot_control || {enabled:false,connected:false,message:'Foot control disabled',messages_received:0,reconnects:0};
@@ -280,6 +320,7 @@ function renderState(s) {
   $('stage-audio-status').textContent = !audio.enabled ? 'Audio disabled' : audio.healthy ? 'Audio healthy' : 'Audio unavailable';
   $('stage-foot-status').textContent = !foot.enabled ? 'Pedal disabled' : foot.connected ? 'Pedal connected' : 'Pedal disconnected';
   document.querySelectorAll('[data-cue]').forEach(e => e.classList.toggle('active', Number(e.dataset.cue) === s.scene_index));
+  if(catalog)renderTuningProfileSelection();
   document.querySelectorAll('[data-preset]').forEach(e => e.classList.toggle('active', e.dataset.preset === s.preset_id));
   const frames = Object.entries(s.frames); const whiteParts=white.part_levels||{};
   if (frames[0]) draw($('cube-a'),frames[0][1],whiteParts[frames[0][0]]||[]);
@@ -488,7 +529,16 @@ $('previous-song').addEventListener('click',()=>act('previous_song'));
 $('next-song').addEventListener('click',()=>act('next_song'));
 $('toggle-song').addEventListener('click',()=>act(state?.performance?.running?'stop_song':'start_song'));
 $('quick-preset').addEventListener('change',e=>act('preset',{value:e.target.value}));
-$('tuning-profile').addEventListener('change',renderTuningProfileSelection);
+async function applyTuningProfile(profileId){
+  const profile=tuningProfileById(profileId);if(!profile)return;
+  const apply=$('apply-tuning-profile');apply.disabled=true;apply.textContent='Applying…';
+  try{
+    await command('apply_tuning_profile',{value:profileId});
+    tuningProfileDirty=false;
+    renderState(await request('/api/state'));
+    notify(`${profile.name} settings applied. Physical whites remain disarmed.`);
+  }catch(_){renderTuningProfileSelection();}
+}
 $('apply-tuning-profile').addEventListener('click',()=>{
   const profile=tuningProfileById($('tuning-profile').value);if(!profile)return;
   if(state?.live){
@@ -496,46 +546,50 @@ $('apply-tuning-profile').addEventListener('click',()=>{
     $('tuning-profile-dialog-title').textContent=`Apply ${profile.name} to live output?`;
     $('tuning-profile-dialog-detail').textContent=`Master changes to ${Math.round(profile.master_level*100)}% within the current ceiling, contrast to ${profile.contrast.toFixed(2)}x, and physical whites are disarmed.`;
     $('tuning-profile-dialog').showModal();
-  }else act('apply_tuning_profile',{value:profile.profile_id});
+  }else applyTuningProfile(profile.profile_id);
 });
 $('cancel-tuning-profile').addEventListener('click',()=>{pendingTuningProfileId=null;$('tuning-profile-dialog').close();});
-$('confirm-tuning-profile').addEventListener('click',()=>{const value=pendingTuningProfileId;pendingTuningProfileId=null;$('tuning-profile-dialog').close();if(value)act('apply_tuning_profile',{value});});
-$('save-tuning-profile').addEventListener('click',()=>{
-  const name=prompt('New tuning profile name')?.trim();if(!name)return;
-  const profile=tuningProfileSnapshot(slug('user-tune',name),name,'Saved from the current Tune controls.');
-  command('save_tuning_profile',{profile},true).then(()=>{$('tuning-profile').value=profile.profile_id;renderTuningProfileSelection();notify(`${name} saved.`);}).catch(()=>{});
-});
+$('confirm-tuning-profile').addEventListener('click',()=>{const value=pendingTuningProfileId;pendingTuningProfileId=null;$('tuning-profile-dialog').close();if(value)applyTuningProfile(value);});
+function saveTuningProfileAsNew(suggestedName=''){
+  const name=prompt('New settings profile name',suggestedName)?.trim();if(!name)return;
+  const profile=tuningProfileSnapshot(slug('user-tune',name),name,'Saved from the current Settings controls.');
+  command('save_tuning_profile',{profile},true).then(()=>{$('tuning-profile').value=profile.profile_id;tuningProfileDirty=false;renderTuningProfileSelection();notify(`${name} saved and active.`);}).catch(()=>{});
+}
+$('save-tuning-profile').addEventListener('click',()=>saveTuningProfileAsNew());
 $('update-tuning-profile').addEventListener('click',()=>{
-  const selected=tuningProfileById($('tuning-profile').value);if(!selected||selected.builtin)return;
+  const selected=tuningProfileById($('tuning-profile').value);if(!selected||!tuningProfileDirty)return;
+  if(selected.builtin){saveTuningProfileAsNew(`${selected.name} Custom`);return;}
   const profile=tuningProfileSnapshot(selected.profile_id,selected.name,selected.description);
-  command('save_tuning_profile',{profile},true).then(()=>notify(`${selected.name} updated.`)).catch(()=>{});
+  command('save_tuning_profile',{profile},true).then(()=>{tuningProfileDirty=false;renderTuningProfileSelection();notify(`${selected.name} updated and active.`);}).catch(()=>{});
 });
 $('delete-tuning-profile').addEventListener('click',()=>{
   const selected=tuningProfileById($('tuning-profile').value);if(!selected||selected.builtin||!confirm(`Delete ${selected.name}?`))return;
   command('delete_tuning_profile',{value:selected.profile_id},true).then(()=>notify('Tuning profile deleted.')).catch(()=>{});
 });
-$('master').addEventListener('input',e=>{$('master-value').textContent=`${Math.round(e.target.value*100)}%`;});
+$('master').addEventListener('input',e=>{$('master-value').textContent=`${Math.round(e.target.value*100)}%`;markTuningProfileDirty();});
 $('master').addEventListener('change',e=>act('brightness',{value:Number(e.target.value)}));
-$('contrast').addEventListener('input',e=>{$('contrast-value').textContent=`${Number(e.target.value).toFixed(2)}x`;});
+$('settings-master').addEventListener('input',e=>{$('settings-master-value').textContent=`${Math.round(e.target.value*100)}%`;markTuningProfileDirty();});
+$('settings-master').addEventListener('change',e=>act('brightness',{value:Number(e.target.value)}));
+$('contrast').addEventListener('input',e=>{$('contrast-value').textContent=`${Number(e.target.value).toFixed(2)}x`;markTuningProfileDirty();});
 $('contrast').addEventListener('change',e=>act('contrast',{value:Number(e.target.value)}));
 const monitorBrightnessControl=$('monitor-brightness');
 monitorBrightnessControl.value=monitorBrightness;$('monitor-brightness-value').textContent=`${monitorBrightness.toFixed(2)}x`;
 monitorBrightnessControl.addEventListener('input',e=>{monitorBrightness=Number(e.target.value);$('monitor-brightness-value').textContent=`${monitorBrightness.toFixed(2)}x`;});
 monitorBrightnessControl.addEventListener('change',()=>{try{localStorage.setItem(MONITOR_BRIGHTNESS_KEY,String(monitorBrightness));}catch(_){}});
-$('audio-auto-level').addEventListener('change',e=>act('audio_auto_level',{enabled:e.target.checked}));
+$('audio-auto-level').addEventListener('change',e=>{markTuningProfileDirty();act('audio_auto_level',{enabled:e.target.checked});});
 function updateAudioDimming(){act('audio_dimming',{enabled:$('deep-dim').checked,floor:Number($('quiet-floor').value)});}
-$('deep-dim').addEventListener('change',updateAudioDimming);
-$('quiet-floor').addEventListener('input',e=>{$('quiet-floor-value').textContent=`${Math.round(e.target.value*100)}%`;});
+$('deep-dim').addEventListener('change',()=>{markTuningProfileDirty();updateAudioDimming();});
+$('quiet-floor').addEventListener('input',e=>{$('quiet-floor-value').textContent=`${Math.round(e.target.value*100)}%`;markTuningProfileDirty();});
 $('quiet-floor').addEventListener('change',updateAudioDimming);
 function updateWhitePreview(){act('white_preview',{enabled:$('white-preview').checked,threshold:Number($('white-threshold').value),level:Number($('white-level').value)});}
-$('white-preview').addEventListener('change',updateWhitePreview);
+$('white-preview').addEventListener('change',()=>{markTuningProfileDirty();updateWhitePreview();});
 for(const id of ['white-threshold','white-level']){
-  $(id).addEventListener('input',()=>{ $('white-threshold-value').textContent=`${Math.round($('white-threshold').value*100)}%`; $('white-level-value').textContent=`${Math.round($('white-level').value*100)}%`; });
+  $(id).addEventListener('input',()=>{ $('white-threshold-value').textContent=`${Math.round($('white-threshold').value*100)}%`; $('white-level-value').textContent=`${Math.round($('white-level').value*100)}%`; markTuningProfileDirty(); });
   $(id).addEventListener('change',updateWhitePreview);
 }
 function updateWhiteOutput(){act('white_output',{enabled:$('white-output').checked,level:Number($('white-output-level').value)});}
 $('white-output').addEventListener('change',updateWhiteOutput);
-$('white-output-level').addEventListener('input',e=>{$('white-output-level-value').textContent=`${Math.round(e.target.value*100)}%`;});
+$('white-output-level').addEventListener('input',e=>{$('white-output-level-value').textContent=`${Math.round(e.target.value*100)}%`;markTuningProfileDirty();});
 $('white-output-level').addEventListener('change',updateWhiteOutput);
 for(const [id,action] of Object.entries({prev:'previous_scene',next:'next_scene',play:'play',pause:'pause',tap:'tap','release-blackout':'resume','stop-live':'stop_live','stage-stop-live':'stop_live'})) $(id).addEventListener('click',()=>act(action));
 // Blackout bypasses the edit queue so a pending save cannot delay it.

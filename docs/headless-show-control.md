@@ -218,7 +218,7 @@ the no-screen show interface. Keep a tested Ampero blackout action, and retain
 QLC+ blackout as the final software safety layer.
 
 The local touchscreen uses the same adaptive controller and feature set. Its
-Perform workspace is the stage-distance view; Setlist, Build, Tune, and Operations are
+Perform workspace is the stage-distance view; Setlist, Build, Settings, and Operations are
 separate workspaces, and live output requires confirmation before leaving
 Perform. See [`touchscreen-control-roadmap.md`](touchscreen-control-roadmap.md)
 for the Pi acceptance sequence. Until that sequence is recorded, treat the

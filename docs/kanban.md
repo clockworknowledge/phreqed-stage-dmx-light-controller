@@ -53,7 +53,7 @@ is not a display or live-show dependency.
 
 ### UX-001 — Adaptive stage-control information architecture (`P1`)
 
-Perform, Setlist, Build, Tune, and Operations now provide a shared capability
+Perform, Setlist, Build, Settings, and Operations now provide a shared capability
 model for touchscreen, phone, and desktop. The implementation uses 56-pixel primary touch
 targets, visible keyboard focus, text plus color for state, persistent blackout,
 and an explicit stage-lock confirmation before leaving Perform while live.
@@ -107,7 +107,7 @@ ordering, LCD blank/wake, and resource measurements on Raspberry Pi OS.
 ### WEB-003 — Browser authoring and tuning redesign (`P1`)
 
 Songs, cue sheets, and ordered Setlists have a top-level Setlist workspace.
-Build contains searchable Looks and the Scene editor. Tune groups RGB,
+Build contains searchable Looks and the Scene editor. Settings groups RGB,
 contrast, preview, audio, whites, persistent bounded venue profiles, and output
 controls. Phone and desktop share the same commands and application logic.
 

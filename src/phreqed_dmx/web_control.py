@@ -572,6 +572,7 @@ class BrowserControl:
             configure_auto_level(profile.audio_auto_level)
         self.white_preview_threshold = profile.white_threshold
         self.white_preview_level = profile.white_preview_level
+        self.white_peak_preview = profile.white_preview_enabled
         self.white_output_level = min(
             profile.white_output_level, self.white_output_ceiling
         )
@@ -779,6 +780,7 @@ class BrowserControl:
                 ]
                 document['profiles'].append(profile.as_dict())
                 self.tuning_profiles.save(document)
+                self.active_tuning_profile_id = profile.profile_id
                 self.notice = f'{profile.name} tuning profile saved.'
             elif action == 'delete_tuning_profile':
                 profile_id = data.get('value')

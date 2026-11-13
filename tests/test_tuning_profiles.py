@@ -28,6 +28,7 @@ class TuningProfileTests(unittest.TestCase):
             audio_auto_level=True,
             deep_dim_enabled=False,
             quiet_floor=0.03,
+            white_preview_enabled=True,
             white_threshold=0.7,
             white_preview_level=0.75,
             white_output_level=0.05,
@@ -49,7 +50,14 @@ class TuningProfileTests(unittest.TestCase):
         self.assertEqual(rehearsal.master_level, 0.25)
         self.assertAlmostEqual(small.master_level, large.master_level * 0.75, 2)
         self.assertEqual(large.master_level, 0.65)
+        self.assertTrue(small.white_preview_enabled)
         self.assertLessEqual(large.white_output_level, 0.10)
+
+    def test_legacy_profile_without_preview_flag_remains_compatible(self) -> None:
+        legacy = self.profile()
+        del legacy['white_preview_enabled']
+        parsed = parse_tuning_profile(legacy)
+        self.assertFalse(parsed.white_preview_enabled)
 
     def test_user_profiles_are_bounded_below_persistent_safety_limits(self) -> None:
         for key, value, message in (

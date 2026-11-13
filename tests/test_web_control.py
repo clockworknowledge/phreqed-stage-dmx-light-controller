@@ -415,7 +415,8 @@ class BrowserControlTests(unittest.TestCase):
             'stage-health', 'stage-start-live', 'stage-stop-live',
             'setup-dialog', 'health-detail-grid', 'display-levels',
             'network-dialog', 'tuning-profile', 'apply-tuning-profile',
-            'tuning-profile-dialog',
+            'tuning-profile-dialog', 'tuning-profile-choices',
+            'settings-master',
         ):
             self.assertIn(f'id="{control_id}"', html)
         self.assertIn('lease_id:leaseId', script)
@@ -424,6 +425,16 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn("localRequest({action,confirmation})", script)
         self.assertIn('--touch: 56px', touch)
         self.assertIn('grid-template-columns: repeat(5, minmax(0, 1fr))', touch)
+        self.assertIn('data-setlist-panel="songs"', html)
+        self.assertIn('data-setlist-panel="show-order"', html)
+        self.assertIn('<span>04</span>Settings', html)
+        self.assertIn('*::-webkit-scrollbar { width: 20px;', touch)
+        self.assertIn('.setlist-panel .build-song-grid { display: block;', touch)
+        self.assertIn('.song-now h1 {', touch)
+        self.assertIn('-webkit-line-clamp: 2', touch)
+        self.assertIn('.song-now h1.very-long-title', touch)
+        self.assertIn("songTitleText.length>64", script)
+        self.assertIn('White-strip preview and the prepared physical level can be stored', script)
         self.assertLess(html.index('id="setlist"'), html.index('id="songbuilder"'))
         self.assertLess(html.index('id="songbuilder"'), html.index('id="tune"'))
         self.assertNotIn('data-tab="songbuilder"', html)
@@ -444,6 +455,7 @@ class BrowserControlTests(unittest.TestCase):
         self.assertEqual(state['contrast'], 1.35)
         self.assertEqual(state['brightness_ceiling'], 0.65)
         self.assertEqual(state['rgb_power_mode'], 'rehearsal')
+        self.assertTrue(state['white_preview']['enabled'])
         self.assertFalse(state['white_preview']['output_enabled'])
         self.assertEqual(state['white_preview']['output_level'], 0.05)
 
@@ -453,6 +465,9 @@ class BrowserControlTests(unittest.TestCase):
         self.control.command(dict(
             action='save_tuning_profile', profile=custom
         ))
+        self.assertEqual(
+            self.control.state()['active_tuning_profile_id'], 'user-tune-club'
+        )
         restored = BrowserControl(Controller(load_config()), self.path)
         self.addCleanup(restored.close)
         self.assertIn(

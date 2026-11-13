@@ -44,6 +44,7 @@ class TuningProfile:
     audio_auto_level: bool
     deep_dim_enabled: bool
     quiet_floor: float
+    white_preview_enabled: bool
     white_threshold: float
     white_preview_level: float
     white_output_level: float
@@ -58,6 +59,7 @@ class TuningProfile:
             audio_auto_level=self.audio_auto_level,
             deep_dim_enabled=self.deep_dim_enabled,
             quiet_floor=self.quiet_floor,
+            white_preview_enabled=self.white_preview_enabled,
             white_threshold=self.white_threshold,
             white_preview_level=self.white_preview_level,
             white_output_level=self.white_output_level,
@@ -66,13 +68,19 @@ class TuningProfile:
 
 PROFILE_FIELDS = {
     'profile_id', 'name', 'description', 'master_level', 'contrast',
-    'audio_auto_level', 'deep_dim_enabled', 'quiet_floor', 'white_threshold',
-    'white_preview_level', 'white_output_level',
+    'audio_auto_level', 'deep_dim_enabled', 'quiet_floor',
+    'white_preview_enabled', 'white_threshold', 'white_preview_level',
+    'white_output_level',
 }
+LEGACY_PROFILE_FIELDS = PROFILE_FIELDS - {'white_preview_enabled'}
 
 
 def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
-    data = _fields(value, PROFILE_FIELDS)
+    if isinstance(value, dict) and set(value) == LEGACY_PROFILE_FIELDS:
+        data = dict(value)
+        data['white_preview_enabled'] = False
+    else:
+        data = _fields(value, PROFILE_FIELDS)
     profile_id = data['profile_id']
     pattern = r'[a-z][a-z0-9-]{0,63}' if builtin else r'user-tune-[a-z0-9-]{1,64}'
     if not isinstance(profile_id, str) or not re.fullmatch(pattern, profile_id):
@@ -88,7 +96,9 @@ def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
     description = data['description']
     if not isinstance(description, str) or len(description) > 500:
         raise ValueError('description must be text of at most 500 characters')
-    for key in ('audio_auto_level', 'deep_dim_enabled'):
+    for key in (
+        'audio_auto_level', 'deep_dim_enabled', 'white_preview_enabled'
+    ):
         if not isinstance(data[key], bool):
             raise ValueError(f'{key.replace("_", " ")} must be boolean')
     return TuningProfile(
@@ -102,6 +112,7 @@ def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
         audio_auto_level=data['audio_auto_level'],
         deep_dim_enabled=data['deep_dim_enabled'],
         quiet_floor=_number(data['quiet_floor'], 'quiet floor', 0.0, 0.25),
+        white_preview_enabled=data['white_preview_enabled'],
         white_threshold=_number(
             data['white_threshold'], 'white threshold', 0.1, 1.0
         ),
@@ -186,7 +197,11 @@ class TuningProfileLibrary:
 
     def save(self, value: object) -> None:
         profiles = self.validate(value)
-        encoded = json.dumps(value, indent=2, allow_nan=False) + '\n'
+        canonical = dict(
+            version=1,
+            profiles=[profile.as_dict() for profile in profiles.values()],
+        )
+        encoded = json.dumps(canonical, indent=2, allow_nan=False) + '\n'
         if len(encoded.encode('utf-8')) > 100_000:
             raise ValueError('tuning profile library exceeds 100 KB')
         self.path.parent.mkdir(parents=True, exist_ok=True)

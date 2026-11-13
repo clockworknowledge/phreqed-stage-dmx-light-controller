@@ -127,8 +127,9 @@ transport controls. The default library is stored outside the repository at
 `~/.local/share/phreqed-dmx/library.json`.
 
 The controller is now one adaptive application with **Perform**, **Setlist**,
-**Build**, **Tune**, and **Operations** workspaces. Setlist owns songs, cue
-sheets, and ordered setlists; Build is reserved for looks and manual scenes.
+**Build**, **Settings**, and **Operations** workspaces. Setlist separates the
+full-width Song Builder from the ordered-show builder; Build is reserved for
+looks and manual scenes.
 The 1280 x 800 touchscreen Perform
 view keeps stage transport, master, health, fixture previews, output state, and
 blackout in one non-scrolling viewport; phones receive compact bottom
@@ -144,13 +145,13 @@ uses the existing five-second fail-dark path. Kiosk startup and local
 operations are explicit Pi deployment options and are never enabled by browser
 simulation.
 
-Tune includes immutable **Rehearsal**, **Small Stage**, and **Large Stage**
+Settings includes immutable **Rehearsal**, **Small Stage**, and **Large Stage**
 profiles. Rehearsal restores the recommended 25% starting master, Small Stage
 uses approximately three quarters of the persistent safe range (49%), and
 Large Stage uses the complete persistent safe range (65%). Profiles also group
 contrast, audio-dimming, onset, and prepared white-level settings. Applying a
 profile never unlocks Show power, raises a ceiling, or arms physical whites.
-Configure the Tune controls and choose **Save current as new** to create an
+Configure the Settings controls and choose **Save as new** to create an
 atomic user profile in `tuning-profiles.json`; built-ins cannot be overwritten
 or deleted. The three built-ins come from the package-owned
 `tuning_profiles.defaults.json`; upgrades replace that read-only baseline but
