@@ -49,3 +49,16 @@ if systemctl cat phreqed-dmx.service >/dev/null 2>&1; then
 else
     echo "No phreqed-dmx.service is installed; no running controller was restarted."
 fi
+
+# Reload an already-running touchscreen so it receives the updated HTML, CSS,
+# and JavaScript. Do not start the optional kiosk on a headless installation.
+if systemctl cat phreqed-kiosk.service >/dev/null 2>&1 \
+        && sudo systemctl is-active --quiet phreqed-kiosk.service; then
+    echo "Restarting the active Phreqed touchscreen kiosk"
+    sudo systemctl restart phreqed-kiosk.service
+    if ! sudo systemctl is-active --quiet phreqed-kiosk.service; then
+        echo "ERROR: phreqed-kiosk.service did not become active after update." >&2
+        sudo systemctl status phreqed-kiosk.service --no-pager >&2 || true
+        exit 1
+    fi
+fi
