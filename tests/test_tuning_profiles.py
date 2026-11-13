@@ -32,6 +32,7 @@ class TuningProfileTests(unittest.TestCase):
             white_threshold=0.7,
             white_preview_level=0.75,
             white_output_level=0.05,
+            show_on_perform=False,
         )
 
     def test_builtin_stage_scales_are_safe_and_ordered(self) -> None:
@@ -51,6 +52,7 @@ class TuningProfileTests(unittest.TestCase):
         self.assertAlmostEqual(small.master_level, large.master_level * 0.75, 2)
         self.assertEqual(large.master_level, 0.65)
         self.assertTrue(small.white_preview_enabled)
+        self.assertTrue(small.show_on_perform)
         self.assertLessEqual(large.white_output_level, 0.10)
 
     def test_legacy_profile_without_preview_flag_remains_compatible(self) -> None:
@@ -58,6 +60,27 @@ class TuningProfileTests(unittest.TestCase):
         del legacy['white_preview_enabled']
         parsed = parse_tuning_profile(legacy)
         self.assertFalse(parsed.white_preview_enabled)
+
+    def test_legacy_profile_without_perform_shortcut_remains_compatible(self) -> None:
+        legacy = self.profile()
+        del legacy['show_on_perform']
+        parsed = parse_tuning_profile(legacy)
+        self.assertFalse(parsed.show_on_perform)
+
+    def test_at_most_two_user_profiles_may_appear_on_perform(self) -> None:
+        profiles = []
+        for index in range(3):
+            profile = self.profile()
+            profile.update(
+                profile_id=f'user-tune-club-{index}',
+                name=f'Club {index}',
+                show_on_perform=True,
+            )
+            profiles.append(profile)
+        with self.assertRaisesRegex(ValueError, 'at most two'):
+            TuningProfileLibrary(self.path).validate(
+                dict(version=1, profiles=profiles)
+            )
 
     def test_user_profiles_are_bounded_below_persistent_safety_limits(self) -> None:
         for key, value, message in (

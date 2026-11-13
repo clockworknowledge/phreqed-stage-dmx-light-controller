@@ -139,8 +139,10 @@ blackout in one non-scrolling viewport. The playing song keeps a prominent time
 bar with elapsed and remaining time, while Start live and Stop output share the
 bottom safety row with blackout. Setlist is the startup mode, large
 Setlist/Manual buttons replace the former mode dropdown, and the bottom stage
-bar exposes the three venue profiles plus the separately gated center-white
-control. Phones receive compact bottom
+bar exposes the three built-in venue profiles plus up to two saved custom
+shortcuts. Touch-sized minus/plus controls adjust the prepared center-white
+level in one-percent steps; the adjacent output button remains separately gated
+and level adjustment never arms physical whites. Phones receive compact bottom
 navigation and desktops receive denser split editors. The same show and
 authoring capabilities remain available on every surface. Only display and
 network operating-system actions are loopback-only. See
@@ -168,7 +170,9 @@ profile never unlocks Show power, raises a ceiling, or arms physical whites.
 Configure the Settings controls and choose **Save as new** to create an
 atomic user profile in `tuning-profiles.json`; built-ins cannot be overwritten
 or deleted. Select an existing user profile and use **Save to _profile_** to
-update it in place. Small Stage prepares the commissioned center whites at 5%;
+update it in place. Mark up to two custom profiles **Show on Perform** to add
+them beside the three built-in stage shortcuts. Small Stage prepares the
+commissioned center whites at 5%;
 their Perform-bar action remains disabled until explicit live output, audio,
 and the other white-output gates are satisfied. The three built-ins come from the package-owned
 `tuning_profiles.defaults.json`; upgrades replace that read-only baseline but

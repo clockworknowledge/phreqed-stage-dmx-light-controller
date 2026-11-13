@@ -48,6 +48,7 @@ class TuningProfile:
     white_threshold: float
     white_preview_level: float
     white_output_level: float
+    show_on_perform: bool
 
     def as_dict(self) -> dict:
         return dict(
@@ -63,6 +64,7 @@ class TuningProfile:
             white_threshold=self.white_threshold,
             white_preview_level=self.white_preview_level,
             white_output_level=self.white_output_level,
+            show_on_perform=self.show_on_perform,
         )
 
 
@@ -70,17 +72,21 @@ PROFILE_FIELDS = {
     'profile_id', 'name', 'description', 'master_level', 'contrast',
     'audio_auto_level', 'deep_dim_enabled', 'quiet_floor',
     'white_preview_enabled', 'white_threshold', 'white_preview_level',
-    'white_output_level',
+    'white_output_level', 'show_on_perform',
 }
-LEGACY_PROFILE_FIELDS = PROFILE_FIELDS - {'white_preview_enabled'}
+OPTIONAL_LEGACY_FIELDS = {'white_preview_enabled', 'show_on_perform'}
 
 
 def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
-    if isinstance(value, dict) and set(value) == LEGACY_PROFILE_FIELDS:
-        data = dict(value)
-        data['white_preview_enabled'] = False
-    else:
-        data = _fields(value, PROFILE_FIELDS)
+    if not isinstance(value, dict):
+        raise ValueError(f'expected fields: {", ".join(sorted(PROFILE_FIELDS))}')
+    missing = PROFILE_FIELDS - set(value)
+    unexpected = set(value) - PROFILE_FIELDS
+    if unexpected or missing - OPTIONAL_LEGACY_FIELDS:
+        raise ValueError(f'expected fields: {", ".join(sorted(PROFILE_FIELDS))}')
+    data = dict(value)
+    data.setdefault('white_preview_enabled', False)
+    data.setdefault('show_on_perform', builtin)
     profile_id = data['profile_id']
     pattern = r'[a-z][a-z0-9-]{0,63}' if builtin else r'user-tune-[a-z0-9-]{1,64}'
     if not isinstance(profile_id, str) or not re.fullmatch(pattern, profile_id):
@@ -97,7 +103,8 @@ def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
     if not isinstance(description, str) or len(description) > 500:
         raise ValueError('description must be text of at most 500 characters')
     for key in (
-        'audio_auto_level', 'deep_dim_enabled', 'white_preview_enabled'
+        'audio_auto_level', 'deep_dim_enabled', 'white_preview_enabled',
+        'show_on_perform',
     ):
         if not isinstance(data[key], bool):
             raise ValueError(f'{key.replace("_", " ")} must be boolean')
@@ -123,6 +130,7 @@ def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
             data['white_output_level'], 'white output level',
             0.01, MAX_SAVED_WHITE,
         ),
+        show_on_perform=data['show_on_perform'],
     )
 
 
@@ -190,6 +198,8 @@ class TuningProfileLibrary:
         if not isinstance(data['profiles'], list) or len(data['profiles']) > 20:
             raise ValueError('tuning library must contain at most 20 profiles')
         parsed = [parse_tuning_profile(item) for item in data['profiles']]
+        if sum(profile.show_on_perform for profile in parsed) > 2:
+            raise ValueError('at most two user tuning profiles may appear on Perform')
         profiles = {profile.profile_id: profile for profile in parsed}
         if len(profiles) != len(parsed):
             raise ValueError('duplicate user tuning profile IDs')

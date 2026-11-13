@@ -14,8 +14,11 @@ viewport is 1280 x 800 landscape. The shared application has five workspaces:
   transport with current/next song, a prominent playing-song time bar, elapsed
   and remaining time, and explicit start/stop. Start live and Stop output share
   the bottom safety row with blackout. Setlist is the startup mode, selected
-  through large mode buttons. A bottom action bar exposes venue profiles and
-  the separately gated white output action. Selection never starts playback.
+  through large mode buttons. A bottom action bar exposes the three built-in
+  venue profiles, up to two operator-selected custom profile shortcuts, and
+  touch-sized prepared-white level controls beside the separately gated white
+  output action. Selection and level adjustment never arm physical whites or
+  start playback.
 - **Setlist** separates Songs/cue-sheet authoring and ordered Setlist editing
   into two full-width touch screens. Neither workflow shares a compressed split
   pane with the other. Running orders can be copied. The focused timeline

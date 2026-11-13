@@ -13,7 +13,8 @@
       "white_preview_enabled": false,
       "white_threshold": 0.75,
       "white_preview_level": 0.6,
-      "white_output_level": 0.03
+      "white_output_level": 0.03,
+      "show_on_perform": true
     },
     {
       "profile_id": "small-stage",
@@ -27,7 +28,8 @@
       "white_preview_enabled": true,
       "white_threshold": 0.7,
       "white_preview_level": 0.75,
-      "white_output_level": 0.05
+      "white_output_level": 0.05,
+      "show_on_perform": true
     },
     {
       "profile_id": "large-stage",
@@ -41,7 +43,8 @@
       "white_preview_enabled": true,
       "white_threshold": 0.65,
       "white_preview_level": 0.9,
-      "white_output_level": 0.08
+      "white_output_level": 0.08,
+      "show_on_perform": true
     }
   ]
 }

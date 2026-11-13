@@ -10,8 +10,11 @@ desktop browsers. Perform contains manual/setlist transport, master brightness,
 compact fixture previews, structured health, output state, and persistent
 blackout in one touchscreen viewport. Perform starts in Setlist mode with large
 Setlist/Manual buttons, keeps a prominent playing-song time bar with elapsed and
-remaining time, and adds a bottom venue-profile/white-output bar. Start live and
-Stop output now sit in the bottom safety row beside blackout.
+remaining time, and adds a bottom venue-profile/white-output bar. The bar keeps
+the three built-in venue shortcuts, accepts up to two explicitly selected custom
+profiles, and provides touch-sized prepared-white minus/plus controls without
+arming physical output. Start live and Stop output now sit in the bottom safety
+row beside blackout.
 Chromium measured document and viewport
 height at exactly 800 pixels with no Perform overflow; a 390 x 844 phone exposed
 all workspace tabs and the Operations boundary with zero console errors.

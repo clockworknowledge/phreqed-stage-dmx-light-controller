@@ -421,6 +421,7 @@ class BrowserControlTests(unittest.TestCase):
             'settings-master',
             'scene-dialog', 'song-dialog', 'close-timeline',
             'copy-setlist', 'stage-profile-choices', 'stage-white-output',
+            'stage-white-down', 'stage-white-up', 'profile-show-on-perform',
             'safety-bar', 'stage-live-actions', 'song-cue-duration',
         ):
             self.assertIn(f'id="{control_id}"', html)
@@ -447,11 +448,15 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn("$('scene-dialog').show()", script)
         self.assertIn("saveSongDocument(document,'Setlist copied.')", script)
         self.assertIn('Save to ${profile.name}', script)
+        self.assertIn("item.builtin||item.show_on_perform", script)
+        self.assertIn("adjustStageWhite(-.01)", script)
+        self.assertIn("adjustStageWhite(.01)", script)
         self.assertIn('.task-dialog { position: fixed;', touch)
         self.assertIn("moveSongCue(song,sheet,index,-1)", script)
         self.assertIn("moveSongCue(song,sheet,index,1)", script)
         self.assertIn('Changing this duration adjusts the next scene', script)
         self.assertIn('.safety-live-actions button { min-width: 132px;', touch)
+        self.assertIn('.safety-bar > .safety-live-actions { flex: 1 1 0;', touch)
         self.assertLess(html.index('id="safety-bar"'), html.index('id="stage-start-live"'))
         self.assertLess(html.index('id="stage-stop-live"'), html.index('id="blackout"'))
         self.assertLess(html.index('id="setlist"'), html.index('id="songbuilder"'))

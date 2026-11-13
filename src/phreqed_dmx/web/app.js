@@ -129,7 +129,8 @@ function renderTuningProfileSelection() {
   const profile=tuningProfileById($('tuning-profile').value);
   if(!profile)return;
   $('tuning-profile-description').textContent=profile.description||'Saved operator tuning profile.';
-  $('tuning-profile-summary').textContent=`RGB master ${Math.round(profile.master_level*100)}% · contrast ${profile.contrast.toFixed(2)}x · white preview ${profile.white_preview_enabled?'on':'off'} · prepared white ${Math.round(profile.white_output_level*100)}% · onset ${Math.round(profile.white_threshold*100)}%`;
+  $('tuning-profile-summary').textContent=`RGB master ${Math.round(profile.master_level*100)}% · contrast ${profile.contrast.toFixed(2)}x · white preview ${profile.white_preview_enabled?'on':'off'} · prepared white ${Math.round(profile.white_output_level*100)}% · onset ${Math.round(profile.white_threshold*100)}% · Perform ${profile.show_on_perform?'shortcut':'hidden'}`;
+  if(!tuningProfileDirty)$('profile-show-on-perform').checked=Boolean(profile.show_on_perform);
   for(const choice of $('tuning-profile-choices').querySelectorAll('[data-profile-id]')){
     const active=choice.dataset.profileId===profile.profile_id;
     choice.classList.toggle('active',active);
@@ -159,7 +160,9 @@ function renderTuningProfiles() {
 }
 function renderStageProfiles(){
   const choices=$('stage-profile-choices');choices.replaceChildren();
-  for(const profile of (catalog?.tuning_profiles||[]).filter(item=>item.builtin).slice(0,3)){
+  const profiles=(catalog?.tuning_profiles||[]).filter(item=>item.builtin||item.show_on_perform);
+  choices.style.setProperty('--stage-profile-count',Math.max(3,profiles.length));
+  for(const profile of profiles){
     const choice=button(profile.name,()=>requestTuningProfileApply(profile),'stage-profile-choice');
     choice.dataset.stageProfileId=profile.profile_id;
     choices.append(choice);
@@ -181,6 +184,7 @@ function tuningProfileSnapshot(profileId,name,description='') {
     white_threshold:Number(white.threshold??.65),
     white_preview_level:Number(white.level??.8),
     white_output_level:Math.min(.10,Number(white.output_level??.05)),
+    show_on_perform:Boolean($('profile-show-on-perform').checked),
   };
 }
 function draw(canvas, rows, whiteLevels = []) {
@@ -349,6 +353,8 @@ function renderState(s) {
   $('white-output').disabled = !white.output_available;
   $('white-output-level').disabled = false;
   const stageWhite=$('stage-white-output');
+  $('stage-white-down').disabled=white.output_level<=.0101;
+  $('stage-white-up').disabled=white.output_level>=white.output_ceiling-.0001;
   stageWhite.disabled=!white.output_available&&!white.output_enabled;
   stageWhite.classList.toggle('active',Boolean(white.output_enabled));
   stageWhite.textContent=white.output_enabled
@@ -674,6 +680,7 @@ function saveTuningProfileAsNew(suggestedName=''){
   command('save_tuning_profile',{profile},true).then(()=>{$('tuning-profile').value=profile.profile_id;tuningProfileDirty=false;renderTuningProfileSelection();notify(`${name} saved and active.`);}).catch(()=>{});
 }
 $('save-tuning-profile').addEventListener('click',()=>saveTuningProfileAsNew());
+$('profile-show-on-perform').addEventListener('change',markTuningProfileDirty);
 $('update-tuning-profile').addEventListener('click',()=>{
   const selected=tuningProfileById($('tuning-profile').value);if(!selected||!tuningProfileDirty)return;
   if(selected.builtin){saveTuningProfileAsNew(`${selected.name} Custom`);return;}
@@ -708,6 +715,13 @@ for(const id of ['white-threshold','white-level']){
 function updateWhiteOutput(){act('white_output',{enabled:$('white-output').checked,level:Number($('white-output-level').value)});}
 $('white-output').addEventListener('change',updateWhiteOutput);
 $('stage-white-output').addEventListener('click',()=>act('white_output',{enabled:!Boolean(state?.white_preview?.output_enabled),level:Number(state?.white_preview?.output_level??.05)}));
+function adjustStageWhite(delta){
+  const white=state?.white_preview||{},minimum=.01,maximum=Number(white.output_ceiling??.10),current=Number(white.output_level??.05),level=Math.max(minimum,Math.min(maximum,Math.round((current+delta)*100)/100));
+  if(Math.abs(level-current)<.001)return;
+  markTuningProfileDirty();act('white_output',{enabled:Boolean(white.output_enabled),level});
+}
+$('stage-white-down').addEventListener('click',()=>adjustStageWhite(-.01));
+$('stage-white-up').addEventListener('click',()=>adjustStageWhite(.01));
 $('white-output-level').addEventListener('input',e=>{$('white-output-level-value').textContent=`${Math.round(e.target.value*100)}%`;markTuningProfileDirty();});
 $('white-output-level').addEventListener('change',updateWhiteOutput);
 for(const [id,action] of Object.entries({prev:'previous_scene',next:'next_scene',play:'play',pause:'pause',tap:'tap','release-blackout':'resume','stop-live':'stop_live','stage-stop-live':'stop_live'})) $(id).addEventListener('click',()=>act(action));

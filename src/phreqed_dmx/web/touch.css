@@ -45,18 +45,18 @@ button.primary { min-height: var(--touch); }
 .stage-primary { display: flex; flex-direction: column; }
 .setlist-stage, .manual-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .setlist-picker { max-width: 330px; }
-.song-now { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; }
-.song-number, .scene-kicker { color: var(--accent); font-size: 13px; letter-spacing: .16em; font-weight: 750; margin-bottom: 8px; }
+.song-now { flex: 1; display: flex; flex-direction: column; justify-content: center; min-height: 0; overflow: hidden; padding: 14px 20px 12px; margin: 10px 0; }
+.song-number, .scene-kicker { color: var(--accent); font-size: 12px; line-height: 1.2; letter-spacing: .14em; font-weight: 750; margin-bottom: 5px; padding-inline: 2px; }
 .song-now h1 { flex-shrink: 0; font-size: clamp(28px, 3.3vw, 50px); line-height: 1.02; letter-spacing: -.04em; white-space: normal; overflow-wrap: anywhere; text-wrap: balance; display: -webkit-box; -webkit-box-orient: vertical; -webkit-line-clamp: 2; overflow: hidden; }
 .song-now h1.long-title { font-size: clamp(24px, 2.5vw, 36px); }
 .song-now h1.very-long-title { font-size: clamp(19px, 1.9vw, 28px); letter-spacing: -.02em; -webkit-line-clamp: 3; }
 .manual-stage h1 { font-size: clamp(34px, 4vw, 58px); line-height: 1; letter-spacing: -.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stage-detail { color: var(--muted); margin-top: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.song-progress { flex: 0 0 18px; display: block; width: 100%; height: 18px; margin-top: 18px; appearance: none; -webkit-appearance: none; overflow: hidden; border: 1px solid #465346; border-radius: 999px; background: #0b100d; accent-color: var(--accent); }
+.song-progress { flex: 0 0 16px; display: block; width: 100%; height: 16px; margin-top: 10px; appearance: none; -webkit-appearance: none; overflow: hidden; border: 1px solid #465346; border-radius: 999px; background: #0b100d; accent-color: var(--accent); }
 .song-progress::-webkit-progress-bar { background: #0b100d; border-radius: 999px; }
 .song-progress::-webkit-progress-value { background: linear-gradient(90deg, #8fcf68, var(--accent)); border-radius: 999px; box-shadow: 0 0 12px #c7ef8e66; }
 .song-progress::-moz-progress-bar { background: linear-gradient(90deg, #8fcf68, var(--accent)); border-radius: 999px; }
-.song-times { display: flex; justify-content: space-between; color: var(--text); font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; }
+.song-times { display: flex; justify-content: space-between; padding: 3px 2px 0; color: var(--text); font-size: 12px; line-height: 1.2; font-weight: 650; font-variant-numeric: tabular-nums; }
 .next-song { min-height: 28px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .next-song span { color: var(--accent); font-size: 10px; letter-spacing: .14em; margin-right: 8px; }
 .stage-transport { margin: 8px 0 0; }
@@ -79,13 +79,16 @@ button.primary { min-height: var(--touch); }
 .compact-action { min-height: 40px; padding: 7px 11px; }
 .mini-status { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 11px; color: var(--muted); }
 .mini-status span { padding: 9px; background: #111713; border-radius: 8px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
-.compact-hint { margin-top: auto; }
+.compact-hint { flex: 0 0 auto; margin: 6px 0 0; font-size: 10px; line-height: 1.25; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stage-profile-bar { flex: 0 0 62px; min-height: 62px; display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 10px; align-items: center; margin-top: 10px; padding: 6px 10px; border: 1px solid var(--line); border-radius: 12px; background: #111713; }
 .stage-profile-label { color: var(--muted); font-size: 10px; font-weight: 750; letter-spacing: .14em; }
-.stage-profile-choices { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 7px; }
+.stage-profile-choices { display: grid; grid-template-columns: repeat(var(--stage-profile-count, 3), minmax(0, 1fr)); gap: 7px; }
 .stage-profile-choices button { min-height: 48px; padding: 8px 10px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .stage-profile-choices button.active { color: var(--accent); border-color: var(--accent); background: #243020; }
-#stage-white-output { min-width: 150px; min-height: 48px; }
+.stage-white-controls { display: grid; grid-template-columns: 48px minmax(132px, auto) 48px; gap: 6px; }
+.stage-white-controls button { min-width: 0; min-height: 48px; padding: 7px 9px; }
+.stage-white-controls > #stage-white-down, .stage-white-controls > #stage-white-up { font-size: 23px; line-height: 1; }
+#stage-white-output { min-height: 48px; }
 #stage-white-output.active { color: #21140d; background: var(--warn); border-color: var(--warn); }
 
 .build-nav { display: flex; gap: 12px; border-bottom: 1px solid var(--line); margin-bottom: 18px; }
@@ -191,7 +194,7 @@ button.primary { min-height: var(--touch); }
   .stage-profile-bar { display: block; margin-bottom: 12px; padding: 10px; }
   .stage-profile-label { display: block; margin-bottom: 7px; }
   .stage-profile-choices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
-  #stage-white-output { width: 100%; margin-top: 7px; }
+  .stage-white-controls { grid-template-columns: 56px minmax(0, 1fr) 56px; width: 100%; margin-top: 7px; }
   .workspace-heading h1 { font-size: 34px; }
   .workspace-heading > div > p:last-child { font-size: 12px; }
   .build-nav { overflow-x: auto; }
@@ -218,7 +221,7 @@ button.primary { min-height: var(--touch); }
   .safety-bar { min-height: 82px; flex-wrap: nowrap; }
   .safety-bar > div { min-width: 0; }
   .safety-bar.perform-controls .safety-status { display: none; }
-  .safety-live-actions { flex: 1; }
+  .safety-bar > .safety-live-actions { flex: 1 1 0; }
   .safety-live-actions button { min-width: 0; width: 100%; padding: 8px; }
   .safety-bar.perform-controls > #release-blackout, .safety-bar.perform-controls > .blackout { flex: 1; min-width: 0; padding: 8px; }
   .safety-bar small { display: none; }
