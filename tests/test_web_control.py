@@ -32,6 +32,7 @@ class BrowserControlTests(unittest.TestCase):
         self.path = Path(self.temp.name) / 'library.json'
         self.controller = Controller(load_config())
         self.control = BrowserControl(self.controller, self.path)
+        self.control.command(dict(action='performance_mode', mode='manual'))
         self.addCleanup(self.control.close)
 
     def preset(self):
@@ -106,6 +107,7 @@ class BrowserControlTests(unittest.TestCase):
             Controller(load_config(), audio_source=source), self.path
         )
         self.addCleanup(control.close)
+        control.command(dict(action='performance_mode', mode='manual'))
 
         self.assertTrue(control.state()['audio']['auto_level_available'])
         self.assertTrue(control.state()['audio']['auto_level_enabled'])
@@ -194,8 +196,8 @@ class BrowserControlTests(unittest.TestCase):
         self.assertEqual(restored.catalog()['song_library'], document)
         self.assertIsNone(restored.sender)
         performance = restored.state()['performance']
-        self.assertEqual(performance['mode'], 'manual')
-        self.assertEqual(performance['state'], 'inactive')
+        self.assertEqual(performance['mode'], 'setlist')
+        self.assertEqual(performance['state'], 'armed')
         self.assertFalse(performance['running'])
 
     def test_song_library_rejects_unknown_presets_and_protects_references(self):
@@ -417,6 +419,8 @@ class BrowserControlTests(unittest.TestCase):
             'network-dialog', 'tuning-profile', 'apply-tuning-profile',
             'tuning-profile-dialog', 'tuning-profile-choices',
             'settings-master',
+            'scene-dialog', 'song-dialog', 'close-timeline',
+            'copy-setlist', 'stage-profile-choices', 'stage-white-output',
         ):
             self.assertIn(f'id="{control_id}"', html)
         self.assertIn('lease_id:leaseId', script)
@@ -435,6 +439,12 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn('.song-now h1.very-long-title', touch)
         self.assertIn("songTitleText.length>64", script)
         self.assertIn('White-strip preview and the prepared physical level can be stored', script)
+        self.assertIn('data-performance-mode="setlist"', html)
+        self.assertIn("$('timeline-editor').show()", script)
+        self.assertIn("$('scene-dialog').show()", script)
+        self.assertIn("saveSongDocument(document,'Setlist copied.')", script)
+        self.assertIn('Save to ${profile.name}', script)
+        self.assertIn('.task-dialog { position: fixed;', touch)
         self.assertLess(html.index('id="setlist"'), html.index('id="songbuilder"'))
         self.assertLess(html.index('id="songbuilder"'), html.index('id="tune"'))
         self.assertNotIn('data-tab="songbuilder"', html)
@@ -468,6 +478,16 @@ class BrowserControlTests(unittest.TestCase):
         self.assertEqual(
             self.control.state()['active_tuning_profile_id'], 'user-tune-club'
         )
+        custom['master_level'] = 0.35
+        self.control.command(dict(
+            action='save_tuning_profile', profile=custom
+        ))
+        saved = [
+            profile for profile in self.control.catalog()['tuning_profiles']
+            if profile['profile_id'] == 'user-tune-club'
+        ]
+        self.assertEqual(len(saved), 1)
+        self.assertEqual(saved[0]['master_level'], 0.35)
         restored = BrowserControl(Controller(load_config()), self.path)
         self.addCleanup(restored.close)
         self.assertIn(
@@ -478,6 +498,26 @@ class BrowserControlTests(unittest.TestCase):
             self.control.command(dict(
                 action='delete_tuning_profile', value='rehearsal'
             ))
+
+    def test_small_stage_prepares_low_white_level_but_needs_explicit_arm(self):
+        source = ManualAudioAnalysisSource(
+            AudioAnalysis(0.3, 0.9, FrequencyBands(0.4, 0.2, 0.2))
+        )
+        control = BrowserControl(
+            Controller(load_config(), audio_source=source),
+            self.path,
+            allow_live=True,
+        )
+        self.addCleanup(control.close)
+        control.command(dict(action='apply_tuning_profile', value='small-stage'))
+        white = control.state()['white_preview']
+        self.assertEqual(white['output_level'], 0.05)
+        self.assertFalse(white['output_enabled'])
+        with patch('phreqed_dmx.web_control.ArtNetSender'):
+            control.command(dict(action='start_live'))
+            self.assertTrue(control.state()['white_preview']['output_available'])
+            control.command(dict(action='white_output', enabled=True, level=0.05))
+            self.assertTrue(control.state()['white_preview']['output_enabled'])
 
     def test_stage_monitor_brightness_is_browser_only_and_persistent(self):
         html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
@@ -602,6 +642,7 @@ class BrowserControlTests(unittest.TestCase):
             Controller(load_config(), audio_source=source), self.path, allow_live=True
         )
         self.addCleanup(control.close)
+        control.command(dict(action='performance_mode', mode='manual'))
         control.command(dict(action='audio_dimming', enabled=True, floor=0.02))
         control.command(dict(
             action='white_preview', enabled=True, threshold=0.65, level=0.8
@@ -635,6 +676,7 @@ class BrowserControlTests(unittest.TestCase):
             Controller(load_config(), audio_source=source), self.path
         )
         self.addCleanup(control.close)
+        control.command(dict(action='performance_mode', mode='manual'))
         with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
             control.command(dict(action='preset', value='wave-rider'))
             control.command(dict(
@@ -658,6 +700,7 @@ class BrowserControlTests(unittest.TestCase):
             Controller(load_config(), audio_source=source), self.path, allow_live=True
         )
         self.addCleanup(control.close)
+        control.command(dict(action='performance_mode', mode='manual'))
         with patch('phreqed_dmx.web_control.ArtNetSender'):
             control.command(dict(action='preset', value='blaster-sweep'))
             control.command(dict(action='start_live'))
@@ -680,6 +723,7 @@ class BrowserControlTests(unittest.TestCase):
             Controller(load_config(), audio_source=source), self.path, allow_live=True
         )
         self.addCleanup(control.close)
+        control.command(dict(action='performance_mode', mode='manual'))
         with self.assertRaisesRegex(ValueError, 'start explicit browser live'):
             control.command(dict(action='white_output', enabled=True, level=0.05))
 
@@ -730,6 +774,7 @@ class BrowserControlTests(unittest.TestCase):
             white_output_ceiling=0.60,
         )
         self.addCleanup(control.close)
+        control.command(dict(action='performance_mode', mode='manual'))
         state = control.state()['white_preview']
         self.assertEqual(state['output_ceiling'], 0.60)
         self.assertTrue(state['high_output'])
@@ -965,6 +1010,7 @@ class BrowserControlTests(unittest.TestCase):
     def test_live_frames_reserved_channels_and_blackout_override(self):
         control = BrowserControl(Controller(load_config()), self.path, allow_live=True)
         self.addCleanup(control.close)
+        control.command(dict(action='performance_mode', mode='manual'))
         with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
             control.command(dict(action='start_live'))
             control.command(dict(action='next_scene'))

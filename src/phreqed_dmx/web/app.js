@@ -1,6 +1,6 @@
 'use strict';
 const $ = id => document.getElementById(id);
-let token = '', catalog = null, state = null, draft = null, editingId = null, connected = false;
+let token = '', catalog = null, catalogFingerprint = '', state = null, draft = null, editingId = null, connected = false;
 let queue = Promise.resolve();
 let editingCue = null;
 let editingSongId = null, editingSongCueIndex = null, selectedSongId = null, selectedSetlistId = null;
@@ -13,6 +13,8 @@ let currentWorkspace = 'perform', pendingWorkspace = null, pendingBuildTab = 'lo
 let pendingSetlistPanel = 'songs', tuningProfileDirty = false;
 let pendingNetworkAction = null;
 let pendingTuningProfileId = null;
+const TOUCH_PAGE_SIZE=5;
+let presetPage=0,scenePage=0,songPage=0,songCuePage=0,setlistPage=0;
 function savedMonitorBrightness() {
   try { const value=Number(localStorage.getItem(MONITOR_BRIGHTNESS_KEY)); return value>=1&&value<=5 ? value : 2; }
   catch (_) { return 2; }
@@ -33,6 +35,12 @@ function command(action, data = {}, refresh = false) {
 function act(action, data = {}, refresh = false) { command(action, data, refresh).catch(() => {}); }
 function button(text, handler, className) { const e = node('button', text, className); e.type = 'button'; e.addEventListener('click', handler); return e; }
 function option(select, value, text) { const o = node('option', text); o.value = value; select.append(o); }
+function boundedPage(page,total){return Math.max(0,Math.min(page,Math.max(0,Math.ceil(total/TOUCH_PAGE_SIZE)-1)));}
+function renderPager(id,page,total,setPage){
+  const pager=$(id),pages=Math.max(1,Math.ceil(total/TOUCH_PAGE_SIZE));pager.replaceChildren();pager.hidden=pages<=1;if(pages<=1)return;
+  const previous=button('← Previous',()=>setPage(page-1)),status=node('span',`Page ${page+1} of ${pages}`),next=button('Next →',()=>setPage(page+1));
+  previous.disabled=page===0;next.disabled=page===pages-1;pager.append(previous,status,next);
+}
 function applyBuildTab(name) {
   pendingBuildTab = name;
   for (const e of document.querySelectorAll('.build-panel')) e.hidden = e.id !== name;
@@ -80,15 +88,28 @@ for (const e of document.querySelectorAll('[data-tab]')) e.addEventListener('cli
 for (const e of document.querySelectorAll('[data-setlist-panel]')) e.addEventListener('click', () => applySetlistPanel(e.dataset.setlistPanel));
 for (const e of document.querySelectorAll('.workspace-tab')) e.addEventListener('click', () => showWorkspace(e.dataset.workspace));
 function fillPresets(select, selected) { select.replaceChildren(); for (const p of catalog.presets.filter(p => p.builtin || catalog.library.presets.some(u => u.preset_id === p.preset_id))) option(select, p.preset_id, p.name); if (selected) select.value = selected; }
-async function loadCatalog() { catalog = await request('/api/catalog'); renderCatalog(); }
+async function loadCatalog() {
+  const next=await request('/api/catalog'),fingerprint=JSON.stringify(next);catalog=next;
+  if(fingerprint!==catalogFingerprint){catalogFingerprint=fingerprint;renderCatalog();}
+}
 function renderCatalog() {
   fillPresets($('quick-preset'), state?.preset_id); fillPresets($('cue-preset'), $('cue-preset').value);
   const performanceSetlist=$('performance-setlist'),selectedPerformanceSetlist=state?.performance?.setlist_id||performanceSetlist.value;
   performanceSetlist.replaceChildren();for(const setlist of catalog.song_library.setlists)option(performanceSetlist,setlist.setlist_id,setlist.name);
   if(selectedPerformanceSetlist)performanceSetlist.value=selectedPerformanceSetlist;
   performanceSetlist.disabled=!catalog.song_library.setlists.length;
-  $('preset-grid').replaceChildren();
-  for (const p of catalog.presets.filter(p => p.builtin || catalog.library.presets.some(u => u.preset_id === p.preset_id))) {
+  renderPresets();
+  renderCues();
+  fillPresets($('song-cue-preset'), $('song-cue-preset').value);
+  renderSongs();
+  renderSetlists();
+  renderTuningProfiles();
+  renderStageProfiles();
+}
+function renderPresets(){
+  const query=$('look-search').value.trim().toLocaleLowerCase(),all=catalog.presets.filter(p => p.builtin || catalog.library.presets.some(u => u.preset_id === p.preset_id)).filter(p=>`${p.name} ${p.description||''}`.toLocaleLowerCase().includes(query));
+  presetPage=boundedPage(presetPage,all.length);$('preset-grid').replaceChildren();
+  for (const p of all.slice(presetPage*TOUCH_PAGE_SIZE,(presetPage+1)*TOUCH_PAGE_SIZE)) {
     const card = node('article', undefined, 'preset'); card.dataset.preset = p.preset_id;
     card.append(node('div', undefined, 'swatch'));
     const body = node('div', undefined, 'preset-body'); body.append(node('span', p.builtin ? 'BUILT-IN LOOK' : 'YOUR LOOK', 'tag'), node('h3', p.name), node('p', p.description || `${p.layers.length} layer look`, 'hint'));
@@ -96,11 +117,7 @@ function renderCatalog() {
     if (!p.builtin) row.append(button('Delete', () => { if (confirm(`Delete “${p.name}”? Remove it from the scene list first if used there.`)) act('delete_preset',{value:p.preset_id},true); }));
     body.append(row); card.append(body); $('preset-grid').append(card);
   }
-  renderCues();
-  fillPresets($('song-cue-preset'), $('song-cue-preset').value);
-  renderSongs();
-  renderSetlists();
-  renderTuningProfiles();
+  renderPager('preset-pager',presetPage,all.length,page=>{presetPage=page;renderPresets();});
 }
 function tuningProfileById(profileId) {
   return catalog?.tuning_profiles?.find(profile => profile.profile_id === profileId);
@@ -121,7 +138,7 @@ function renderTuningProfileSelection() {
     : applied ? 'Applied to the current controller settings.' : 'Selected · press Apply profile to use these values.';
   $('apply-tuning-profile').textContent=applied?'Applied':'Apply profile';
   $('apply-tuning-profile').disabled=applied;
-  $('update-tuning-profile').textContent=profile.builtin?'Save changed copy':'Save changes';
+  $('update-tuning-profile').textContent=profile.builtin?'Save as editable copy':`Save to ${profile.name}`;
   $('update-tuning-profile').disabled=!tuningProfileDirty;
   $('delete-tuning-profile').disabled=Boolean(profile.builtin);
 }
@@ -137,6 +154,16 @@ function renderTuningProfiles() {
   select.value=tuningProfileById(previous)?previous:'rehearsal';
   renderTuningProfileSelection();
 }
+function renderStageProfiles(){
+  const choices=$('stage-profile-choices');choices.replaceChildren();
+  for(const profile of (catalog?.tuning_profiles||[]).filter(item=>item.builtin).slice(0,3)){
+    const choice=button(profile.name,()=>requestTuningProfileApply(profile),'stage-profile-choice');
+    choice.dataset.stageProfileId=profile.profile_id;
+    choices.append(choice);
+  }
+  updateStageProfileSelection();
+}
+function updateStageProfileSelection(){for(const choice of $('stage-profile-choices').querySelectorAll('[data-stage-profile-id]'))choice.classList.toggle('active',choice.dataset.stageProfileId===state?.active_tuning_profile_id);}
 function markTuningProfileDirty(){tuningProfileDirty=true;renderTuningProfileSelection();}
 function tuningProfileSnapshot(profileId,name,description='') {
   const audio=state?.audio||{},white=state?.white_preview||{};
@@ -256,7 +283,11 @@ function renderState(s) {
   $('play').disabled = !cues.length || s.playing || s.blackout; $('pause').disabled = !s.playing;
   $('next').disabled = $('prev').disabled = !cues.length;
   const performance=s.performance||{mode:'manual',state:'inactive',song_count:0,song_index:null,duration_seconds:0,elapsed_seconds:0,remaining_seconds:0,playable:false,running:false};
-  if(document.activeElement!==$('performance-mode'))$('performance-mode').value=performance.mode;
+  $('performance-mode').value=performance.mode;
+  for(const button of document.querySelectorAll('[data-performance-mode]')){
+    const active=button.dataset.performanceMode===performance.mode;
+    button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
+  }
   const setlistMode=performance.mode==='setlist';$('setlist-performance').hidden=!setlistMode;$('manual-transport').hidden=setlistMode;$('quick-preset').disabled=setlistMode;
   $('performance-heading').textContent=setlistMode?'Setlist performance':'Manual scene control';
   if(performance.setlist_id&&document.activeElement!==$('performance-setlist'))$('performance-setlist').value=performance.setlist_id;
@@ -313,6 +344,12 @@ function renderState(s) {
   $('white-level').disabled = !white.enabled;
   $('white-output').disabled = !white.output_available;
   $('white-output-level').disabled = false;
+  const stageWhite=$('stage-white-output');
+  stageWhite.disabled=!white.output_available&&!white.output_enabled;
+  stageWhite.classList.toggle('active',Boolean(white.output_enabled));
+  stageWhite.textContent=white.output_enabled
+    ? `Whites on · ${Math.round(white.output_level*100)}%`
+    : white.output_available ? `Enable whites · ${Math.round(white.output_level*100)}%` : `Whites ready · ${Math.round(white.output_level*100)}%`;
   const whitePattern = white.pattern_name || 'Dark by design';
   $('white-preview-status').textContent = white.output_active_level > 0 ? `LIVE · ${whitePattern}` : white.output_enabled ? `Armed · ${whitePattern} · max ${Math.round(white.output_ceiling*100)}%` : white.commissioned ? `Preview · ${whitePattern}` : 'Physical output locked';
   const foot = s.foot_control || {enabled:false,connected:false,message:'Foot control disabled',messages_received:0,reconnects:0};
@@ -321,6 +358,7 @@ function renderState(s) {
   $('stage-foot-status').textContent = !foot.enabled ? 'Pedal disabled' : foot.connected ? 'Pedal connected' : 'Pedal disconnected';
   document.querySelectorAll('[data-cue]').forEach(e => e.classList.toggle('active', Number(e.dataset.cue) === s.scene_index));
   if(catalog)renderTuningProfileSelection();
+  if(catalog)updateStageProfileSelection();
   document.querySelectorAll('[data-preset]').forEach(e => e.classList.toggle('active', e.dataset.preset === s.preset_id));
   const frames = Object.entries(s.frames); const whiteParts=white.part_levels||{};
   if (frames[0]) draw($('cube-a'),frames[0][1],whiteParts[frames[0][0]]||[]);
@@ -361,22 +399,26 @@ function editorPreset() {
   return {preset_id:editingId||`user-${slug}`,name,description:$('look-description').value,global_brightness:Number($('look-level').value),layers:copy(draft.layers)};
 }
 function saveScenes(scenes, done = () => {}) { command('save_scenes',{scenes},true).then(()=>{notify('Scene list saved on the Pi.');done();}).catch(()=>{}); }
+function openSceneEditor(cue=null,index=null){
+  editingCue=index;
+  $('cue-name').value=cue?.name||'';$('cue-preset').value=cue?.preset_id||catalog.presets[0]?.preset_id||'';
+  $('cue-hold').value=cue?.hold_seconds??15;$('cue-fade').value=cue?.fade_seconds??1;
+  $('cue-heading').textContent=cue?'Edit scene':'Add a scene';$('save-cue').textContent=cue?'Save scene':'+ Add scene';
+  if(!$('scene-dialog').open)$('scene-dialog').show();$('cue-name').focus();
+}
 function renderCues() {
   $('cue-list').replaceChildren(); const cues=catalog.library.scenes; $('empty-cues').hidden=Boolean(cues.length);
-  cues.forEach((cue,index)=>{
+  scenePage=boundedPage(scenePage,cues.length);const start=scenePage*TOUCH_PAGE_SIZE;
+  cues.slice(start,start+TOUCH_PAGE_SIZE).forEach((cue,offset)=>{const index=start+offset;
     const card=node('article',undefined,'cue'); card.dataset.cue=index;
     const info=node('div'); info.append(node('h3',cue.name),node('p',`${catalog.presets.find(p=>p.preset_id===cue.preset_id)?.name || cue.preset_id} · ${cue.hold_seconds}s hold · ${cue.fade_seconds}s fade`,'hint'));
     const row=node('div',undefined,'row');
-    row.append(button('Go',()=>act('select_scene',{index})),button('Edit',()=>{
-      editingCue=index; $('cue-name').value=cue.name; $('cue-preset').value=cue.preset_id;
-      $('cue-hold').value=cue.hold_seconds; $('cue-fade').value=cue.fade_seconds;
-      $('cue-heading').textContent='Edit scene'; $('save-cue').textContent='Save scene';
-      $('cancel-cue').hidden=false; $('add-cue').scrollIntoView({behavior:'smooth',block:'center'});
-    }),button('↑',()=>{if(index>0){const next=copy(cues);[next[index-1],next[index]]=[next[index],next[index-1]];saveScenes(next);}}),button('↓',()=>{if(index<cues.length-1){const next=copy(cues);[next[index+1],next[index]]=[next[index],next[index+1]];saveScenes(next);}}),button('Remove',()=>{if(confirm(`Remove “${cue.name}” from the scene list?`))saveScenes(cues.filter((_,i)=>i!==index));}));
+    row.append(button('Go',()=>act('select_scene',{index})),button('Edit',()=>openSceneEditor(cue,index)),button('↑',()=>{if(index>0){const next=copy(cues);[next[index-1],next[index]]=[next[index],next[index-1]];saveScenes(next);}}),button('↓',()=>{if(index<cues.length-1){const next=copy(cues);[next[index+1],next[index]]=[next[index],next[index+1]];saveScenes(next);}}),button('Remove',()=>{if(confirm(`Remove “${cue.name}” from the scene list?`))saveScenes(cues.filter((_,i)=>i!==index));}));
     row.children[2].disabled=index===0;row.children[3].disabled=index===cues.length-1;
     row.children[2].setAttribute('aria-label',`Move ${cue.name} up`);row.children[3].setAttribute('aria-label',`Move ${cue.name} down`);
     card.append(node('span',String(index+1).padStart(2,'0'),'cue-number'),info,row);$('cue-list').append(card);
   });
+  renderPager('cue-pager',scenePage,cues.length,page=>{scenePage=page;renderCues();});
 }
 function slug(prefix,name){const value=name.toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/^-|-$/g,'').slice(0,58)||'untitled';return `${prefix}-${value}`;}
 function songDocument(){return copy(catalog.song_library);}
@@ -392,19 +434,21 @@ function timelineSheet(song){
 function renderSongs(){
   const library=catalog.song_library;$('song-list').replaceChildren();$('empty-songs').hidden=Boolean(library.songs.length);
   if(selectedSongId&&!songById(selectedSongId))selectedSongId=null;
-  for(const song of library.songs){
+  songPage=boundedPage(songPage,library.songs.length);const start=songPage*TOUCH_PAGE_SIZE;
+  for(const song of library.songs.slice(start,start+TOUCH_PAGE_SIZE)){
     const card=node('article',undefined,'cue');
     const info=node('div');info.append(node('h3',song.title),node('p',`${song.artist} | ${songStyleName(song)} | ${song.duration_seconds}s | ${song.active_cue_sheet_id?'published timeline':'no published timeline'}`,'hint'));
     const row=node('div',undefined,'row');
-    row.append(button('Timeline',()=>{selectedSongId=song.song_id;renderSongs();renderTimeline();}),button('Edit',()=>openSongEditor(song)),button('Delete',()=>deleteSong(song)));
+    row.append(button('Timeline',()=>openTimeline(song.song_id)),button('Edit',()=>openSongEditor(song)),button('Delete',()=>deleteSong(song)));
     card.append(node('span',String(library.songs.indexOf(song)+1).padStart(2,'0'),'cue-number'),info,row);$('song-list').append(card);
   }
+  renderPager('song-pager',songPage,library.songs.length,page=>{songPage=page;renderSongs();});
   renderTimeline();
 }
 function openSongEditor(song=null){
-  editingSongId=song?.song_id||null;$('song-editor').hidden=false;$('song-editor-heading').textContent=song?'Edit song':'New song';
+  editingSongId=song?.song_id||null;$('song-editor-heading').textContent=song?'Edit song':'New song';
   $('song-title').value=song?.title||'';$('song-artist').value=song?.artist||'Phreqed';$('song-duration').value=song?.duration_seconds||'';$('song-id').value=song?.song_id||'';$('song-id').disabled=Boolean(song);$('song-style').value=song?.style||'unspecified';$('song-notes').value=song?.notes||'';
-  $('song-editor').scrollIntoView({behavior:'smooth',block:'center'});
+  if(!$('song-dialog').open)$('song-dialog').show();$('song-title').focus();
 }
 function deleteSong(song){
   if(sheetsForSong(song.song_id).length){notify('Songs with cue-sheet history cannot be deleted.',true);return;}
@@ -412,22 +456,25 @@ function deleteSong(song){
   if(!confirm(`Delete ${song.title}?`))return;
   const document=songDocument();document.songs=document.songs.filter(item=>item.song_id!==song.song_id);saveSongDocument(document,'Song deleted.');
 }
+function openTimeline(songId){selectedSongId=songId;songCuePage=0;renderTimeline();if(!$('timeline-editor').open)$('timeline-editor').show();}
 function renderTimeline(){
-  const song=selectedSongId?songById(selectedSongId):null;$('timeline-editor').hidden=!song;if(!song)return;
+  const song=selectedSongId?songById(selectedSongId):null;if(!song)return;
   $('timeline-title').textContent=song.title;const sheet=timelineSheet(song),editable=Boolean(sheet&&!sheet.published);
   const styled=Boolean(song.style&&song.style!=='unspecified'),styleName=songStyleName(song);
   $('apply-style-default').textContent=!styled?'Choose a song style first':editable?`Replace draft with ${styleName}`:sheet?.published?`Create ${styleName} revision`:`Create ${styleName} draft`;$('apply-style-default').disabled=!styled;
   $('new-cue-draft').textContent=sheet?.published?'Copy published revision':'New manual draft';
   $('new-cue-draft').hidden=editable;$('publish-cue-sheet').hidden=!editable;$('song-cue-editor').hidden=!editable;$('song-cue-list').replaceChildren();
   $('timeline-status').textContent=!sheet?`Style: ${styleName}. Create a style-based or manual draft.`:sheet.published?`Style: ${styleName}. Published revision ${sheet.revision} remains active. Create a ${styleName} revision to generate new cues, or copy the published revision for manual edits.`:`Style: ${styleName}. Draft revision ${sheet.revision} is editable but not active. Replace it with the style default if required, then preview and publish it.`;
-  if(!sheet)return;
-  sheet.cues.forEach((cue,index)=>{
+  if(!sheet){renderPager('song-cue-pager',0,0,()=>{});return;}
+  songCuePage=boundedPage(songCuePage,sheet.cues.length);const start=songCuePage*TOUCH_PAGE_SIZE;
+  sheet.cues.slice(start,start+TOUCH_PAGE_SIZE).forEach((cue,offset)=>{const index=start+offset;
     const card=node('article',undefined,'cue'),info=node('div');const preset=catalog.presets.find(item=>item.preset_id===cue.preset_id);
     info.append(node('h3',preset?.name||cue.preset_id),node('p',`${cue.at_seconds}s | ${cue.transition_seconds}s transition`,'hint'));
     const row=node('div',undefined,'row');row.append(button('Preview',()=>act('preview_song_cue',{cue_sheet_id:sheet.cue_sheet_id,cue_index:index})));
     if(editable)row.append(button('Edit',()=>{editingSongCueIndex=index;$('song-cue-time').value=cue.at_seconds;$('song-cue-preset').value=cue.preset_id;$('song-cue-transition').value=cue.transition_seconds;$('save-song-cue').textContent='Save cue';$('cancel-song-cue').hidden=false;}),button('Remove',()=>{if(sheet.cues.length===1){notify('A cue sheet must keep at least one cue.',true);return;}const document=songDocument(),draft=document.cue_sheets.find(item=>item.cue_sheet_id===sheet.cue_sheet_id);draft.cues.splice(index,1);saveSongDocument(document,'Cue removed.');}));
     card.append(node('span',String(index+1).padStart(2,'0'),'cue-number'),info,row);$('song-cue-list').append(card);
   });
+  renderPager('song-cue-pager',songCuePage,sheet.cues.length,page=>{songCuePage=page;renderTimeline();});
 }
 function newCueDraft(){
   const song=songById(selectedSongId);if(!song)return;const document=songDocument(),sheets=sheetsForSong(song.song_id);if(sheets.some(sheet=>!sheet.published)){notify('This song already has an editable draft.',true);return;}
@@ -459,17 +506,20 @@ function renderSetlists(){
   if(!songs.length)option(songSelect,'',query?'No matching songs':'No songs in library');
   songSelect.disabled=!songs.length;
   $('setlist-song-filter-status').textContent=query?(songs.length?`${songs.length} of ${library.songs.length} songs shown.`:`No songs match “${$('setlist-song-search').value.trim()}”.`):`${library.songs.length} song${library.songs.length===1?'':'s'} available.`;
-  const setlist=library.setlists.find(item=>item.setlist_id===selectedSetlistId);$('setlist-songs').replaceChildren();$('delete-setlist').disabled=$('save-setlist').disabled=!setlist;$('add-setlist-song').disabled=!setlist||!songs.length;
+  const setlist=library.setlists.find(item=>item.setlist_id===selectedSetlistId);$('setlist-songs').replaceChildren();$('copy-setlist').disabled=$('delete-setlist').disabled=$('save-setlist').disabled=!setlist;$('add-setlist-song').disabled=!setlist||!songs.length;
   if(document.activeElement!==$('setlist-name'))$('setlist-name').value=setlist?.name||'';
-  if(!setlist)return;
-  setlist.song_ids.forEach((songId,index)=>{const song=songById(songId),card=node('article',undefined,'cue'),info=node('div');info.append(node('h3',song?.title||songId),node('p',song?.artist||'Missing song','hint'));const row=node('div',undefined,'row');
+  if(!setlist){renderPager('setlist-pager',0,0,()=>{});return;}
+  setlistPage=boundedPage(setlistPage,setlist.song_ids.length);const start=setlistPage*TOUCH_PAGE_SIZE;
+  setlist.song_ids.slice(start,start+TOUCH_PAGE_SIZE).forEach((songId,offset)=>{const index=start+offset,song=songById(songId),card=node('article',undefined,'cue'),info=node('div');info.append(node('h3',song?.title||songId),node('p',song?.artist||'Missing song','hint'));const row=node('div',undefined,'row');
     row.append(button('Up',()=>moveSetlistSong(index,-1)),button('Down',()=>moveSetlistSong(index,1)),button('Remove',()=>removeSetlistSong(index)));row.children[0].disabled=index===0;row.children[1].disabled=index===setlist.song_ids.length-1;card.append(node('span',String(index+1).padStart(2,'0'),'cue-number'),info,row);$('setlist-songs').append(card);});
+  renderPager('setlist-pager',setlistPage,setlist.song_ids.length,page=>{setlistPage=page;renderSetlists();});
 }
 function updateSetlist(mutator,message){const document=songDocument(),setlist=document.setlists.find(item=>item.setlist_id===selectedSetlistId);if(!setlist)return;mutator(setlist);saveSongDocument(document,message);}
 function moveSetlistSong(index,direction){updateSetlist(setlist=>{const target=index+direction;if(target<0||target>=setlist.song_ids.length)return;[setlist.song_ids[index],setlist.song_ids[target]]=[setlist.song_ids[target],setlist.song_ids[index]];},'Setlist order saved.');}
 function removeSetlistSong(index){const setlist=catalog.song_library.setlists.find(item=>item.setlist_id===selectedSetlistId);if(setlist?.song_ids.length===1){notify('A setlist must keep one song; delete the setlist instead.',true);return;}updateSetlist(item=>item.song_ids.splice(index,1),'Song removed from setlist.');}
 $('new-song').addEventListener('click',()=>openSongEditor());
-$('cancel-song').addEventListener('click',()=>{$('song-editor').hidden=true;editingSongId=null;});
+$('cancel-song').addEventListener('click',()=>{$('song-dialog').close();editingSongId=null;});
+$('close-timeline').addEventListener('click',()=>{$('timeline-editor').close();clearSongCueEdit();});
 $('song-title').addEventListener('input',()=>{if(!editingSongId)$('song-id').value=slug('song',$('song-title').value);});
 $('song-editor').addEventListener('submit',event=>{
   event.preventDefault();
@@ -479,7 +529,7 @@ $('song-editor').addEventListener('submit',event=>{
   const song={song_id:songId,title:$('song-title').value.trim(),artist:$('song-artist').value.trim(),duration_seconds:Number($('song-duration').value),notes:$('song-notes').value.trim(),source:existing?.source||'manual',active_cue_sheet_id:existing?.active_cue_sheet_id||null,style:$('song-style').value};
   if(existing)document.songs[document.songs.indexOf(existing)]=song;else document.songs.push(song);
   const oldStyle=existing?.style||'unspecified',styleChanged=Boolean(existing&&oldStyle!==song.style),message=styleChanged?`Song saved as ${songStyleName(song)}. Use Create ${songStyleName(song)} revision to generate a new style timeline.`:'Song saved.';
-  saveSongDocument(document,message,()=>{$('song-editor').hidden=true;editingSongId=null;selectedSongId=song.song_id;renderSongs();});
+  saveSongDocument(document,message,()=>{$('song-dialog').close();editingSongId=null;selectedSongId=song.song_id;renderSongs();});
 });
 function clearSongCueEdit(){editingSongCueIndex=null;$('song-cue-time').value='';$('song-cue-transition').value=0.5;$('save-song-cue').textContent='+ Add cue';$('cancel-song-cue').hidden=true;}
 $('cancel-song-cue').addEventListener('click',clearSongCueEdit);
@@ -495,7 +545,7 @@ $('song-cue-editor').addEventListener('submit',event=>{
   saved.cues.sort((left,right)=>left.at_seconds-right.at_seconds);
   saveSongDocument(document,'Song cue saved.',clearSongCueEdit);
 });
-$('setlist-select').addEventListener('change',event=>{selectedSetlistId=event.target.value||null;renderSetlists();});
+$('setlist-select').addEventListener('change',event=>{selectedSetlistId=event.target.value||null;setlistPage=0;renderSetlists();});
 $('setlist-song-search').addEventListener('input',renderSetlists);
 $('new-setlist').addEventListener('click',()=>{
   if(!catalog.song_library.songs.length){notify('Add a song before creating a setlist.',true);return;}
@@ -512,8 +562,18 @@ $('delete-setlist').addEventListener('click',()=>{
   const setlist=catalog.song_library.setlists.find(item=>item.setlist_id===selectedSetlistId);if(!setlist||!confirm(`Delete ${setlist.name}?`))return;
   const document=songDocument();document.setlists=document.setlists.filter(item=>item.setlist_id!==setlist.setlist_id);selectedSetlistId=null;saveSongDocument(document,'Setlist deleted.');
 });
-$('performance-mode').addEventListener('change',event=>{
-  const mode=event.target.value,setlistId=mode==='setlist'?($('performance-setlist').value||null):null;
+$('copy-setlist').addEventListener('click',()=>{
+  const setlist=catalog.song_library.setlists.find(item=>item.setlist_id===selectedSetlistId);if(!setlist)return;
+  $('copy-setlist-name').value=`${setlist.name} Copy`;$('copy-setlist-dialog').showModal();$('copy-setlist-name').select();
+});
+$('cancel-copy-setlist').addEventListener('click',()=>$('copy-setlist-dialog').close());
+$('confirm-copy-setlist').addEventListener('click',()=>{
+  const source=catalog.song_library.setlists.find(item=>item.setlist_id===selectedSetlistId),name=$('copy-setlist-name').value.trim();if(!source||!name)return;
+  const document=songDocument(),setlistId=slug('setlist',name);if(document.setlists.some(item=>item.setlist_id===setlistId)){notify('A setlist with that name already exists.',true);return;}
+  document.setlists.push({setlist_id:setlistId,name,song_ids:copy(source.song_ids),notes:source.notes||''});selectedSetlistId=setlistId;$('copy-setlist-dialog').close();saveSongDocument(document,'Setlist copied.');
+});
+for(const button of document.querySelectorAll('[data-performance-mode]'))button.addEventListener('click',()=>{
+  const mode=button.dataset.performanceMode,setlistId=mode==='setlist'?($('performance-setlist').value||null):null;
   act('performance_mode',{mode,setlist_id:setlistId});
 });
 $('rgb-power-mode').addEventListener('change',event=>{
@@ -539,15 +599,16 @@ async function applyTuningProfile(profileId){
     notify(`${profile.name} settings applied. Physical whites remain disarmed.`);
   }catch(_){renderTuningProfileSelection();}
 }
-$('apply-tuning-profile').addEventListener('click',()=>{
-  const profile=tuningProfileById($('tuning-profile').value);if(!profile)return;
+function requestTuningProfileApply(profile){
+  if(!profile)return;
   if(state?.live){
     pendingTuningProfileId=profile.profile_id;
     $('tuning-profile-dialog-title').textContent=`Apply ${profile.name} to live output?`;
     $('tuning-profile-dialog-detail').textContent=`Master changes to ${Math.round(profile.master_level*100)}% within the current ceiling, contrast to ${profile.contrast.toFixed(2)}x, and physical whites are disarmed.`;
     $('tuning-profile-dialog').showModal();
   }else applyTuningProfile(profile.profile_id);
-});
+}
+$('apply-tuning-profile').addEventListener('click',()=>requestTuningProfileApply(tuningProfileById($('tuning-profile').value)));
 $('cancel-tuning-profile').addEventListener('click',()=>{pendingTuningProfileId=null;$('tuning-profile-dialog').close();});
 $('confirm-tuning-profile').addEventListener('click',()=>{const value=pendingTuningProfileId;pendingTuningProfileId=null;$('tuning-profile-dialog').close();if(value)applyTuningProfile(value);});
 function saveTuningProfileAsNew(suggestedName=''){
@@ -589,6 +650,7 @@ for(const id of ['white-threshold','white-level']){
 }
 function updateWhiteOutput(){act('white_output',{enabled:$('white-output').checked,level:Number($('white-output-level').value)});}
 $('white-output').addEventListener('change',updateWhiteOutput);
+$('stage-white-output').addEventListener('click',()=>act('white_output',{enabled:!Boolean(state?.white_preview?.output_enabled),level:Number(state?.white_preview?.output_level??.05)}));
 $('white-output-level').addEventListener('input',e=>{$('white-output-level-value').textContent=`${Math.round(e.target.value*100)}%`;markTuningProfileDirty();});
 $('white-output-level').addEventListener('change',updateWhiteOutput);
 for(const [id,action] of Object.entries({prev:'previous_scene',next:'next_scene',play:'play',pause:'pause',tap:'tap','release-blackout':'resume','stop-live':'stop_live','stage-stop-live':'stop_live'})) $(id).addEventListener('click',()=>act(action));
@@ -607,7 +669,7 @@ $('shutdown-system').addEventListener('click',()=>{$('shutdown-confirmation').va
 $('shutdown-confirmation').addEventListener('input',event=>{$('confirm-shutdown').disabled=event.target.value!=='SHUTDOWN';});
 $('cancel-shutdown').addEventListener('click',()=>$('shutdown-dialog').close());
 $('confirm-shutdown').addEventListener('click',()=>{const confirmation=$('shutdown-confirmation').value;$('shutdown-dialog').close();command('system_shutdown',{confirmation}).catch(()=>{});});
-$('look-search').addEventListener('input',event=>{const query=event.target.value.trim().toLocaleLowerCase();for(const card of $('preset-grid').children)card.hidden=!card.textContent.toLocaleLowerCase().includes(query);});
+$('look-search').addEventListener('input',()=>{presetPage=0;renderPresets();});
 async function localRequest(body) {
   if (!token || !localHost) throw new Error('This action is available only on the local touchscreen.');
   return request('/api/local/action',{method:'POST',headers:{'Content-Type':'application/json','X-Control-Token':token},body:JSON.stringify(body)});
@@ -630,7 +692,8 @@ $('close-editor').addEventListener('click',()=>{$('editor').hidden=true;});
 $('add-layer').addEventListener('click',()=>{if(draft.layers.length<8){draft.layers.push(newLayer());renderLayers();}});
 $('preview-look').addEventListener('click',()=>{try{act('preview',{preset:editorPreset()});}catch(e){notify(e.message,true);}});
 $('save-look').addEventListener('click',()=>{try{const preset=editorPreset();if(!editingId&&catalog.library.presets.some(p=>p.preset_id===preset.preset_id)&&!confirm('A user look with this name already exists. Replace it?'))return;command('save_preset',{preset},true).then(()=>{editingId=preset.preset_id;notify('Look saved on the Pi.');}).catch(()=>{});}catch(e){notify(e.message,true);}});
-function clearCueEdit(){editingCue=null;$('cue-heading').textContent='Add a scene';$('save-cue').textContent='+ Add scene';$('cancel-cue').hidden=true;$('cue-name').value='';}
+function clearCueEdit(){editingCue=null;$('cue-heading').textContent='Add a scene';$('save-cue').textContent='+ Add scene';$('cue-name').value='';if($('scene-dialog').open)$('scene-dialog').close();}
+$('new-scene').addEventListener('click',()=>openSceneEditor());
 $('cancel-cue').addEventListener('click',clearCueEdit);
 $('add-cue').addEventListener('submit',e=>{e.preventDefault();const cue={name:$('cue-name').value,preset_id:$('cue-preset').value,hold_seconds:Number($('cue-hold').value),fade_seconds:Number($('cue-fade').value)};const scenes=copy(catalog.library.scenes);if(editingCue===null)scenes.push(cue);else scenes[editingCue]=cue;saveScenes(scenes,clearCueEdit);});
 let lastBeat=0;

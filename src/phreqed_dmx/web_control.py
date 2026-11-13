@@ -136,6 +136,12 @@ class BrowserControl:
             blackout_active=lambda: self.engine.blackout_enabled,
         )
         self.performance = PerformanceController(self.song_timeline)
+        self.performance.set_mode(PerformanceMode.SETLIST)
+        first_setlist_id = next(iter(self.song_library.setlists), None)
+        if first_setlist_id is not None:
+            # Prepare the first running order for the setlist-first stage UI.
+            # Loading remains output-free; explicit Start is still required.
+            self.performance.load_setlist(first_setlist_id)
         # A high CLI ceiling is available capability, not the startup level.
         # Browser control always begins in the conservative rehearsal profile.
         self.rgb_show_ceiling = float(

@@ -8,18 +8,24 @@ The shared stage-control application now has Perform, Setlist, Build, Settings, 
 Operations workspaces across the 1280 x 800 Waveshare target, phones, and
 desktop browsers. Perform contains manual/setlist transport, master brightness,
 compact fixture previews, structured health, output state, and persistent
-blackout in one touchscreen viewport. Chromium measured document and viewport
+blackout in one touchscreen viewport. Perform starts in Setlist mode with large
+Setlist/Manual buttons and adds a bottom venue-profile/white-output bar.
+Chromium measured document and viewport
 height at exactly 800 pixels with no Perform overflow; a 390 x 844 phone exposed
 all workspace tabs and the Operations boundary with zero console errors.
 
 Songs and cue sheets now use a full-width touch screen inside the top-level
 Setlist workspace; ordered setlist editing is a separate full-width screen so
 neither builder is compressed into a split pane. Build contains only Looks and
-Scenes. Settings now provides immutable
+Scenes. Setlists can be copied; Looks, Scenes, Songs, cue timelines, and running
+orders use five-row touch pages, while song and scene editing use focused task
+overlays with no nested scrollers. Settings now provides immutable
 Rehearsal (25%), Small Stage (49%, approximately three quarters of the safe
 range), and Large Stage (65%, the full persistent safe range) profiles plus
-atomic user profiles. Applying a profile cannot unlock Show power or raise a
-ceiling and always disarms physical whites.
+atomic user profiles that can be updated in place. Small Stage prepares a 5%
+center-white level. Applying a profile cannot unlock Show power, raise a
+ceiling, or arm physical whites; the separate Perform-bar control is enabled
+only when the existing live/audio/blackout gates are satisfied.
 
 The single browser deadline is now a named lease registry. Remote browsers have
 independent leases and the optional native kiosk supervisor holds a loopback-
@@ -31,7 +37,7 @@ allowlists; they are absent unless explicit `live --web` local-operation
 authority is enabled, and network mutation is blocked while output or a song
 timeline is active.
 
-Windows Python 3.12 now passes 242 tests. The software work is in Validation
+Windows Python 3.12 now passes 243 tests. The software work is in Validation
 pending the Raspberry Pi touch, Chromium
 crash/restart, blank/wake, NetworkManager, backlight, service-order, and guarded
 shutdown run in `docs/touchscreen-control-roadmap.md`. `OPS-005` remains in

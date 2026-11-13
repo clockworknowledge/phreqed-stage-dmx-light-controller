@@ -72,6 +72,9 @@ class PerformanceController:
         setlist_id = self.timeline.setlist_id
         song_index = self.timeline.song_index
         if setlist_id is None:
+            first_setlist_id = next(iter(self.timeline.library.setlists), None)
+            if first_setlist_id is not None:
+                self.timeline.load(first_setlist_id)
             return
         setlist = self.timeline.library.setlists.get(setlist_id)
         if setlist is None:

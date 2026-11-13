@@ -129,10 +129,16 @@ transport controls. The default library is stored outside the repository at
 The controller is now one adaptive application with **Perform**, **Setlist**,
 **Build**, **Settings**, and **Operations** workspaces. Setlist separates the
 full-width Song Builder from the ordered-show builder; Build is reserved for
-looks and manual scenes.
+looks and manual scenes. Setlists can be copied, and Looks, Scenes, Songs,
+timeline cues, and running orders use five-item touch pages instead of nested
+scroll regions. Song timelines, song details, and scene editing open as focused
+task overlays while the persistent blackout remains reachable.
 The 1280 x 800 touchscreen Perform
 view keeps stage transport, master, health, fixture previews, output state, and
-blackout in one non-scrolling viewport; phones receive compact bottom
+blackout in one non-scrolling viewport. Setlist is the startup mode, large
+Setlist/Manual buttons replace the former mode dropdown, and the bottom stage
+bar exposes the three venue profiles plus the separately gated center-white
+control. Phones receive compact bottom
 navigation and desktops receive denser split editors. The same show and
 authoring capabilities remain available on every surface. Only display and
 network operating-system actions are loopback-only. See
@@ -153,7 +159,10 @@ contrast, audio-dimming, onset, and prepared white-level settings. Applying a
 profile never unlocks Show power, raises a ceiling, or arms physical whites.
 Configure the Settings controls and choose **Save as new** to create an
 atomic user profile in `tuning-profiles.json`; built-ins cannot be overwritten
-or deleted. The three built-ins come from the package-owned
+or deleted. Select an existing user profile and use **Save to _profile_** to
+update it in place. Small Stage prepares the commissioned center whites at 5%;
+their Perform-bar action remains disabled until explicit live output, audio,
+and the other white-output gates are satisfied. The three built-ins come from the package-owned
 `tuning_profiles.defaults.json`; upgrades replace that read-only baseline but
 never copy it over the user's tuning profile file, song library, or look/scene
 library.

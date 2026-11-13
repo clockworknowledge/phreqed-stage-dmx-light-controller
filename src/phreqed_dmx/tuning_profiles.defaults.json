@@ -18,7 +18,7 @@
     {
       "profile_id": "small-stage",
       "name": "Small Stage",
-      "description": "Three-quarter stage scale: 49% RGB master with moderate contrast.",
+      "description": "Three-quarter stage scale: 49% RGB master with moderate contrast and center-white strobe prepared at 5%.",
       "master_level": 0.49,
       "contrast": 1.35,
       "audio_auto_level": true,

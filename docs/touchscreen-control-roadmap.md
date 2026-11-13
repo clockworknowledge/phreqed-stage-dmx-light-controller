@@ -12,17 +12,23 @@ viewport is 1280 x 800 landscape. The shared application has five workspaces:
   run/hold, tap tempo, quick looks, master brightness, fixture thumbnails,
   output state, health, and blackout in one view. Setlist mode replaces scene
   transport with current/next song, progress, remaining time, and explicit
-  start/stop. Selection never starts playback.
+  start/stop. Setlist is the startup mode, selected through large mode buttons.
+  A bottom action bar exposes venue profiles and the separately gated white
+  output action. Selection never starts playback.
 - **Setlist** separates Songs/cue-sheet authoring and ordered Setlist editing
   into two full-width touch screens. Neither workflow shares a compressed split
-  pane with the other.
+  pane with the other. Running orders can be copied.
 - **Build** contains searchable Looks and the focused manual Scene editor.
-  Editors are panels or drawers rather than one long stack of unrelated controls.
+  Song timelines, song details, and scene editing use focused task overlays.
+  Authoring lists use five-item pages rather than nested scrolling or long card
+  stacks.
 - **Settings** contains RGB power, contrast, browser-only preview brightness, audio
   response, segmented whites, venue tuning profiles, and the live-output
   boundary. Rehearsal is 25%, Small Stage is 49% (approximately three quarters
   of the persistent safe range), and Large Stage is the full persistent 65%
   range. Atomic user profiles capture the current bounded Settings values.
+  Existing user profiles can be updated in place. Small Stage prepares a 5%
+  center-white level, but profile application never arms physical output.
 - **Operations** contains structured health, local display brightness, four
   fixed network actions, recovery status, and confirmed clean shutdown.
 
