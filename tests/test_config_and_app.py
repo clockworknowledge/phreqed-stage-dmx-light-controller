@@ -318,6 +318,7 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("Requires=phreqed-show-inhibit.service", controller)
         self.assertIn("PartOf=phreqed-dmx.service", inhibitor)
         self.assertIn("--what=sleep:idle", inhibitor)
+        self.assertIn('"--why=Show controller must remain available"', inhibitor)
         self.assertNotIn("--what=shutdown", inhibitor)
         self.assertNotIn("sleep:idle:shutdown", inhibitor)
         self.assertIn("phreqed-show-inhibit.service", installer)

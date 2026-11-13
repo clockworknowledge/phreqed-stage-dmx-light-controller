@@ -6,7 +6,7 @@ ConditionPathExists=/usr/bin/systemd-inhibit
 
 [Service]
 Type=exec
-ExecStart=/usr/bin/systemd-inhibit --what=sleep:idle --who=Phreqed --why=Show controller must remain available --mode=block /usr/bin/sleep infinity
+ExecStart=/usr/bin/systemd-inhibit --what=sleep:idle --who=Phreqed "--why=Show controller must remain available" --mode=block /usr/bin/sleep infinity
 Restart=on-failure
 RestartSec=2
 NoNewPrivileges=true
