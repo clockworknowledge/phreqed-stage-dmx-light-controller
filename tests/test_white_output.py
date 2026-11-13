@@ -57,6 +57,7 @@ class WhiteOutputTests(unittest.TestCase):
         self.assertEqual(select_white_pattern(("inside-out-vu",)), "vu")
         self.assertEqual(select_white_pattern(("sprite-parade",)), "glint")
         self.assertEqual(select_white_pattern(("pacman",)), "pellets")
+        self.assertEqual(select_white_pattern(("cartoon-bomb",)), "fuse")
         self.assertEqual(select_white_pattern(("plasma", "rings")), "bloom")
         self.assertEqual(select_white_pattern(("unknown-effect",)), "dark")
 

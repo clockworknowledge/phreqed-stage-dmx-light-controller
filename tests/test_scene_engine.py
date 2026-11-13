@@ -43,6 +43,7 @@ class SceneEngineTests(unittest.TestCase):
             "flame-thrower",
             "wave-rider",
             "pacman-chase",
+            "burning-fuse",
             "watchful-eyes",
             "inside-out-vu",
         }

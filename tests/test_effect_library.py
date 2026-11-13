@@ -27,6 +27,7 @@ REQUIRED_ADVANCED_EFFECTS = {
     "flame-jet",
     "dynamic-wave",
     "pacman",
+    "cartoon-bomb",
     "blinking-eye",
     "sprite-parade",
     "inside-out-vu",
@@ -420,6 +421,65 @@ class EffectLibraryTests(unittest.TestCase):
             for x in range(24) for y in range(4)
         ]
         self.assertEqual(first, second)
+
+    def test_cartoon_bomb_burns_across_seam_then_flashes_and_smokes(self) -> None:
+        effect = EFFECT_REGISTRY.get("cartoon-bomb")
+        parameters = EFFECT_REGISTRY.parameters("cartoon-bomb", {
+            "palette": "ember", "fuse_seconds": 7.0,
+            "blast_seconds": 1.2, "smoke_seconds": 2.2,
+        })
+
+        def frame(animation_time: float):
+            return [
+                ((global_x, y), effect.sample(
+                    global_x % 12, y, 12, 4, animation_time,
+                    FixtureIdentity(
+                        "Cube A" if global_x < 12 else "Cube B",
+                        global_x // 12, 2,
+                    ),
+                    parameters, self.context,
+                ))
+                for global_x in range(24) for y in range(4)
+            ]
+
+        def spark_centroid(animation_time: float) -> float:
+            sparks = [
+                (position[0], color.green)
+                for position, color in frame(animation_time)
+                if color.red > 0.5 and color.green > 0.35 and color.blue < 0.25
+            ]
+            self.assertTrue(sparks)
+            return sum(x * weight for x, weight in sparks) / sum(
+                weight for _, weight in sparks
+            )
+
+        early = frame(1.0)
+        self.assertLess(spark_centroid(1.0), 12.0)
+        self.assertGreater(spark_centroid(6.4), 12.0)
+        self.assertTrue(any(
+            x >= 17 and color.blue > color.red and color.blue > 0.1
+            for (x, _), color in early
+        ))
+
+        detonation = frame(7.02)
+        self.assertGreater(sum(
+            max(color.red, color.green, color.blue) > 0.35
+            for _, color in detonation
+        ), 72)
+
+        starburst = frame(7.85)
+        self.assertTrue(any(
+            x < 12 and color.red > 0.25 for (x, _), color in starburst
+        ))
+        self.assertTrue(any(
+            x >= 12 and color.red > 0.25 for (x, _), color in starburst
+        ))
+
+        smoke = frame(8.65)
+        self.assertTrue(any(
+            x >= 12 and color.blue > color.red and color.blue > color.green
+            for (x, _), color in smoke
+        ))
 
     def test_digital_rain_is_sparse_and_heads_move_downward(self) -> None:
         effect = EFFECT_REGISTRY.get("digital-rain")

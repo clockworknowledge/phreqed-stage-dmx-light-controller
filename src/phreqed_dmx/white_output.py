@@ -33,6 +33,7 @@ WHITE_PATTERN_LABELS = {
     "vu": "Inside-out level peak",
     "glint": "Sprite glint",
     "pellets": "Arcade pill chase",
+    "fuse": "Travelling fuse spark",
 }
 
 _EFFECT_PATTERNS = {
@@ -62,6 +63,7 @@ _EFFECT_PATTERNS = {
     "blinking-eye": "glint",
     "sprite-parade": "glint",
     "pacman": "pellets",
+    "cartoon-bomb": "fuse",
 }
 
 _PATTERN_PRIORITY = {
@@ -71,6 +73,7 @@ _PATTERN_PRIORITY = {
     "vu": 0,
     "glint": 1,
     "pellets": 1,
+    "fuse": 1,
     "energy": 2,
     "collision": 3,
     "blades": 3,
@@ -314,6 +317,24 @@ def _global_pattern(
             gain * _smooth_peak(x, head - spacing, 0.48)
             for gain, spacing in ((0.82, 0.0), (0.48, 4.0), (0.3, 8.0))
         )) for x in range(part_count))
+    if pattern_id == "fuse":
+        # Match the default ten-second RGB story: a single restrained spark
+        # crosses toward the bomb, then two short points expand from impact.
+        phase = animation_time % 10.4
+        bomb = max(0.0, part_count - 3.0)
+        if phase < 7.0:
+            head = 1.0 + (bomb - 1.0) * phase / 7.0
+            return tuple(0.82 * _smooth_peak(x, head, 0.46)
+                         for x in range(part_count))
+        if phase < 8.2:
+            radius = (phase - 7.0) / 1.2 * min(7.0, part_count * 0.55)
+            return tuple(min(0.88,
+                             0.78 * _smooth_peak(abs(x - bomb), radius, 0.55)
+                             + 0.22 * _smooth_peak(x, bomb, 1.1))
+                         for x in range(part_count))
+        ember = 1.0 - (phase - 8.2) / 2.2
+        return tuple(max(0.0, ember) * 0.24 * _smooth_peak(x, bomb - 1.5, 1.6)
+                     for x in range(part_count))
     raise ValueError(f"unknown white animation pattern: {pattern_id}")
 
 

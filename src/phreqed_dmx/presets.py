@@ -501,6 +501,25 @@ EXAMPLE_PRESETS = (
         global_brightness=0.44,
     ),
     VisualPreset(
+        "burning-fuse",
+        "Burning Fuse Bomb",
+        "A spark crosses Cube A into a round bomb on Cube B, then bursts into smoke.",
+        (
+            EffectLayerSpec(
+                "cartoon-bomb",
+                parameters={
+                    "speed": 1.0,
+                    "brightness": 0.94,
+                    "palette": "ember",
+                    "fuse_seconds": 7.0,
+                    "blast_seconds": 1.2,
+                    "smoke_seconds": 2.2,
+                },
+            ),
+        ),
+        global_brightness=0.43,
+    ),
+    VisualPreset(
         "watchful-eyes",
         "Watchful Eyes",
         "A luminous eye on each fixture opens, watches, and blinks in unison.",

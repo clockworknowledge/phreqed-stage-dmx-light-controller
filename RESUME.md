@@ -2,10 +2,10 @@
 
 Last updated: 2026-11-13
 
-## Pause checkpoint -- Perform polish and Pac-Man power cycle
+## Pause checkpoint -- Perform polish and arcade/cartoon effects
 
-Implementation is paused cleanly after `7a56739` on `main`; no feature work is
-currently active. The latest Perform pass keeps song number and time labels
+Implementation is paused cleanly with no feature work currently active. The
+latest Perform pass keeps song number and time labels
 inside the active-song card, restores the prominent elapsed/remaining time bar,
 keeps the live-monitor footer within its panel, and places Start/Stop output in
 the bottom safety row beside blackout. The stage bar exposes Rehearsal, Small
@@ -19,7 +19,17 @@ eyes, a deterministic power pellet, and a smooth blue frightened/reversal
 interval before the chase resumes. Sparse travelling center-white pellets are
 selected by the effect, but actual white output remains under the commissioned
 physical-white safety boundary. Fixed-time visual inspection and the full
-Windows Python 3.12 suite pass with 248 tests.
+Windows Python 3.12 suite pass with 249 tests.
+
+The Burning Fuse Bomb quick look places a shaded round bomb on Cube B while a
+bright spark burns a long wavy fuse from Cube A across the seam. It follows
+with one broad amber RGB detonation flash, an expanding cross-fixture starburst,
+embers, and purple smoke. Fuse, blast, and smoke durations are editable. The
+flash is governed by the common effect/preset levels, master brightness, RGB
+ceiling, and compositor limiter without an additional bomb-specific cap. A
+matching physical-white spatial pattern remains behind the existing explicit
+white-output and onset gates. Chromium at 1280 x 800 exposed the preset and both
+fixture previews with zero console errors.
 
 The next release-critical action is the physical `DISPLAY-003` Pi/Waveshare
 acceptance run: touch accuracy, 100%/200% zoom, kiosk/browser recovery,
@@ -72,7 +82,7 @@ allowlists; they are absent unless explicit `live --web` local-operation
 authority is enabled, and network mutation is blocked while output or a song
 timeline is active.
 
-Windows Python 3.12 now passes 248 tests. The software work is in Validation
+Windows Python 3.12 now passes 249 tests. The software work is in Validation
 pending the Raspberry Pi touch, Chromium
 crash/restart, blank/wake, NetworkManager, backlight, service-order, and guarded
 shutdown run in `docs/touchscreen-control-roadmap.md`. `OPS-005` remains in
