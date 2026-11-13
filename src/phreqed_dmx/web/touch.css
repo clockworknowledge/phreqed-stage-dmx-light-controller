@@ -52,8 +52,11 @@ button.primary { min-height: var(--touch); }
 .song-now h1.very-long-title { font-size: clamp(19px, 1.9vw, 28px); letter-spacing: -.02em; -webkit-line-clamp: 3; }
 .manual-stage h1 { font-size: clamp(34px, 4vw, 58px); line-height: 1; letter-spacing: -.04em; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .stage-detail { color: var(--muted); margin-top: 9px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.song-now progress { width: 100%; height: 16px; margin-top: 18px; accent-color: var(--accent); }
-.song-times { display: flex; justify-content: space-between; color: var(--muted); font-variant-numeric: tabular-nums; }
+.song-progress { flex: 0 0 18px; display: block; width: 100%; height: 18px; margin-top: 18px; appearance: none; -webkit-appearance: none; overflow: hidden; border: 1px solid #465346; border-radius: 999px; background: #0b100d; accent-color: var(--accent); }
+.song-progress::-webkit-progress-bar { background: #0b100d; border-radius: 999px; }
+.song-progress::-webkit-progress-value { background: linear-gradient(90deg, #8fcf68, var(--accent)); border-radius: 999px; box-shadow: 0 0 12px #c7ef8e66; }
+.song-progress::-moz-progress-bar { background: linear-gradient(90deg, #8fcf68, var(--accent)); border-radius: 999px; }
+.song-times { display: flex; justify-content: space-between; color: var(--text); font-size: 13px; font-weight: 650; font-variant-numeric: tabular-nums; }
 .next-song { min-height: 28px; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .next-song span { color: var(--accent); font-size: 10px; letter-spacing: .14em; margin-right: 8px; }
 .stage-transport { margin: 8px 0 0; }
@@ -68,8 +71,6 @@ button.primary { min-height: var(--touch); }
 .ceiling-note strong { color: var(--accent); }
 .stage-output-state { margin-top: auto; display: grid; gap: 7px; padding: 12px; background: #111713; border: 1px solid var(--line); border-radius: 10px; font-size: 13px; }
 #stage-power-label { color: var(--muted); }
-.stage-live-actions { margin-top: 9px; }
-.stage-live-actions button { flex: 1; }
 .stage-monitor-card { display: flex; flex-direction: column; }
 .compact-monitors { grid-template-columns: 1fr; gap: 8px; margin: 4px 0 10px; }
 .compact-monitors figure { padding: 7px 10px; border-radius: 10px; }
@@ -108,6 +109,8 @@ button.primary { min-height: var(--touch); }
 .task-dialog .cue-list { margin-bottom: 18px; }
 .task-dialog .card { margin-bottom: 12px; }
 .timeline-actions { margin-bottom: 8px; }
+.timeline-dialog .cue .row { justify-content: flex-end; }
+.timeline-dialog .cue .row button { min-width: 82px; }
 
 .tune-grid, .operations-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; }
 .tune-grid .card, .operations-grid .card { margin: 0; }
@@ -136,6 +139,9 @@ button.primary { min-height: var(--touch); }
 .danger { background: #402120; color: #ffd3cf; border-color: #a55851; }
 
 .safety-bar { min-height: 82px; padding-top: 12px; padding-bottom: 12px; }
+.safety-bar > .safety-status { flex: 1; }
+.safety-live-actions { display: flex; flex: 0 0 auto; gap: 10px; }
+.safety-live-actions button { min-width: 132px; min-height: 58px; }
 .blackout { min-height: 58px; font-size: 17px; }
 
 @media (min-width: 900px) {
@@ -211,6 +217,10 @@ button.primary { min-height: var(--touch); }
   .task-dialog-heading { top: -18px; margin: -18px -18px 16px; padding: 16px 18px 12px; }
   .safety-bar { min-height: 82px; flex-wrap: nowrap; }
   .safety-bar > div { min-width: 0; }
+  .safety-bar.perform-controls .safety-status { display: none; }
+  .safety-live-actions { flex: 1; }
+  .safety-live-actions button { min-width: 0; width: 100%; padding: 8px; }
+  .safety-bar.perform-controls > #release-blackout, .safety-bar.perform-controls > .blackout { flex: 1; min-width: 0; padding: 8px; }
   .safety-bar small { display: none; }
 }
 

@@ -11,13 +11,17 @@ viewport is 1280 x 800 landscape. The shared application has five workspaces:
 - **Perform** is the stage-first dashboard. Manual mode keeps scene transport,
   run/hold, tap tempo, quick looks, master brightness, fixture thumbnails,
   output state, health, and blackout in one view. Setlist mode replaces scene
-  transport with current/next song, progress, remaining time, and explicit
-  start/stop. Setlist is the startup mode, selected through large mode buttons.
-  A bottom action bar exposes venue profiles and the separately gated white
-  output action. Selection never starts playback.
+  transport with current/next song, a prominent playing-song time bar, elapsed
+  and remaining time, and explicit start/stop. Start live and Stop output share
+  the bottom safety row with blackout. Setlist is the startup mode, selected
+  through large mode buttons. A bottom action bar exposes venue profiles and
+  the separately gated white output action. Selection never starts playback.
 - **Setlist** separates Songs/cue-sheet authoring and ordered Setlist editing
   into two full-width touch screens. Neither workflow shares a compressed split
-  pane with the other. Running orders can be copied.
+  pane with the other. Running orders can be copied. The focused timeline
+  editor exposes scene sequence, duration, and transition; large Up/Down
+  controls reorder complete segments without requiring precision dragging.
+  Duration edits preserve the fixed song length by adjusting a neighbor.
 - **Build** contains searchable Looks and the focused manual Scene editor.
   Song timelines, song details, and scene editing use focused task overlays.
   Authoring lists use five-item pages rather than nested scrolling or long card
@@ -57,6 +61,9 @@ console errors in simulation.
   operation depends only on hover, swipe, or long press.
 - Blackout is fixed above the application on every viewport. Live output,
   current power profile, lease count, and controller connection remain visible.
+- The active song time bar remains visible and readable during playback, with
+  textual elapsed and remaining time so progress is not communicated by color
+  alone.
 - When output is live, leaving Perform opens a deliberate confirmation. This
   is a stage lock, not authentication. Confirming unlocks the requested setup
   workspace while blackout remains available.

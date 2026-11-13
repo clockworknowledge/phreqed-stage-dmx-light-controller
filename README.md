@@ -135,7 +135,9 @@ scroll regions. Song timelines, song details, and scene editing open as focused
 task overlays while the persistent blackout remains reachable.
 The 1280 x 800 touchscreen Perform
 view keeps stage transport, master, health, fixture previews, output state, and
-blackout in one non-scrolling viewport. Setlist is the startup mode, large
+blackout in one non-scrolling viewport. The playing song keeps a prominent time
+bar with elapsed and remaining time, while Start live and Stop output share the
+bottom safety row with blackout. Setlist is the startup mode, large
 Setlist/Manual buttons replace the former mode dropdown, and the bottom stage
 bar exposes the three venue profiles plus the separately gated center-white
 control. Phones receive compact bottom
@@ -143,6 +145,12 @@ navigation and desktops receive denser split editors. The same show and
 authoring capabilities remain available on every surface. Only display and
 network operating-system actions are loopback-only. See
 [`docs/touchscreen-control-roadmap.md`](docs/touchscreen-control-roadmap.md).
+
+The focused song-timeline editor exposes each scene's sequence, duration, and
+transition. Large Up/Down controls reorder complete scene segments without a
+drag-only gesture. Editing a segment duration preserves the song's fixed total
+length by adjusting its neighboring segment, and invalid or too-short segments
+are rejected before the cue sheet is saved.
 
 Each browser now renews a distinct trusted lease. An optional native kiosk
 supervisor can hold an independent local lease while Chromium is alive, so

@@ -9,7 +9,9 @@ Operations workspaces across the 1280 x 800 Waveshare target, phones, and
 desktop browsers. Perform contains manual/setlist transport, master brightness,
 compact fixture previews, structured health, output state, and persistent
 blackout in one touchscreen viewport. Perform starts in Setlist mode with large
-Setlist/Manual buttons and adds a bottom venue-profile/white-output bar.
+Setlist/Manual buttons, keeps a prominent playing-song time bar with elapsed and
+remaining time, and adds a bottom venue-profile/white-output bar. Start live and
+Stop output now sit in the bottom safety row beside blackout.
 Chromium measured document and viewport
 height at exactly 800 pixels with no Perform overflow; a 390 x 844 phone exposed
 all workspace tabs and the Operations boundary with zero console errors.
@@ -19,7 +21,10 @@ Setlist workspace; ordered setlist editing is a separate full-width screen so
 neither builder is compressed into a split pane. Build contains only Looks and
 Scenes. Setlists can be copied; Looks, Scenes, Songs, cue timelines, and running
 orders use five-row touch pages, while song and scene editing use focused task
-overlays with no nested scrollers. Settings now provides immutable
+overlays with no nested scrollers. Timeline scenes expose editable duration and
+transition plus large Up/Down sequence controls; reordering moves complete
+segments and duration edits preserve the fixed song length by adjusting a
+neighbor. Settings now provides immutable
 Rehearsal (25%), Small Stage (49%, approximately three quarters of the safe
 range), and Large Stage (65%, the full persistent safe range) profiles plus
 atomic user profiles that can be updated in place. Small Stage prepares a 5%

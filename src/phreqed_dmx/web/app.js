@@ -14,6 +14,7 @@ let pendingSetlistPanel = 'songs', tuningProfileDirty = false;
 let pendingNetworkAction = null;
 let pendingTuningProfileId = null;
 const TOUCH_PAGE_SIZE=5;
+const MIN_CUE_DURATION=0.1;
 let presetPage=0,scenePage=0,songPage=0,songCuePage=0,setlistPage=0;
 function savedMonitorBrightness() {
   try { const value=Number(localStorage.getItem(MONITOR_BRIGHTNESS_KEY)); return value>=1&&value<=5 ? value : 2; }
@@ -75,6 +76,8 @@ function showWorkspace(name, force = false) {
     e.setAttribute('aria-selected', String(active));
   }
   currentWorkspace = name;
+  $('stage-live-actions').hidden = name !== 'perform';
+  $('safety-bar').classList.toggle('perform-controls',name==='perform');
   if (name === 'build') applyBuildTab(pendingBuildTab);
   if (name === 'setlist') applySetlistPanel(pendingSetlistPanel);
   window.scrollTo({top: 0, behavior: 'smooth'});
@@ -264,6 +267,7 @@ function renderState(s) {
   $('release-blackout').hidden = !s.blackout; $('blackout').classList.toggle('latched',s.blackout);
   for (const id of ['start-live','stage-start-live']) $(id).disabled = !s.live_allowed || s.live || Boolean(s.error);
   for (const id of ['stop-live','stage-stop-live']) $(id).disabled = !s.live;
+  $('stage-live-actions').hidden=currentWorkspace!=='perform';$('safety-bar').classList.toggle('perform-controls',currentWorkspace==='perform');$('stage-start-live').hidden=s.live||s.blackout;$('stage-stop-live').hidden=!s.live;
   $('shutdown-system').disabled = !s.system_shutdown_available || Boolean(s.shutdown_requested);
   $('shutdown-system').textContent = s.shutdown_requested ? 'Shutdown requested' : 'Shut down Pi';
   $('live-help').textContent = s.live ? 'Live output active. Loss of every trusted control surface fails dark after 5 seconds.' : s.live_allowed ? 'Live is available. Output stays off until you choose Start live.' : 'Simulation only. Start the Pi controller with live --web to make live output available.';
@@ -431,6 +435,45 @@ function timelineSheet(song){
   const sheets=sheetsForSong(song.song_id),drafts=sheets.filter(sheet=>!sheet.published).sort((a,b)=>b.revision-a.revision);
   return drafts[0]||sheets.find(sheet=>sheet.cue_sheet_id===song.active_cue_sheet_id)||null;
 }
+function timelineNumber(value){return Number(Number(value).toFixed(3));}
+function timelineSegments(song,sheet){
+  return sheet.cues.map((cue,index)=>{
+    const end=index+1<sheet.cues.length?sheet.cues[index+1].at_seconds:song.duration_seconds;
+    return {...copy(cue),duration_seconds:timelineNumber(end-cue.at_seconds)};
+  });
+}
+function cuesFromTimelineSegments(segments){
+  let at=0;
+  return segments.map(segment=>{
+    const cue={at_seconds:timelineNumber(at),preset_id:segment.preset_id,transition_seconds:segment.transition_seconds};
+    at=timelineNumber(at+segment.duration_seconds);
+    return cue;
+  });
+}
+function saveTimelineSegments(song,sheet,segments,message,done=clearSongCueEdit){
+  if(!segments.length||segments.some(segment=>!Number.isFinite(segment.duration_seconds)||segment.duration_seconds<MIN_CUE_DURATION)){notify('Every scene must run for at least 0.1 seconds.',true);return;}
+  const total=timelineNumber(segments.reduce((sum,segment)=>sum+segment.duration_seconds,0));
+  if(Math.abs(total-song.duration_seconds)>0.01){notify(`Scene durations must total the ${song.duration_seconds}s song length.`,true);return;}
+  const document=songDocument(),draft=document.cue_sheets.find(item=>item.cue_sheet_id===sheet.cue_sheet_id);
+  draft.cues=cuesFromTimelineSegments(segments);saveSongDocument(document,message,done);
+}
+function editSongCue(song,sheet,index){
+  const cue=sheet.cues[index],segments=timelineSegments(song,sheet);editingSongCueIndex=index;
+  $('song-cue-editor-heading').textContent=`Edit scene ${index+1}`;$('song-cue-preset').value=cue.preset_id;$('song-cue-duration').value=segments[index].duration_seconds;$('song-cue-transition').value=cue.transition_seconds;
+  $('song-cue-duration-hint').textContent=`The song remains ${song.duration_seconds}s. Changing this duration adjusts the next scene, or the previous scene when editing the final one.`;
+  $('save-song-cue').textContent='Save scene';$('cancel-song-cue').hidden=false;$('song-cue-preset').focus();
+}
+function moveSongCue(song,sheet,index,direction){
+  const target=index+direction;if(target<0||target>=sheet.cues.length)return;
+  const segments=timelineSegments(song,sheet);[segments[index],segments[target]]=[segments[target],segments[index]];songCuePage=Math.floor(target/TOUCH_PAGE_SIZE);
+  saveTimelineSegments(song,sheet,segments,'Scene sequence saved.');
+}
+function removeSongCue(song,sheet,index){
+  if(sheet.cues.length===1){notify('A cue sheet must keep at least one scene.',true);return;}
+  const segments=timelineSegments(song,sheet),[removed]=segments.splice(index,1),recipient=index===0?0:index-1;
+  segments[recipient].duration_seconds=timelineNumber(segments[recipient].duration_seconds+removed.duration_seconds);songCuePage=boundedPage(songCuePage,segments.length);
+  saveTimelineSegments(song,sheet,segments,'Scene removed and its time returned to the neighbouring scene.');
+}
 function renderSongs(){
   const library=catalog.song_library;$('song-list').replaceChildren();$('empty-songs').hidden=Boolean(library.songs.length);
   if(selectedSongId&&!songById(selectedSongId))selectedSongId=null;
@@ -456,7 +499,7 @@ function deleteSong(song){
   if(!confirm(`Delete ${song.title}?`))return;
   const document=songDocument();document.songs=document.songs.filter(item=>item.song_id!==song.song_id);saveSongDocument(document,'Song deleted.');
 }
-function openTimeline(songId){selectedSongId=songId;songCuePage=0;renderTimeline();if(!$('timeline-editor').open)$('timeline-editor').show();}
+function openTimeline(songId){selectedSongId=songId;songCuePage=0;clearSongCueEdit();renderTimeline();if(!$('timeline-editor').open)$('timeline-editor').show();}
 function renderTimeline(){
   const song=selectedSongId?songById(selectedSongId):null;if(!song)return;
   $('timeline-title').textContent=song.title;const sheet=timelineSheet(song),editable=Boolean(sheet&&!sheet.published);
@@ -467,11 +510,15 @@ function renderTimeline(){
   $('timeline-status').textContent=!sheet?`Style: ${styleName}. Create a style-based or manual draft.`:sheet.published?`Style: ${styleName}. Published revision ${sheet.revision} remains active. Create a ${styleName} revision to generate new cues, or copy the published revision for manual edits.`:`Style: ${styleName}. Draft revision ${sheet.revision} is editable but not active. Replace it with the style default if required, then preview and publish it.`;
   if(!sheet){renderPager('song-cue-pager',0,0,()=>{});return;}
   songCuePage=boundedPage(songCuePage,sheet.cues.length);const start=songCuePage*TOUCH_PAGE_SIZE;
+  const segments=timelineSegments(song,sheet);
   sheet.cues.slice(start,start+TOUCH_PAGE_SIZE).forEach((cue,offset)=>{const index=start+offset;
     const card=node('article',undefined,'cue'),info=node('div');const preset=catalog.presets.find(item=>item.preset_id===cue.preset_id);
-    info.append(node('h3',preset?.name||cue.preset_id),node('p',`${cue.at_seconds}s | ${cue.transition_seconds}s transition`,'hint'));
+    info.append(node('h3',preset?.name||cue.preset_id),node('p',`Starts ${cue.at_seconds}s · runs ${segments[index].duration_seconds}s · ${cue.transition_seconds}s transition`,'hint'));
     const row=node('div',undefined,'row');row.append(button('Preview',()=>act('preview_song_cue',{cue_sheet_id:sheet.cue_sheet_id,cue_index:index})));
-    if(editable)row.append(button('Edit',()=>{editingSongCueIndex=index;$('song-cue-time').value=cue.at_seconds;$('song-cue-preset').value=cue.preset_id;$('song-cue-transition').value=cue.transition_seconds;$('save-song-cue').textContent='Save cue';$('cancel-song-cue').hidden=false;}),button('Remove',()=>{if(sheet.cues.length===1){notify('A cue sheet must keep at least one cue.',true);return;}const document=songDocument(),draft=document.cue_sheets.find(item=>item.cue_sheet_id===sheet.cue_sheet_id);draft.cues.splice(index,1);saveSongDocument(document,'Cue removed.');}));
+    if(editable){
+      const up=button('↑ Up',()=>moveSongCue(song,sheet,index,-1)),down=button('↓ Down',()=>moveSongCue(song,sheet,index,1));up.disabled=index===0;down.disabled=index===sheet.cues.length-1;up.setAttribute('aria-label',`Move ${preset?.name||cue.preset_id} earlier`);down.setAttribute('aria-label',`Move ${preset?.name||cue.preset_id} later`);
+      row.append(button('Edit',()=>editSongCue(song,sheet,index)),up,down,button('Remove',()=>removeSongCue(song,sheet,index)));
+    }
     card.append(node('span',String(index+1).padStart(2,'0'),'cue-number'),info,row);$('song-cue-list').append(card);
   });
   renderPager('song-cue-pager',songCuePage,sheet.cues.length,page=>{songCuePage=page;renderTimeline();});
@@ -531,7 +578,10 @@ $('song-editor').addEventListener('submit',event=>{
   const oldStyle=existing?.style||'unspecified',styleChanged=Boolean(existing&&oldStyle!==song.style),message=styleChanged?`Song saved as ${songStyleName(song)}. Use Create ${songStyleName(song)} revision to generate a new style timeline.`:'Song saved.';
   saveSongDocument(document,message,()=>{$('song-dialog').close();editingSongId=null;selectedSongId=song.song_id;renderSongs();});
 });
-function clearSongCueEdit(){editingSongCueIndex=null;$('song-cue-time').value='';$('song-cue-transition').value=0.5;$('save-song-cue').textContent='+ Add cue';$('cancel-song-cue').hidden=true;}
+function clearSongCueEdit(){
+  editingSongCueIndex=null;const song=selectedSongId?songById(selectedSongId):null,sheet=song&&timelineSheet(song),segments=song&&sheet?timelineSegments(song,sheet):[],remaining=segments.at(-1)?.duration_seconds||15;
+  $('song-cue-editor-heading').textContent='Add scene to end';$('song-cue-duration').value=timelineNumber(Math.max(MIN_CUE_DURATION,Math.min(15,remaining/2)));$('song-cue-transition').value=0.5;$('song-cue-duration-hint').textContent='A new scene is added to the end and takes time from the previous final scene. Use the large Up and Down controls to change sequence.';$('save-song-cue').textContent='+ Add scene';$('cancel-song-cue').hidden=true;
+}
 $('cancel-song-cue').addEventListener('click',clearSongCueEdit);
 $('apply-style-default').addEventListener('click',applyStyleDefault);
 $('new-cue-draft').addEventListener('click',newCueDraft);
@@ -540,10 +590,17 @@ $('song-cue-editor').addEventListener('submit',event=>{
   event.preventDefault();
   for(const input of $('song-cue-editor').querySelectorAll('input'))if(!input.reportValidity())return;
   const song=songById(selectedSongId),sheet=song&&timelineSheet(song);if(!sheet||sheet.published){notify('Create an editable cue-sheet revision first.',true);return;}
-  const cue={at_seconds:Number($('song-cue-time').value),preset_id:$('song-cue-preset').value,transition_seconds:Number($('song-cue-transition').value)},document=songDocument(),saved=document.cue_sheets.find(item=>item.cue_sheet_id===sheet.cue_sheet_id);
-  if(editingSongCueIndex===null)saved.cues.push(cue);else saved.cues[editingSongCueIndex]=cue;
-  saved.cues.sort((left,right)=>left.at_seconds-right.at_seconds);
-  saveSongDocument(document,'Song cue saved.',clearSongCueEdit);
+  const duration=Number($('song-cue-duration').value),segments=timelineSegments(song,sheet),presetId=$('song-cue-preset').value,transition=Number($('song-cue-transition').value);
+  if(editingSongCueIndex===null){
+    const donor=segments.at(-1),remainder=donor?timelineNumber(donor.duration_seconds-duration):0;if(!donor||remainder<MIN_CUE_DURATION){notify('The previous final scene must keep at least 0.1 seconds. Choose a shorter duration.',true);return;}
+    donor.duration_seconds=remainder;segments.push({preset_id:presetId,transition_seconds:transition,duration_seconds:timelineNumber(duration)});songCuePage=Math.floor((segments.length-1)/TOUCH_PAGE_SIZE);
+  }else{
+    const index=editingSongCueIndex,current=segments[index],delta=timelineNumber(duration-current.duration_seconds),neighbour=index<segments.length-1?index+1:index-1;
+    if(neighbour<0&&Math.abs(delta)>0.001){notify('Edit the song details to change the duration of a single-scene timeline.',true);return;}
+    const neighbourDuration=neighbour>=0?timelineNumber(segments[neighbour].duration_seconds-delta):0;if(neighbour>=0&&neighbourDuration<MIN_CUE_DURATION){notify('That duration leaves less than 0.1 seconds for the neighbouring scene.',true);return;}
+    current.preset_id=presetId;current.transition_seconds=transition;current.duration_seconds=timelineNumber(duration);if(neighbour>=0)segments[neighbour].duration_seconds=neighbourDuration;
+  }
+  saveTimelineSegments(song,sheet,segments,'Song scene saved.');
 });
 $('setlist-select').addEventListener('change',event=>{selectedSetlistId=event.target.value||null;setlistPage=0;renderSetlists();});
 $('setlist-song-search').addEventListener('input',renderSetlists);
