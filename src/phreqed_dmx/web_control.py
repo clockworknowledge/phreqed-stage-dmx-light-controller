@@ -7,6 +7,7 @@ import ipaddress
 import json
 import math
 from pathlib import Path
+import re
 import secrets
 import signal
 import threading
@@ -26,6 +27,12 @@ from .render import compose_dmx
 from .song_timeline import SongTimelineRunner, TimelineState
 from .song_styles import generate_style_cues
 from .songs import SongCue, SongLibrary
+from .tuning_profiles import (
+    BUILTIN_TUNING_PROFILES,
+    TuningProfile,
+    TuningProfileLibrary,
+    parse_tuning_profile,
+)
 from .white_output import (
     DEFAULT_WHITE_OUTPUT_LEVEL,
     MAX_WHITE_FLASH_HZ,
@@ -41,6 +48,26 @@ from .white_output import (
 
 ASSETS = Path(__file__).with_name('web')
 REHEARSAL_RGB_CEILING = 0.65
+CONTROL_LEASE_SECONDS = 5.0
+LEASE_ID_PATTERN = re.compile(r"^[A-Za-z0-9._-]{1,64}$")
+
+
+class LocalOperations:
+    """Narrow callbacks exposed only to loopback touchscreen requests."""
+
+    def __init__(
+        self,
+        run_network_action: Callable[[str], None],
+        set_display_brightness: Callable[[int], None],
+    ) -> None:
+        self.run_network_action = run_network_action
+        self.set_display_brightness = set_display_brightness
+
+
+def health_item(state: str, label: str, detail: str = '') -> dict:
+    if state not in ('healthy', 'warning', 'offline', 'unknown'):
+        raise ValueError('health state must be healthy, warning, offline, or unknown')
+    return dict(state=state, label=label, detail=detail)
 
 
 class BrowserFootCommands:
@@ -71,9 +98,11 @@ class BrowserControl:
         library_path: Path,
         *,
         song_library_path: Path | None = None,
+        tuning_profile_path: Path | None = None,
         allow_live: bool = False,
         white_output_ceiling: float = WHITE_OUTPUT_CEILING,
         system_shutdown: Callable[[], None] | None = None,
+        local_operations: LocalOperations | None = None,
     ) -> None:
         if (
             isinstance(white_output_ceiling, bool)
@@ -96,6 +125,10 @@ class BrowserControl:
             song_library_path or library_path.with_name('songs.json'),
             set(self.engine.presets),
         )
+        self.tuning_profiles = TuningProfileLibrary(
+            tuning_profile_path or library_path.with_name('tuning-profiles.json')
+        )
+        self.active_tuning_profile_id: str | None = None
         self.song_timeline = SongTimelineRunner(
             self.song_library,
             self._activate_song_cue,
@@ -126,13 +159,18 @@ class BrowserControl:
         )
         self.allow_live = allow_live
         self.system_shutdown = system_shutdown
+        self.local_operations = local_operations
         self.shutdown_requested = False
         self.white_output_ceiling = float(white_output_ceiling)
         self.sender: ArtNetSender | None = None
         self.lock = threading.RLock()
         self.stop_event = threading.Event()
         self.started = time.monotonic()
+        self.leases: dict[str, tuple[str, float]] = {}
+        # Compatibility mirror for callers that exercised the former single
+        # browser deadline directly. New code uses the lease registry.
         self.lease_deadline = 0.0
+        self.display_brightness = 60
         self.error = ''
         self.notice = ''
         self.white_peak_preview = False
@@ -154,6 +192,105 @@ class BrowserControl:
 
     def elapsed(self) -> float:
         return time.monotonic() - self.started
+
+    def _renew_lease(
+        self,
+        lease_id: object,
+        lease_kind: object,
+        *,
+        source: str,
+    ) -> None:
+        lease_id = 'legacy-browser' if lease_id is None else lease_id
+        lease_kind = 'remote' if lease_kind is None else lease_kind
+        if not isinstance(lease_id, str) or not LEASE_ID_PATTERN.fullmatch(lease_id):
+            raise ValueError('lease id must contain only letters, numbers, dot, dash, or underscore')
+        if lease_kind not in ('remote', 'local'):
+            raise ValueError('lease kind must be remote or local')
+        if lease_kind == 'local' and source != 'loopback':
+            raise ValueError('local display leases require a loopback request')
+        deadline = time.monotonic() + CONTROL_LEASE_SECONDS
+        self.leases[lease_id] = (lease_kind, deadline)
+        self.lease_deadline = max(
+            (item[1] for item in self.leases.values()), default=0.0
+        )
+
+    def _active_leases(self, now: float | None = None) -> dict[str, tuple[str, float]]:
+        now = time.monotonic() if now is None else now
+        expired = [
+            lease_id
+            for lease_id, (_, deadline) in self.leases.items()
+            if deadline <= now
+        ]
+        for lease_id in expired:
+            del self.leases[lease_id]
+        self.lease_deadline = max(
+            (item[1] for item in self.leases.values()), default=0.0
+        )
+        return dict(self.leases)
+
+    def _lease_state(self) -> dict:
+        leases = self._active_leases()
+        local_count = sum(kind == 'local' for kind, _ in leases.values())
+        remote_count = sum(kind == 'remote' for kind, _ in leases.values())
+        return dict(
+            active=len(leases),
+            local=local_count,
+            remote=remote_count,
+            local_display_healthy=local_count > 0,
+            timeout_seconds=CONTROL_LEASE_SECONDS,
+        )
+
+    def _health_state(self, *, audio: dict, foot_status: object | None) -> dict:
+        leases = self._lease_state()
+        controller_state = 'offline' if self.error else 'healthy'
+        audio_state = (
+            'unknown' if not audio['enabled']
+            else 'healthy' if audio['healthy']
+            else 'offline'
+        )
+        foot_state = (
+            'unknown' if foot_status is None
+            else 'healthy' if foot_status.connected
+            else 'warning'
+        )
+        output_state = (
+            'offline' if self.engine.blackout_enabled
+            else 'healthy' if self.sender is not None
+            else 'unknown'
+        )
+        local_state = 'healthy' if leases['local_display_healthy'] else 'unknown'
+        return dict(
+            controller=health_item(
+                controller_state,
+                'Controller ready' if not self.error else 'Controller fault',
+                self.error,
+            ),
+            qlcplus=health_item(
+                'unknown',
+                'QLC+ external',
+                'Verified by the Pi readiness check; Art-Net is send-only.',
+            ),
+            audio=health_item(audio_state, audio['message']),
+            pedal=health_item(
+                foot_state,
+                'Pedal disabled' if foot_status is None else foot_status.message,
+            ),
+            network=health_item(
+                'healthy' if self.allow_live else 'unknown',
+                'Trusted control network' if self.allow_live else 'Simulation network',
+            ),
+            fixture_output=health_item(
+                output_state,
+                'Blackout active' if self.engine.blackout_enabled
+                else 'Fixture output live' if self.sender is not None
+                else 'Output stopped',
+            ),
+            local_display=health_item(
+                local_state,
+                'Local display connected' if leases['local_display_healthy']
+                else 'Local display not connected',
+            ),
+        )
 
     def _activate_song_cue(self, cue: SongCue, scheduled: float) -> None:
         self.controller.begin_transition(
@@ -239,6 +376,14 @@ class BrowserControl:
         return dict(effects=[asdict(m) for m in EFFECT_REGISTRY.metadata()],
                     presets=[{**preset_data(p), 'builtin': p.preset_id in PRESETS}
                              for p in self.library.all_presets.values()],
+                    tuning_profiles=[
+                        {
+                            **profile.as_dict(),
+                            'builtin': profile_id in BUILTIN_TUNING_PROFILES,
+                        }
+                        for profile_id, profile
+                        in self.tuning_profiles.all_profiles.items()
+                    ],
                     library=self.library.document(),
                     song_library=self.song_library.document())
 
@@ -288,12 +433,17 @@ class BrowserControl:
                 if self.foot_controller is not None
                 else None
             )
+            lease_state = self._lease_state()
+            health = self._health_state(audio=audio, foot_status=foot_status)
             white_commissioned = all(
                 fixture.white_commissioned and fixture.white_rows_together
                 for fixture in self.controller.config.fixtures
             )
             return dict(live_allowed=self.allow_live, live=self.sender is not None,
                         system_shutdown_available=self.system_shutdown is not None,
+                        local_operations_available=self.local_operations is not None,
+                        display_brightness=self.display_brightness,
+                        active_tuning_profile_id=self.active_tuning_profile_id,
                         shutdown_requested=self.shutdown_requested,
                         blackout=self.engine.blackout_enabled, error=self.error, notice=self.notice,
                         preset_id=self.engine.active_preset_id, playing=scenes.playing,
@@ -360,6 +510,8 @@ class BrowserControl:
                                 reconnects=0,
                             )
                         ),
+                        control_leases=lease_state,
+                        health=health,
                         performance=self._performance_state(),
                         frames={name: [[[round(c.red * 255), round(c.green * 255), round(c.blue * 255)]
                                         for c in row] for row in grid.rows()]
@@ -402,7 +554,39 @@ class BrowserControl:
         }
         self.white_peak_limiter.reset()
 
-    def command(self, raw: object) -> None:
+    def _apply_tuning_profile(self, profile: TuningProfile) -> None:
+        applied_master = min(
+            profile.master_level,
+            self.engine.compositor.maximum_brightness,
+        )
+        self.engine.set_global_brightness(applied_master)
+        self.engine.compositor.set_contrast(profile.contrast)
+        self.controller.configure_audio_dimming(
+            enabled=profile.deep_dim_enabled,
+            quiet_floor=profile.quiet_floor,
+        )
+        configure_auto_level = getattr(
+            self.controller.audio_source, 'configure_auto_level', None
+        )
+        if callable(configure_auto_level):
+            configure_auto_level(profile.audio_auto_level)
+        self.white_preview_threshold = profile.white_threshold
+        self.white_preview_level = profile.white_preview_level
+        self.white_output_level = min(
+            profile.white_output_level, self.white_output_ceiling
+        )
+        # Venue changes may prepare a future white level, but never preserve or
+        # arm physical white output across the change.
+        self._disable_white_output()
+        self.active_tuning_profile_id = profile.profile_id
+        capped = applied_master < profile.master_level
+        self.notice = (
+            f'{profile.name} tuning applied'
+            + (' at the current RGB ceiling.' if capped else '.')
+            + ' Physical whites are disarmed.'
+        )
+
+    def command(self, raw: object, *, source: str = 'remote') -> None:
         data = object_fields(
             raw,
             {'action'},
@@ -410,7 +594,7 @@ class BrowserControl:
                 'value', 'preset', 'scenes', 'index', 'enabled', 'floor',
                 'threshold', 'level', 'song_library', 'cue_sheet_id',
                 'cue_index', 'setlist_id', 'mode', 'song_id', 'replace',
-                'confirmation',
+                'confirmation', 'lease_id', 'lease_kind', 'profile',
             },
         )
         action = data['action']
@@ -418,7 +602,9 @@ class BrowserControl:
             elapsed = self.elapsed()
             scenes = self.controller.scenes
             if action == 'heartbeat':
-                self.lease_deadline = time.monotonic() + 5
+                self._renew_lease(
+                    data.get('lease_id'), data.get('lease_kind'), source=source
+                )
             elif action == 'blackout':
                 self.engine.set_blackout(True)
                 self._disable_white_output()
@@ -447,7 +633,8 @@ class BrowserControl:
                     ))
                     config = self.controller.config
                     self.sender = ArtNetSender(config.artnet_host, config.artnet_port, config.universe)
-                    self.lease_deadline = time.monotonic() + 5
+                    if not self._active_leases():
+                        self._renew_lease(None, None, source=source)
                     self.notice = ''
             elif action == 'stop_live':
                 self.engine.set_blackout(True)
@@ -489,6 +676,7 @@ class BrowserControl:
                     data.get('value'), 'brightness', 0,
                     self.engine.compositor.maximum_brightness,
                 ))
+                self.active_tuning_profile_id = None
             elif action == 'rgb_power_mode':
                 mode = data.get('value')
                 if mode not in ('rehearsal', 'show'):
@@ -516,6 +704,7 @@ class BrowserControl:
                 self.engine.compositor.set_contrast(number(
                     data.get('value'), 'contrast', 1.0, 3.0,
                 ))
+                self.active_tuning_profile_id = None
             elif action == 'audio_dimming':
                 enabled = data.get('enabled')
                 if not isinstance(enabled, bool):
@@ -524,6 +713,7 @@ class BrowserControl:
                 self.controller.configure_audio_dimming(
                     enabled=enabled, quiet_floor=floor
                 )
+                self.active_tuning_profile_id = None
             elif action == 'audio_auto_level':
                 enabled = data.get('enabled')
                 if not isinstance(enabled, bool):
@@ -534,6 +724,7 @@ class BrowserControl:
                 if not callable(configure):
                     raise ValueError('audio auto level requires a capture source')
                 configure(enabled)
+                self.active_tuning_profile_id = None
             elif action == 'white_preview':
                 enabled = data.get('enabled')
                 if not isinstance(enabled, bool):
@@ -547,6 +738,7 @@ class BrowserControl:
                 self.white_peak_preview = enabled
                 self.white_preview_threshold = threshold
                 self.white_preview_level = level
+                self.active_tuning_profile_id = None
             elif action == 'white_output':
                 enabled = data.get('enabled')
                 if not isinstance(enabled, bool):
@@ -569,8 +761,43 @@ class BrowserControl:
                         raise ValueError('white output requires commissioned fixtures')
                 self.white_output_level = level
                 self.white_output_enabled = enabled
+                self.active_tuning_profile_id = None
                 if not enabled:
                     self._disable_white_output()
+            elif action == 'apply_tuning_profile':
+                profile_id = data.get('value')
+                profiles = self.tuning_profiles.all_profiles
+                if not isinstance(profile_id, str) or profile_id not in profiles:
+                    raise ValueError('unknown tuning profile')
+                self._apply_tuning_profile(profiles[profile_id])
+            elif action == 'save_tuning_profile':
+                profile = parse_tuning_profile(data.get('profile'))
+                document = self.tuning_profiles.document()
+                document['profiles'] = [
+                    item for item in document['profiles']
+                    if item['profile_id'] != profile.profile_id
+                ]
+                document['profiles'].append(profile.as_dict())
+                self.tuning_profiles.save(document)
+                self.notice = f'{profile.name} tuning profile saved.'
+            elif action == 'delete_tuning_profile':
+                profile_id = data.get('value')
+                if (
+                    not isinstance(profile_id, str)
+                    or profile_id not in self.tuning_profiles.profiles
+                ):
+                    raise ValueError(
+                        'only saved user tuning profiles can be deleted'
+                    )
+                document = self.tuning_profiles.document()
+                document['profiles'] = [
+                    item for item in document['profiles']
+                    if item['profile_id'] != profile_id
+                ]
+                self.tuning_profiles.save(document)
+                if self.active_tuning_profile_id == profile_id:
+                    self.active_tuning_profile_id = None
+                self.notice = 'Tuning profile deleted.'
             elif action == 'preset':
                 if self.performance.mode is PerformanceMode.SETLIST:
                     raise ValueError('switch to Manual mode to select a look directly')
@@ -712,10 +939,48 @@ class BrowserControl:
             else:
                 raise ValueError('unknown action')
 
+    def local_state(self) -> dict:
+        with self.lock:
+            return dict(
+                available=self.local_operations is not None,
+                display_brightness=self.display_brightness,
+                network_actions=(
+                    ('stage', 'wifi', 'enable-stage', 'disable-stage')
+                    if self.local_operations is not None else ()
+                ),
+                live=self.sender is not None,
+                timeline_running=self.song_timeline.state is TimelineState.RUNNING,
+            )
+
+    def local_action(self, raw: object) -> None:
+        data = object_fields(raw, {'action'}, {'value', 'confirmation'})
+        if self.local_operations is None:
+            raise ValueError('local operations are disabled for this controller')
+        action = data['action']
+        with self.lock:
+            if action == 'display_brightness':
+                value = data.get('value')
+                if isinstance(value, bool) or not isinstance(value, int):
+                    raise ValueError('display brightness must be an integer')
+                if value not in (20, 40, 60, 80, 100):
+                    raise ValueError('display brightness must be 20, 40, 60, 80, or 100')
+                self.local_operations.set_display_brightness(value)
+                self.display_brightness = value
+                return
+            if action not in ('stage', 'wifi', 'enable-stage', 'disable-stage'):
+                raise ValueError('unknown local operation')
+            if data.get('confirmation') != action.upper():
+                raise ValueError(f'type {action.upper()} to confirm this network operation')
+            if self.sender is not None or self.song_timeline.state is TimelineState.RUNNING:
+                raise ValueError('stop fixture output and the active song before changing networks')
+            self.local_operations.run_network_action(action)
+            self.notice = f'Local network action requested: {action}.'
+
     def step(self, now: float | None = None) -> None:
         with self.lock:
             now = time.monotonic() if now is None else now
-            if self.sender is not None and now >= self.lease_deadline:
+            active_leases = self._active_leases(now)
+            if self.sender is not None and not active_leases:
                 self.engine.set_blackout(True)
                 self.controller.scenes.playing = False
                 self.performance.blackout()
@@ -890,6 +1155,19 @@ class ControlHandler(BaseHTTPRequestHandler):
         except (ValueError, TypeError):
             return False
 
+    def client_is_loopback(self) -> bool:
+        try:
+            address = self.client_address[0]
+        except (AttributeError, TypeError):
+            try:
+                address = self.connection.getpeername()[0]
+            except (AttributeError, TypeError):
+                return False
+        try:
+            return ipaddress.ip_address(address).is_loopback
+        except ValueError:
+            return False
+
     def do_GET(self) -> None:
         if not self.valid_host():
             self.reply(403, b'{"error":"unrecognized host"}')
@@ -897,6 +1175,11 @@ class ControlHandler(BaseHTTPRequestHandler):
         path = urlsplit(self.path).path
         if path == '/api/state':
             self.reply(200, json.dumps(self.server.control.state()).encode())
+        elif path == '/api/local/state':
+            if not self.client_is_loopback():
+                self.reply(403, b'{"error":"local operations require loopback"}')
+                return
+            self.reply(200, json.dumps(self.server.control.local_state()).encode())
         elif path == '/api/catalog':
             with self.server.control.lock:
                 self.reply(200, json.dumps(self.server.control.catalog()).encode())
@@ -904,14 +1187,15 @@ class ControlHandler(BaseHTTPRequestHandler):
             self.reply(200, json.dumps({'token': self.server.token}).encode())
         elif path in (
             '/', '/app.js', '/style.css', '/fixture.css', '/audio.css',
-            '/safety.css',
+            '/safety.css', '/touch.css',
         ):
             name = 'index.html' if path == '/' else path[1:]
             content_type = {'index.html': 'text/html; charset=utf-8', 'app.js': 'text/javascript; charset=utf-8',
                             'style.css': 'text/css; charset=utf-8',
                             'fixture.css': 'text/css; charset=utf-8',
                             'audio.css': 'text/css; charset=utf-8',
-                            'safety.css': 'text/css; charset=utf-8'}[name]
+                            'safety.css': 'text/css; charset=utf-8',
+                            'touch.css': 'text/css; charset=utf-8'}[name]
             self.reply(200, (ASSETS / name).read_bytes(), content_type)
         elif path == '/favicon.ico':
             self.reply(204, b'', 'image/x-icon')
@@ -924,8 +1208,12 @@ class ControlHandler(BaseHTTPRequestHandler):
                 or (origin is not None and origin != 'http://' + self.headers.get('Host', ''))):
             self.reply(403, b'{"error":"reload this controller page"}')
             return
-        if self.path != '/api/command':
+        path = urlsplit(self.path).path
+        if path not in ('/api/command', '/api/local/action'):
             self.reply(404, b'{"error":"not found"}')
+            return
+        if path == '/api/local/action' and not self.client_is_loopback():
+            self.reply(403, b'{"error":"local operations require loopback"}')
             return
         try:
             if self.headers.get('Content-Type') != 'application/json':
@@ -934,7 +1222,16 @@ class ControlHandler(BaseHTTPRequestHandler):
             if not 0 < length <= 1_000_000:
                 raise ValueError('request must be between 1 byte and 1 MB')
             data = json.loads(self.rfile.read(length))
-            self.server.control.command(data)
+            if path == '/api/local/action':
+                self.server.control.local_action(data)
+            elif (
+                isinstance(data, dict)
+                and data.get('action') == 'heartbeat'
+                and data.get('lease_kind') == 'local'
+            ):
+                self.server.control.command(data, source='loopback')
+            else:
+                self.server.control.command(data)
             self.reply(200, b'{"ok":true}')
         except (ValueError, TypeError, KeyError) as exc:
             self.reply(400, json.dumps({'error': str(exc)}).encode())
@@ -946,7 +1243,8 @@ def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1'
           allow_network: str = '192.168.1.0/24', allow_live: bool = False,
           foot_midi_device: Path | None = None, foot_midi_channel: int = 1,
           white_output_ceiling: float = WHITE_OUTPUT_CEILING,
-          system_shutdown: Callable[[], None] | None = None) -> None:
+          system_shutdown: Callable[[], None] | None = None,
+          local_operations: LocalOperations | None = None) -> None:
     if not 1 <= port <= 65535:
         raise ValueError('browser port must be between 1 and 65535')
     if controller.config.fps > 25:
@@ -957,6 +1255,7 @@ def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1'
         allow_live=allow_live,
         white_output_ceiling=white_output_ceiling,
         system_shutdown=system_shutdown,
+        local_operations=local_operations,
     )
     foot_controller = (
         RawMidiFootController(

@@ -19,4 +19,4 @@ phreqed-dmx = "phreqed_dmx.app:main"
 where = ["src"]
 
 [tool.setuptools.package-data]
-phreqed_dmx = ["web/*.html", "web/*.css", "web/*.js"]
+phreqed_dmx = ["web/*.html", "web/*.css", "web/*.js", "tuning_profiles.defaults.json"]

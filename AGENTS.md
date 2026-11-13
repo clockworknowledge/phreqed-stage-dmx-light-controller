@@ -27,6 +27,8 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
   independent 0.10-second/4 Hz safety limits.
 - `src/phreqed_dmx/scenes.py`: deterministic ordered-cue playback and transitions.
 - `src/phreqed_dmx/library.py`: validated, atomic user presets and scene storage.
+- `src/phreqed_dmx/tuning_profiles.py`: immutable safe venue defaults plus
+  validated, atomic user tuning-profile storage.
 - `src/phreqed_dmx/songs.py`: validated, atomic song, cue-sheet, and setlist
   metadata storage; it never stores audio media.
 - `src/phreqed_dmx/song_timeline.py`: transport-independent, injected-clock
@@ -102,8 +104,8 @@ not effect code, converts those coordinates to physical zone order.
   and retain the luminance-rise and flash-interval limiter. Browser control
   must still start in Rehearsal power at 0.65 or below; Show power requires a
   second in-page confirmation after live output starts and must reset on live
-  stop, lease loss, failure, or process restart. Saved presets stay at or below
-  0.65. The RGB override must never alter the separately configured white-channel
+  stop, lease loss, failure, or process restart. Saved presets and tuning
+  profiles stay at or below 0.65. The RGB override must never alter the separately configured white-channel
   ceiling.
 - New default effects must avoid rapid high-intensity full-frame flashes.
 - New configuration must be rejected if a fixture falls outside the 512-channel
@@ -123,6 +125,11 @@ not effect code, converts those coordinates to physical zone order.
   execution, or an inhibit override. Pi authorization must be restricted to the
   managed `phreqed-dmx.service` starting only the root-owned
   `phreqed-poweroff.service` helper.
+- The managed show controller must not be suspended by desktop/display idle
+  policy. Its systemd dependency may inhibit only `sleep` and `idle` while the
+  service is active; it must not inhibit shutdown. LCD dimming or blanking must
+  remain independent of QLC+, Art-Net, audio, MIDI, timelines, and control
+  leases.
 - Foot control is disabled unless an explicit raw-MIDI device path is supplied.
   MIDI input must not enable live output or bypass the browser live gate.
   Initial absence or later loss of that path must not stop browser/audio

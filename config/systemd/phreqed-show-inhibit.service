@@ -1,0 +1,19 @@
+[Unit]
+Description=Prevent sleep while the Phreqed show controller is active
+PartOf=phreqed-dmx.service
+Before=phreqed-dmx.service
+ConditionPathExists=/usr/bin/systemd-inhibit
+
+[Service]
+Type=exec
+ExecStart=/usr/bin/systemd-inhibit --what=sleep:idle --who=Phreqed --why=Show controller must remain available --mode=block /usr/bin/sleep infinity
+Restart=on-failure
+RestartSec=2
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=strict
+ProtectHome=true
+ProtectKernelTunables=true
+ProtectKernelModules=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX

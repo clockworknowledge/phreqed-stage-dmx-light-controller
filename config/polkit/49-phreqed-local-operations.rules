@@ -1,0 +1,25 @@
+// Permit the managed controller to start only the commissioned fixed-action
+// network and display helpers. No transient unit, arbitrary argument, shell,
+// or other systemd verb is authorized.
+polkit.addRule(function(action, subject) {
+    var unit = action.lookup("unit");
+    var allowed = [
+        "phreqed-network@stage.service",
+        "phreqed-network@wifi.service",
+        "phreqed-network@enable-stage.service",
+        "phreqed-network@disable-stage.service",
+        "phreqed-backlight@20.service",
+        "phreqed-backlight@40.service",
+        "phreqed-backlight@60.service",
+        "phreqed-backlight@80.service",
+        "phreqed-backlight@100.service"
+    ];
+    if (action.id == "org.freedesktop.systemd1.manage-units" &&
+            allowed.indexOf(unit) >= 0 &&
+            action.lookup("verb") == "start" &&
+            subject.user == "mmorley" &&
+            subject.system_unit == "phreqed-dmx.service" &&
+            subject.no_new_privileges) {
+        return polkit.Result.YES;
+    }
+});

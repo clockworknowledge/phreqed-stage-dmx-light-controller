@@ -21,6 +21,7 @@ from phreqed_dmx.web_control import (
     BrowserFootCommands,
     ControlHandler,
     ControlServer,
+    LocalOperations,
 )
 
 
@@ -397,6 +398,72 @@ class BrowserControlTests(unittest.TestCase):
         ):
             self.assertIn(f'<option value="{style}">', html)
 
+    def test_browser_has_shared_touch_workspaces_and_named_leases(self):
+        html = files('phreqed_dmx').joinpath('web/index.html').read_text(
+            encoding='utf-8'
+        )
+        script = files('phreqed_dmx').joinpath('web/app.js').read_text(
+            encoding='utf-8'
+        )
+        touch = files('phreqed_dmx').joinpath('web/touch.css').read_text(
+            encoding='utf-8'
+        )
+        for workspace in ('perform', 'setlist', 'build', 'tune', 'operations'):
+            self.assertIn(f'id="{workspace}" class="workspace', html)
+            self.assertIn(f'data-workspace="{workspace}"', html)
+        for control_id in (
+            'stage-health', 'stage-start-live', 'stage-stop-live',
+            'setup-dialog', 'health-detail-grid', 'display-levels',
+            'network-dialog', 'tuning-profile', 'apply-tuning-profile',
+            'tuning-profile-dialog',
+        ):
+            self.assertIn(f'id="{control_id}"', html)
+        self.assertIn('lease_id:leaseId', script)
+        self.assertIn("lease_kind:'remote'", script)
+        self.assertIn("state?.live && currentWorkspace === 'perform'", script)
+        self.assertIn("localRequest({action,confirmation})", script)
+        self.assertIn('--touch: 56px', touch)
+        self.assertIn('grid-template-columns: repeat(5, minmax(0, 1fr))', touch)
+        self.assertLess(html.index('id="setlist"'), html.index('id="songbuilder"'))
+        self.assertLess(html.index('id="songbuilder"'), html.index('id="tune"'))
+        self.assertNotIn('data-tab="songbuilder"', html)
+
+    def test_tuning_profiles_are_persistent_bounded_and_disarm_whites(self):
+        profiles = self.control.catalog()['tuning_profiles']
+        self.assertEqual(
+            [profile['profile_id'] for profile in profiles[:3]],
+            ['rehearsal', 'small-stage', 'large-stage'],
+        )
+        self.control.white_output_enabled = True
+        self.control.command(dict(
+            action='apply_tuning_profile', value='small-stage'
+        ))
+        state = self.control.state()
+        self.assertEqual(state['active_tuning_profile_id'], 'small-stage')
+        self.assertEqual(state['brightness'], 0.49)
+        self.assertEqual(state['contrast'], 1.35)
+        self.assertEqual(state['brightness_ceiling'], 0.65)
+        self.assertEqual(state['rgb_power_mode'], 'rehearsal')
+        self.assertFalse(state['white_preview']['output_enabled'])
+        self.assertEqual(state['white_preview']['output_level'], 0.05)
+
+        custom = dict(profiles[1])
+        custom.pop('builtin')
+        custom.update(profile_id='user-tune-club', name='Club', master_level=0.4)
+        self.control.command(dict(
+            action='save_tuning_profile', profile=custom
+        ))
+        restored = BrowserControl(Controller(load_config()), self.path)
+        self.addCleanup(restored.close)
+        self.assertIn(
+            'user-tune-club',
+            [profile['profile_id'] for profile in restored.catalog()['tuning_profiles']],
+        )
+        with self.assertRaisesRegex(ValueError, 'only saved user'):
+            self.control.command(dict(
+                action='delete_tuning_profile', value='rehearsal'
+            ))
+
     def test_stage_monitor_brightness_is_browser_only_and_persistent(self):
         html = files('phreqed_dmx').joinpath('web/index.html').read_text(encoding='utf-8')
         script = files('phreqed_dmx').joinpath('web/app.js').read_text(encoding='utf-8')
@@ -693,6 +760,80 @@ class BrowserControlTests(unittest.TestCase):
             control.command(dict(action='heartbeat'))
             self.assertIsNone(control.sender)
 
+    def test_multiple_control_leases_keep_live_until_every_surface_is_lost(self):
+        control = BrowserControl(
+            Controller(load_config()), self.path, allow_live=True
+        )
+        self.addCleanup(control.close)
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(
+                action='heartbeat', lease_id='phone', lease_kind='remote'
+            ))
+            control.command(
+                dict(action='heartbeat', lease_id='local-kiosk', lease_kind='local'),
+                source='loopback',
+            )
+            control.command(dict(action='start_live'))
+            state = control.state()['control_leases']
+            self.assertEqual((state['remote'], state['local']), (1, 1))
+
+            remote_deadline = control.leases['phone'][1]
+            local_deadline = control.leases['local-kiosk'][1]
+            control.leases['phone'] = ('remote', remote_deadline - 10)
+            control.step(local_deadline - 0.1)
+            self.assertIsNotNone(control.sender)
+            sender.return_value.close.assert_not_called()
+
+            control.step(local_deadline + 0.1)
+            sender.return_value.close.assert_called_once_with()
+            self.assertTrue(control.state()['blackout'])
+
+    def test_remote_request_cannot_claim_a_local_display_lease(self):
+        with self.assertRaisesRegex(ValueError, 'loopback'):
+            self.control.command(dict(
+                action='heartbeat', lease_id='fake-kiosk', lease_kind='local'
+            ))
+        self.assertEqual(self.control.state()['control_leases']['active'], 0)
+
+    def test_structured_health_and_local_operations_are_bounded(self):
+        network_action = Mock()
+        brightness_action = Mock()
+        control = BrowserControl(
+            Controller(load_config()),
+            self.path,
+            allow_live=True,
+            local_operations=LocalOperations(network_action, brightness_action),
+        )
+        self.addCleanup(control.close)
+        state = control.state()
+        self.assertEqual(
+            set(state['health']),
+            {
+                'controller', 'qlcplus', 'audio', 'pedal', 'network',
+                'fixture_output', 'local_display',
+            },
+        )
+        self.assertTrue(state['local_operations_available'])
+
+        control.local_action(dict(action='display_brightness', value=80))
+        brightness_action.assert_called_once_with(80)
+        self.assertEqual(control.local_state()['display_brightness'], 80)
+        with self.assertRaisesRegex(ValueError, '20, 40, 60, 80, or 100'):
+            control.local_action(dict(action='display_brightness', value=75))
+        with self.assertRaisesRegex(ValueError, 'type STAGE'):
+            control.local_action(dict(action='stage', confirmation='yes'))
+        with self.assertRaisesRegex(ValueError, 'unknown local operation'):
+            control.local_action(dict(
+                action='stage; /usr/bin/systemctl reboot', confirmation='STAGE'
+            ))
+        control.local_action(dict(action='stage', confirmation='STAGE'))
+        network_action.assert_called_once_with('stage')
+
+        with patch('phreqed_dmx.web_control.ArtNetSender'):
+            control.command(dict(action='start_live'))
+            with self.assertRaisesRegex(ValueError, 'stop fixture output'):
+                control.local_action(dict(action='wifi', confirmation='WIFI'))
+
     def test_system_shutdown_requires_opt_in_phrase_and_blackouts_first(self):
         self.assertFalse(self.control.state()['system_shutdown_available'])
         with self.assertRaisesRegex(ValueError, 'disabled'):
@@ -897,6 +1038,7 @@ class HttpBoundaryTests(unittest.TestCase):
                            'Content-Type':'application/json', 'Content-Length':str(len(body))}.items():
             handler.headers[key] = value
         handler.path = '/api/command'
+        handler.client_address = ('127.0.0.1', 12345)
         handler.connection = Mock()
         handler.connection.getsockname.return_value = ('127.0.0.1',8080)
         handler.rfile = io.BytesIO(body)
@@ -925,11 +1067,34 @@ class HttpBoundaryTests(unittest.TestCase):
         self.assertEqual(handler.reply.call_args.args[0],200)
         handler.server.control.command.assert_called_once_with({'action':'blackout'})
 
-    def test_safety_stylesheet_is_served_with_css_mime_type(self):
-        handler = self.handler(b'')
-        handler.path = '/safety.css'
-        handler.do_GET()
-        self.assertEqual(handler.reply.call_args.args[0], 200)
-        self.assertEqual(
-            handler.reply.call_args.args[2], 'text/css; charset=utf-8'
+    def test_local_operations_endpoint_rejects_remote_clients(self):
+        handler = self.handler(b'{"action":"stage","confirmation":"STAGE"}')
+        handler.path = '/api/local/action'
+        handler.client_address = ('192.168.1.50', 12345)
+        handler.do_POST()
+        self.assertEqual(handler.reply.call_args.args[0], 403)
+        handler.server.control.local_action.assert_not_called()
+
+    def test_local_display_heartbeat_is_marked_loopback(self):
+        body = b'{"action":"heartbeat","lease_id":"local-kiosk","lease_kind":"local"}'
+        handler = self.handler(body)
+        handler.do_POST()
+        handler.server.control.command.assert_called_once_with(
+            {
+                'action': 'heartbeat',
+                'lease_id': 'local-kiosk',
+                'lease_kind': 'local',
+            },
+            source='loopback',
         )
+
+    def test_stylesheets_are_served_with_css_mime_type(self):
+        for path in ('/safety.css', '/touch.css'):
+            with self.subTest(path=path):
+                handler = self.handler(b'')
+                handler.path = path
+                handler.do_GET()
+                self.assertEqual(handler.reply.call_args.args[0], 200)
+                self.assertEqual(
+                    handler.reply.call_args.args[2], 'text/css; charset=utf-8'
+                )

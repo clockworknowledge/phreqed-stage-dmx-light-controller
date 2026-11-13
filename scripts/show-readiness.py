@@ -38,6 +38,14 @@ def service_check(name: str) -> Result:
     return "PASS", f"{name} is active and enabled"
 
 
+def active_dependency_check(name: str) -> Result:
+    """Check a required service that is pulled in rather than enabled alone."""
+    active = command("systemctl", "is-active", name)
+    if active.returncode != 0:
+        return "FAIL", f"{name} is not active ({active.stdout.strip() or active.stderr.strip()})"
+    return "PASS", f"{name} is active"
+
+
 def assess_state(
     state: dict[str, object], *, startup_defaults: bool,
     require_audio: bool, require_foot_event: bool,
@@ -123,7 +131,11 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
 
 def main(argv: list[str] | None = None) -> int:
     args = parse_args(argv)
-    results = [service_check("qlcplus.service"), service_check("phreqed-dmx.service")]
+    results = [
+        service_check("qlcplus.service"),
+        active_dependency_check("phreqed-show-inhibit.service"),
+        service_check("phreqed-dmx.service"),
+    ]
     try:
         state = get_json(f"{args.controller_url.rstrip('/')}/api/state")
     except (OSError, URLError, ValueError, json.JSONDecodeError) as exc:

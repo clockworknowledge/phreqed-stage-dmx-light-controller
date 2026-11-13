@@ -139,10 +139,33 @@ sudoedit /etc/default/phreqed-dmx
 sudo reboot
 ```
 
-The installer synchronizes both systemd units and makes a one-time backup of a
-different installed QLC+ unit. It never replaces the commissioned `.qxw`
-workspace. Review `systemctl cat qlcplus.service phreqed-dmx.service` before
-the reboot if the Pi has any local service customization.
+For the optional 1280 x 800 local touchscreen, install Chromium first and opt
+in to the separately managed kiosk:
+
+```bash
+sudo apt install -y chromium
+bash scripts/pi-install-show-service.sh --enable-kiosk
+```
+
+`phreqed-kiosk.service` is wanted only by the graphical target. It waits for
+the loopback controller before launching Chromium and renews the native local
+lease only while Chromium is running. The controller and QLC+ do not require
+the kiosk, so a missing display, graphical session, or Chromium leaves normal
+headless startup unaffected. Disable it at any time with
+`sudo systemctl disable --now phreqed-kiosk.service`.
+
+The installer synchronizes QLC+, the Phreqed controller, its sleep inhibitor,
+and the optional power-off helper, and makes a one-time backup of a different
+installed QLC+ unit. It never replaces the commissioned `.qxw` workspace.
+Review `systemctl cat qlcplus.service phreqed-show-inhibit.service
+phreqed-dmx.service` before the reboot if the Pi has any local service
+customization.
+
+`phreqed-show-inhibit.service` holds a systemd `sleep:idle` block while the
+managed show controller is running. This prevents desktop display-idle or
+suspend policy from putting the stage controller to sleep. It deliberately
+does not inhibit shutdown, so the separately confirmed clean power-off path
+continues to work. Stopping `phreqed-dmx.service` releases the inhibitor.
 
 The safe default file permits the current home LAN and reserved stage LAN:
 
@@ -150,10 +173,25 @@ The safe default file permits the current home LAN and reserved stage LAN:
 PHREQED_ALLOW_NETWORK=192.168.1.0/24,10.42.0.0/24
 ```
 
+Loopback display/network actions remain disabled by default. After the fixed
+helper units and polkit rule are installed, enable them only for a commissioned
+local display:
+
+```text
+PHREQED_ALLOW_LOCAL_OPERATIONS=1
+PHREQED_WIFI_CONNECTION=<exact saved NetworkManager profile name>
+```
+
+Restart `phreqed-dmx.service`. The Operations workspace can then request only
+backlight levels 20/40/60/80/100 and the fixed stage/Wi-Fi actions. Remote
+clients receive HTTP 403. Network requests are rejected while output or a song
+timeline is active and do not enable Art-Net.
+
 After reboot, join the selected private network and check:
 
 ```bash
-systemctl status qlcplus.service phreqed-dmx.service --no-pager
+systemctl status qlcplus.service phreqed-show-inhibit.service phreqed-dmx.service --no-pager
+systemd-inhibit --list --what=sleep --no-pager
 curl -I http://127.0.0.1:9999
 curl -fsS http://127.0.0.1:8080/api/state | python3 -m json.tool
 ```
@@ -171,9 +209,20 @@ defaults were lost, if a required peripheral is unhealthy, or if neither
 commissioned stage address is present. A MIDI event proves the input path is
 alive; the bank acceptance tool is what proves all five mappings.
 
+The readiness check also fails when the required sleep inhibitor is inactive.
+Screen dimming or blanking may be configured separately, but it must not
+suspend the Pi or stop the controller during a show.
+
 The phone browser is the configuration and override interface. The Ampero is
 the no-screen show interface. Keep a tested Ampero blackout action, and retain
 QLC+ blackout as the final software safety layer.
+
+The local touchscreen uses the same adaptive controller and feature set. Its
+Perform workspace is the stage-distance view; Setlist, Build, Tune, and Operations are
+separate workspaces, and live output requires confirmation before leaving
+Perform. See [`touchscreen-control-roadmap.md`](touchscreen-control-roadmap.md)
+for the Pi acceptance sequence. Until that sequence is recorded, treat the
+screen as optional rather than show-critical.
 
 ## Headless operating checklist
 

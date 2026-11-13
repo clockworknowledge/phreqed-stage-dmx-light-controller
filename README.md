@@ -1,6 +1,7 @@
 # Phreqed Stage DMX Light Controller
 
-A simulation-first Python 3.11+ visual engine for a Calgary rock band [Phreqed!](https://www.phreqed.com) two
+A simulation-first Python 3.11+ visual engine for Calgary rock band
+[Phreqed!](https://www.phreqed.com)'s two
 Betopper LF4808 RGB matrix fixtures. It provides deterministic procedural
 effects, normalized RGB layer compositing, presets, an interactive two-cube
 simulator, a dependency-free browser show controller, and explicit live
@@ -125,6 +126,37 @@ persists user looks, builds timed scene lists, and exposes blackout and show
 transport controls. The default library is stored outside the repository at
 `~/.local/share/phreqed-dmx/library.json`.
 
+The controller is now one adaptive application with **Perform**, **Setlist**,
+**Build**, **Tune**, and **Operations** workspaces. Setlist owns songs, cue
+sheets, and ordered setlists; Build is reserved for looks and manual scenes.
+The 1280 x 800 touchscreen Perform
+view keeps stage transport, master, health, fixture previews, output state, and
+blackout in one non-scrolling viewport; phones receive compact bottom
+navigation and desktops receive denser split editors. The same show and
+authoring capabilities remain available on every surface. Only display and
+network operating-system actions are loopback-only. See
+[`docs/touchscreen-control-roadmap.md`](docs/touchscreen-control-roadmap.md).
+
+Each browser now renews a distinct trusted lease. An optional native kiosk
+supervisor can hold an independent local lease while Chromium is alive, so
+losing a phone alone does not stop output. Loss of every trusted surface still
+uses the existing five-second fail-dark path. Kiosk startup and local
+operations are explicit Pi deployment options and are never enabled by browser
+simulation.
+
+Tune includes immutable **Rehearsal**, **Small Stage**, and **Large Stage**
+profiles. Rehearsal restores the recommended 25% starting master, Small Stage
+uses approximately three quarters of the persistent safe range (49%), and
+Large Stage uses the complete persistent safe range (65%). Profiles also group
+contrast, audio-dimming, onset, and prepared white-level settings. Applying a
+profile never unlocks Show power, raises a ceiling, or arms physical whites.
+Configure the Tune controls and choose **Save current as new** to create an
+atomic user profile in `tuning-profiles.json`; built-ins cannot be overwritten
+or deleted. The three built-ins come from the package-owned
+`tuning_profiles.defaults.json`; upgrades replace that read-only baseline but
+never copy it over the user's tuning profile file, song library, or look/scene
+library.
+
 For trusted-LAN preview from the Pi, bind explicitly while remaining in the
 simulation-only `web` command:
 
@@ -240,7 +272,7 @@ selects the next song in an armed state and never starts it automatically.
 The Ampero mapping is mode-specific: in Manual mode FS1/FS2 select scenes and
 FS3 taps tempo; in Setlist mode FS1/FS2 select songs and FS3 starts or stops the
 selected song. FS4 remains the global blackout in both modes. Blackout, Stop
-output, a lost browser lease, or application shutdown stops the song timeline
+output, loss of every trusted control lease, or application shutdown stops the song timeline
 and releasing blackout does not resume it.
 
 The browser is the authoritative current/next-song display. The documented
@@ -284,6 +316,11 @@ offline performance control and a private, internet-independent stage LAN for
 the phone interface. See
 [Headless show control](docs/headless-show-control.md).
 
+The managed controller also pulls in `phreqed-show-inhibit.service`, which
+blocks operating-system sleep and idle suspension while the show controller is
+active. It does not block shutdown. An attached display may dim or blank, but
+that must not suspend QLC+, Phreqed, audio, MIDI, or the active timeline.
+
 Commands accept `--brightness` and `--speed`. The RGB ceiling defaults to 0.65.
 For a physically checked show rig, a higher temporary ceiling requires all of
 the following explicit live options:
@@ -324,8 +361,9 @@ page:
 ```
 
 Live browser output is capped at 25% when first enabled and stops with blackout
-if browser heartbeats are absent for five seconds. Keep QLC+ blackout available;
-the lease is an additional safeguard, not a substitute for physical controls.
+if every trusted local and remote lease is absent for five seconds. Keep QLC+
+blackout available; leases are an additional safeguard, not a substitute for
+physical controls.
 
 An optional browser **Shut down Pi** control can request a clean systemd
 power-off after first stopping the song timeline and blacking out/closing live

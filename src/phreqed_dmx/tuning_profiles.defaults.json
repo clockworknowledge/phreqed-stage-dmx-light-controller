@@ -1,0 +1,44 @@
+{
+  "version": 1,
+  "profiles": [
+    {
+      "profile_id": "rehearsal",
+      "name": "Rehearsal",
+      "description": "Recommended safe starting point for setup, focus, and rehearsal.",
+      "master_level": 0.25,
+      "contrast": 1.0,
+      "audio_auto_level": true,
+      "deep_dim_enabled": false,
+      "quiet_floor": 0.03,
+      "white_threshold": 0.75,
+      "white_preview_level": 0.6,
+      "white_output_level": 0.03
+    },
+    {
+      "profile_id": "small-stage",
+      "name": "Small Stage",
+      "description": "Three-quarter stage scale: 49% RGB master with moderate contrast.",
+      "master_level": 0.49,
+      "contrast": 1.35,
+      "audio_auto_level": true,
+      "deep_dim_enabled": false,
+      "quiet_floor": 0.03,
+      "white_threshold": 0.7,
+      "white_preview_level": 0.75,
+      "white_output_level": 0.05
+    },
+    {
+      "profile_id": "large-stage",
+      "name": "Large Stage",
+      "description": "Full persistent safe range: 65% RGB master and stronger contrast.",
+      "master_level": 0.65,
+      "contrast": 1.5,
+      "audio_auto_level": true,
+      "deep_dim_enabled": false,
+      "quiet_floor": 0.03,
+      "white_threshold": 0.65,
+      "white_preview_level": 0.9,
+      "white_output_level": 0.08
+    }
+  ]
+}

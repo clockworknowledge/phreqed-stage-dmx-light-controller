@@ -5,10 +5,18 @@ set -Eeuo pipefail
 SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 REPO_ROOT="$(cd -- "${SCRIPT_DIR}/.." && pwd)"
 SERVICE_SOURCE="${REPO_ROOT}/config/systemd/phreqed-dmx.service"
+INHIBIT_SOURCE="${REPO_ROOT}/config/systemd/phreqed-show-inhibit.service"
 POWEROFF_SOURCE="${REPO_ROOT}/config/systemd/phreqed-poweroff.service"
+KIOSK_SOURCE="${REPO_ROOT}/config/systemd/phreqed-kiosk.service"
+NETWORK_UNIT_SOURCE="${REPO_ROOT}/config/systemd/phreqed-network@.service"
+BACKLIGHT_UNIT_SOURCE="${REPO_ROOT}/config/systemd/phreqed-backlight@.service"
 ENV_SOURCE="${REPO_ROOT}/config/systemd/phreqed-dmx.env.example"
 SERVICE_TARGET="/etc/systemd/system/phreqed-dmx.service"
+INHIBIT_TARGET="/etc/systemd/system/phreqed-show-inhibit.service"
 POWEROFF_TARGET="/etc/systemd/system/phreqed-poweroff.service"
+KIOSK_TARGET="/etc/systemd/system/phreqed-kiosk.service"
+NETWORK_UNIT_TARGET="/etc/systemd/system/phreqed-network@.service"
+BACKLIGHT_UNIT_TARGET="/etc/systemd/system/phreqed-backlight@.service"
 ENV_TARGET="/etc/default/phreqed-dmx"
 QLC_SOURCE="${REPO_ROOT}/config/qlc/qlcplus.service"
 QLC_TARGET="/etc/systemd/system/qlcplus.service"
@@ -17,15 +25,26 @@ UDEV_SOURCE="${REPO_ROOT}/config/udev/70-phreqed-ampero.rules"
 UDEV_TARGET="/etc/udev/rules.d/70-phreqed-ampero.rules"
 POLKIT_SOURCE="${REPO_ROOT}/config/polkit/49-phreqed-poweroff.rules"
 POLKIT_TARGET="/etc/polkit-1/rules.d/49-phreqed-poweroff.rules"
+LOCAL_POLKIT_SOURCE="${REPO_ROOT}/config/polkit/49-phreqed-local-operations.rules"
+LOCAL_POLKIT_TARGET="/etc/polkit-1/rules.d/49-phreqed-local-operations.rules"
+NETWORK_HELPER_SOURCE="${REPO_ROOT}/scripts/local-network-helper.py"
+NETWORK_HELPER_TARGET="/usr/local/libexec/phreqed-local-network"
+BACKLIGHT_HELPER_SOURCE="${REPO_ROOT}/scripts/set-display-brightness.py"
+BACKLIGHT_HELPER_TARGET="/usr/local/libexec/phreqed-set-backlight"
 MIDI_LINK="/dev/snd/phreqed-ampero-midi"
 START_NOW=0
+ENABLE_KIOSK=0
 
-if [[ "${1:-}" == "--start" ]]; then
-    START_NOW=1
-elif [[ -n "${1:-}" ]]; then
-    echo "Usage: bash scripts/pi-install-show-service.sh [--start]" >&2
-    exit 2
-fi
+for argument in "$@"; do
+    case "${argument}" in
+        --start) START_NOW=1 ;;
+        --enable-kiosk) ENABLE_KIOSK=1 ;;
+        *)
+            echo "Usage: bash scripts/pi-install-show-service.sh [--start] [--enable-kiosk]" >&2
+            exit 2
+            ;;
+    esac
+done
 
 if [[ "$(id -un)" != "mmorley" ]]; then
     echo "ERROR: This commissioned service is configured for user mmorley." >&2
@@ -52,7 +71,9 @@ if [[ ! -f "/home/mmorley/.qlcplus/autostart.qxw" ]]; then
 fi
 
 echo "Validating systemd units"
-systemd-analyze verify "${QLC_SOURCE}" "${SERVICE_SOURCE}" "${POWEROFF_SOURCE}"
+systemd-analyze verify \
+    "${QLC_SOURCE}" "${SERVICE_SOURCE}" "${INHIBIT_SOURCE}" "${POWEROFF_SOURCE}" \
+    "${KIOSK_SOURCE}" "${NETWORK_UNIT_SOURCE}" "${BACKLIGHT_UNIT_SOURCE}"
 
 if sudo test -f "${QLC_TARGET}" \
         && ! sudo test -f "${QLC_BACKUP}" \
@@ -65,12 +86,22 @@ echo "Installing ${QLC_TARGET}"
 sudo install -m 0644 "${QLC_SOURCE}" "${QLC_TARGET}"
 echo "Installing ${SERVICE_TARGET}"
 sudo install -m 0644 "${SERVICE_SOURCE}" "${SERVICE_TARGET}"
+echo "Installing ${INHIBIT_TARGET}"
+sudo install -m 0644 "${INHIBIT_SOURCE}" "${INHIBIT_TARGET}"
 echo "Installing ${POWEROFF_TARGET}"
 sudo install -m 0644 "${POWEROFF_SOURCE}" "${POWEROFF_TARGET}"
+echo "Installing ${KIOSK_TARGET}"
+sudo install -m 0644 "${KIOSK_SOURCE}" "${KIOSK_TARGET}"
+echo "Installing local operation helper units"
+sudo install -m 0644 "${NETWORK_UNIT_SOURCE}" "${NETWORK_UNIT_TARGET}"
+sudo install -m 0644 "${BACKLIGHT_UNIT_SOURCE}" "${BACKLIGHT_UNIT_TARGET}"
+sudo install -m 0755 "${NETWORK_HELPER_SOURCE}" "${NETWORK_HELPER_TARGET}"
+sudo install -m 0755 "${BACKLIGHT_HELPER_SOURCE}" "${BACKLIGHT_HELPER_TARGET}"
 echo "Installing ${UDEV_TARGET}"
 sudo install -m 0644 "${UDEV_SOURCE}" "${UDEV_TARGET}"
 echo "Installing ${POLKIT_TARGET}"
 sudo install -m 0644 "${POLKIT_SOURCE}" "${POLKIT_TARGET}"
+sudo install -m 0644 "${LOCAL_POLKIT_SOURCE}" "${LOCAL_POLKIT_TARGET}"
 sudo udevadm control --reload-rules
 for midi_device in /sys/class/sound/midiC*D*; do
     if [[ -e "${midi_device}" ]]; then
@@ -96,6 +127,11 @@ fi
 
 sudo systemctl daemon-reload
 sudo systemctl enable qlcplus.service phreqed-dmx.service
+if (( ENABLE_KIOSK )); then
+    sudo systemctl enable phreqed-kiosk.service
+else
+    echo "Touchscreen kiosk installed but left disabled; use --enable-kiosk after local validation."
+fi
 
 if (( START_NOW )); then
     echo "Starting the headless show sequence"
@@ -114,9 +150,15 @@ To expose the confirmed browser shutdown control, set:
   PHREQED_ALLOW_SYSTEM_SHUTDOWN=1
 Then restart the controller service. It remains disabled by default.
 
+To expose loopback-only display/network operations after installing the helper units, set:
+  PHREQED_ALLOW_LOCAL_OPERATIONS=1
+  PHREQED_WIFI_CONNECTION=<saved NetworkManager profile>
+Then restart the controller service. Remote clients remain denied.
+
 Check the boot sequence:
-  systemctl status qlcplus.service phreqed-dmx.service --no-pager
-  journalctl -u qlcplus.service -u phreqed-dmx.service -b --no-pager -n 100
+  systemctl status qlcplus.service phreqed-show-inhibit.service phreqed-dmx.service phreqed-kiosk.service --no-pager
+  systemd-inhibit --list --what=sleep --no-pager
+  journalctl -u qlcplus.service -u phreqed-show-inhibit.service -u phreqed-dmx.service -b --no-pager -n 100
   curl -I http://127.0.0.1:9999
   curl -fsS http://127.0.0.1:8080/api/state | python3 -m json.tool
   .venv/bin/python scripts/show-readiness.py --startup-defaults

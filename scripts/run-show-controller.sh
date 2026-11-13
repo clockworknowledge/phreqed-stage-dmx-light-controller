@@ -59,5 +59,8 @@ fi
 if is_true "${PHREQED_ALLOW_SYSTEM_SHUTDOWN:-0}"; then
     arguments+=(--allow-system-shutdown)
 fi
+if is_true "${PHREQED_ALLOW_LOCAL_OPERATIONS:-0}"; then
+    arguments+=(--allow-local-operations)
+fi
 
 exec "${CONTROLLER}" "${arguments[@]}"

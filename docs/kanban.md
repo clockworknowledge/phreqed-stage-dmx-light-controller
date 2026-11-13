@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-11-06
+Last reviewed: 2026-11-13
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -38,80 +38,135 @@ No implementation-ready work.
 
 ## Validation
 
-### SPRITE-001 — Production sprite renderer (`P2`, visuals)
+### DISPLAY-001 — Adaptive local stage touchscreen umbrella (`P1`, operations)
 
-The former bitmap helper now supports normalized RGB rendering, integer scaling,
-horizontal/vertical transforms, clipping, deterministic equal-size animation
-frames, and splitting one logical canvas into independent fixture grids. The
-`Sprite Parade` effect exposes birds, walking stick figures, triangles, circles,
-and diamonds with editable palette, direction, travel, animation rate, and
-spacing. Pixel Flight, Stickman Step, and Shape Shifter provide starting looks.
+The touchscreen program is tracked by the independently movable child cards
+below. The shared adaptive shell, stage dashboard, trusted leases, optional
+kiosk, authoring redesign, and local Operations boundary are implemented. The
+umbrella remains in Validation until `DISPLAY-003` records the complete Pi and
+Waveshare acceptance run. Detailed design and acceptance steps are in
+[`touchscreen-control-roadmap.md`](touchscreen-control-roadmap.md).
 
-Windows tests cover animation determinism, transformed clipping, seam crossing,
-fixture independence, four-row fit, metadata, geometry, safe DMX boundaries,
-and preset rendering. Chromium simulation exposed all three looks and switched
-between them with zero console errors and no Art-Net capability. A socket-blocked
-48-look smoke passed all gates; Sprite Parade measured 1.489 ms mean and 1.652 ms
-maximum render time with no missed or over-budget frames.
+Children: `UX-001`, `WEB-002`, `DISPLAY-002`, `SAFE-003`, `OPS-006`, `WEB-003`,
+`OPS-007`, and `DISPLAY-003`. The optional `AI-DATA-001` spike is related but
+is not a display or live-show dependency.
 
-Acceptance remaining: visually review all figures on the physical LF4808 grids
-at low rehearsal brightness, particularly the bottom two rows and movement
-through the Cube A/B seam. Adjust silhouettes only if the real diffuser makes a
-pose ambiguous; do not infer physical readability from the browser alone.
+### UX-001 — Adaptive stage-control information architecture (`P1`)
 
-### CONTROL-003 — Performance-safe Ampero bank profile (`P0`, reliability)
+Perform, Setlist, Build, Tune, and Operations now provide a shared capability
+model for touchscreen, phone, and desktop. The implementation uses 56-pixel primary touch
+targets, visible keyboard focus, text plus color for state, persistent blackout,
+and an explicit stage-lock confirmation before leaving Perform while live.
 
-The intermittent loss of mapped pedal actions was an accidental bank change,
-not demonstrated configuration erasure. The repository now documents the
-duplicate safe mapping for every reachable bank and supplies
-`scripts/ampero-bank-check.py`. The checker opens only the explicit raw-MIDI
-path, creates no renderer or Art-Net sender, and requires all five mapped
-actions: Note 60/61/62 and CC 23 high/low. Recovery guidance keeps browser
-blackout independent and requires no phone app after fallback banks are
-programmed.
+Acceptance remaining: repeat keyboard, zoom/reflow, contrast, and stage-distance
+readability checks on the physical 10.1-inch display.
 
-Acceptance remaining: use the vendor app to duplicate the mapping into bank 0,
-bank 1, and every other reachable bank; run the checker separately against each
-bank; deliberately exercise adjacent-switch navigation; and pass a
-rehearsal-length USB soak. Do not rely on simultaneous-switch chords for new
-performance commands.
+### WEB-002 — Shared responsive application shell (`P1`)
 
-### OPS-003 — Unattended show startup and private control LAN (`P0`, deployment)
+The previous long page is now a persistent workspace shell with desktop split
+views and phone bottom navigation. Chromium validates all five workspaces at
+1280 x 800 and 390 x 844 with zero console errors. No controller command or
+safety semantic was removed.
 
-A separate `phreqed-dmx.service` now starts after headless QLC+ without waiting
-for internet or venue Wi-Fi. It exposes browser-live capability but leaves
-Art-Net stopped until the operator explicitly selects **Start live**. The
-service restarts after application failure, tolerates an absent Ampero through
-the existing reconnect worker, and starts without audio rather than losing the
-browser when the Snowball is absent. Safe settings live outside Git in
-`/etc/default/phreqed-dmx`.
+Acceptance remaining: physical Pi Chromium at 100% and 200% zoom plus the
+complete regression suite on the target OS.
 
-The browser boundary now accepts a comma-separated list of specific trusted
-IPv4 networks. The commissioned home LAN and reserved private stage LAN
-`10.42.0.0/24` are permitted by both application and systemd filters. A
-dedicated private router with Pi Ethernet is the recommended production path.
-The guarded `scripts/pi-stage-hotspot.sh` now implements the alternative
-Pi-hosted access point at `10.42.0.1`: configure, activate, and boot enablement
-are separate actions, and activation/disable refuses an SSH path using the same
-Wi-Fi interface. iPhone join and no-internet behavior are documented. The
-read-only readiness check can require either commissioned stage-LAN address.
-The root-level `local_network.sh` menu provides guarded local-console switching
-between the existing stage profile and saved private/home Wi-Fi profiles, shows
-status, controls the hotspot boot preference, runs startup/stage-LAN readiness,
-and prints the iPhone URLs without configuring a key or enabling fixture output.
+### DISPLAY-002 — Setlist-first touchscreen performance dashboard (`P1`)
 
-Pi evidence on 2026-10-22: both enabled services survived an unattended reboot.
-QLC+ started first and Phreqed followed five seconds later; the browser logged
-`simulation active; output stopped`, Snowball capture was active, and the
-operator subsequently reported the full browser, audio, pedal, and two-fixture
-live path working with the band. The unsupported `curl -I` response on port
-8080 was only an HTTP HEAD limitation; the documented state check now uses GET.
+Perform includes manual and setlist layouts, current/next song, progress and
+remaining time, current scene, transport, master, output state, power profile,
+lease count, structured health, compact fixture previews, and blackout. At
+1280 x 800 Chromium measured both document and viewport at exactly 800 pixels,
+with no Perform workspace overflow.
 
-Acceptance remaining: configure and activate the selected network on the Pi,
-join it from the iPhone, then enable it at boot only after that test. Repeat a
-boot with external Wi-Fi unavailable and confirm QLC+ plus port 8080 recover
-while fixtures stay dark. Verify documented no-audio startup behavior. Record
-the private SSID/key outside Git.
+Acceptance remaining: touch accuracy, glare/readability, wake behavior, and a
+full rehearsal on the commissioned display.
+
+### SAFE-003 — Multi-control-plane trusted lease (`P0`)
+
+Named local and remote leases replace the single heartbeat deadline. Losing one
+surface preserves output while another is healthy; losing every surface keeps
+the existing five-second fail-dark stop, blackout, white disarm, timeline stop,
+and Show-power reset. Automated tests cover multiple leases and remote attempts
+to claim local authority.
+
+Acceptance remaining: phone-only loss, kiosk-only loss, all-loss, browser crash,
+controller restart, render failure, and display blank/wake on the Pi.
+
+### OPS-006 — Optional Chromium kiosk lifecycle (`P0`)
+
+The native supervisor waits for loopback readiness, launches Chromium kiosk,
+renews the local lease independently of browser timers, and stops renewing when
+Chromium exits. Its graphical service only wants the controller and is not
+required by QLC+ or headless control. Installation is opt-in with
+`--enable-kiosk`.
+
+Acceptance remaining: missing-GUI fallback, Chromium crash/restart, boot
+ordering, LCD blank/wake, and resource measurements on Raspberry Pi OS.
+
+### WEB-003 — Browser authoring and tuning redesign (`P1`)
+
+Songs, cue sheets, and ordered Setlists have a top-level Setlist workspace.
+Build contains searchable Looks and the Scene editor. Tune groups RGB,
+contrast, preview, audio, whites, persistent bounded venue profiles, and output
+controls. Phone and desktop share the same commands and application logic.
+
+Acceptance remaining: complete representative create/edit/publish/reorder
+workflows on phone, touchscreen, and desktop Chromium, then confirm persistence
+across a Pi service restart.
+
+### OPS-007 — Loopback-only display and network operations (`P0`)
+
+Fixed local endpoints, five enumerated backlight levels, four enumerated
+NetworkManager actions, exact typed network confirmation, root-owned helper
+units, and an exact polkit allowlist are implemented. Non-loopback requests,
+unknown actions, shell-like values, and network changes while output or a song
+is active are rejected. Simulation never receives this authority.
+
+Acceptance remaining: verify the Waveshare backlight sysfs device, every fixed
+NetworkManager action, loopback continuity, remote rejection, and recovery
+messages on the Pi.
+
+### DISPLAY-003 — Pi touchscreen and show-readiness acceptance (`P0`)
+
+Run and record Sprint 6 from
+[`touchscreen-control-roadmap.md`](touchscreen-control-roadmap.md): touch and
+readability, service ordering, headless fallback, kiosk recovery, blank/wake,
+25 FPS, all lease-loss combinations, private-network switching, reserved DMX
+channels, and clean shutdown. This card cannot move to Done from desktop tests.
+
+### AI-DATA-001 — Relate offline-memory feasibility spike (`P2`)
+
+The proposed song/analysis/section/feature/proposal/evidence/review graph,
+single-writer boundary, read-only MCP access, bounded directory store, export,
+backup, and schema-migration gates are documented in
+[`relate-ai-memory-spike.md`](relate-ai-memory-spike.md). Relate is not installed
+and the JSON libraries remain authoritative.
+
+Acceptance remaining: ARM64 installation, memory and 25 FPS coexistence,
+durability/recovery, read-only MCP, migration, and removable JSON export. A
+failure is a no-go for on-Pi deployment and does not block show control.
+
+### OPS-005 — Prevent Pi suspend during managed shows (`P0`, reliability)
+
+The live show on 2026-11-06 exposed a release-blocking operating-system power
+policy problem: the Pi could suspend or stop servicing the controller when its
+attached display entered power saving. A connected screen/mouse and an
+operator-applied administrative workaround kept the show running, but that is
+not an acceptable show dependency.
+
+`phreqed-show-inhibit.service` now holds a systemd `sleep:idle` block for the
+entire lifetime of the managed `phreqed-dmx.service`. It deliberately excludes
+shutdown, so the confirmed clean-poweroff helper remains usable, and it is
+released when the controller service stops. The installer deploys and verifies
+the unit; the readiness check treats an inactive inhibitor as a failure.
+
+Acceptance remaining: install the updated units on the Pi, verify the inhibitor
+with `systemd-inhibit --list --what=sleep`, then allow the attached display to
+dim/blank for longer than the previous failure interval. QLC+, port 8080, audio,
+MIDI, the active timeline, and fixture output must continue uninterrupted.
+Stopping `phreqed-dmx.service` must release the inhibitor, and browser clean
+shutdown must still power off normally.
 
 ### OPS-004 — Confirmed browser clean shutdown (`P0`, deployment safety)
 
@@ -131,77 +186,14 @@ tests, and Chromium verified disabled confirmation for incorrect
 text, enabled confirmation for exact text, cancellation, responsive layout, and
 zero console errors without executing power-off.
 
-Acceptance remaining: install the helper and policy on the Pi, enable
-`PHREQED_ALLOW_SYSTEM_SHUTDOWN=1`, restart the service, and perform one
-deliberate shutdown with fixtures already stopped. Confirm the Pi powers off cleanly and
-the service journal contains no authorization error. Then repeat once from live
-at conservative brightness with QLC+ blackout available and visually confirm
-fixtures black out before the Pi loses power.
-
-### HW-002 — Guarded audio peak output for commissioned whites (`P0`, safety)
-
-Browser live can now separately arm audio-onset accents across all eight white
-parts on both fixtures. The control requires explicit browser-live activation,
-an audio source, and its own toggle; it defaults to 5% with a 10% ceiling. A
-higher process-local ceiling is accepted only with explicit `live --web`,
-`--white-ceiling`, and `--acknowledge-high-output-whites`; the browser then
-shows a persistent warning and constrains its slider to that selected ceiling.
-All modes use pulses no longer than 0.10 seconds at no more than 4 Hz and disarm
-on blackout, stop, render failure, or browser-lease loss. Simulation and
-ordinary live rendering continue to keep the white channels zero.
-
-Acceptance remaining: deploy to the Pi and perform a short 5% audio-triggered
-test with fixtures secured, people warned, and QLC+ blackout immediately
-available. Confirm blackout, Stop output, and lost-browser handling each disarm
-the toggle. Only then validate an elevated ceiling in deliberate small steps;
-the browser warning, threshold control, and dynamic slider bound must remain
-visible throughout.
-
-The operator reports that normal show operation is covered. Keep this card in
-Validation until the lost-browser disarm behavior is deliberately observed and
-recorded; that safety boundary should not be inferred from a general rehearsal.
-
-### REL-002 — Persistent show controls and MIDI recovery (`P0`, reliability)
-
-Browser preset and scene changes now preserve the operator's master brightness
-override. The Ampero raw-MIDI worker no longer terminates permanently after a
-transient select/read/disconnect error: it closes the descriptor, retries the
-same configured path, contains command/reporting failures, and exposes
-connection, message, and reconnect counts in the browser.
-
-The integrated Pi soak now separates recoverable MIDI lifecycle events from
-genuine action errors. A recovered reconnect can pass only when the final device
-state is connected and all required pedal actions were observed; missing
-actions, a lost device, or a command error still fails the gate.
-
-Acceptance remaining: perform a measured rehearsal-length pedal soak without
-forced disconnects and record brightness persistence through repeated scene
-navigation. Deliberate disconnect/recovery acceptance follows CONTROL-002. The
-stable raw-MIDI udev path is implemented; its reboot and unplug/replug behavior
-still needs explicit captured verification.
-
-The 2026-10-21 controlled reconnect test proved that reopening the ALSA node is
-not sufficient evidence of mapped pedal actions. The reader detected removal,
-reopened `/dev/snd/midiC3D0`, and reported connected, but received zero messages;
-direct `amidi` and `aseqdump` were also silent. The later operator diagnosis
-identified an accidental bank 0-to-1 switch as the intermittent cause, rather
-than erased programming. Treat a valid mapped MIDI event after startup or
-reconnect as the functional readiness gate. Performance-bank hardening is
-tracked by CONTROL-003; optional read-only backup research remains CONTROL-002.
-
-The subsequent current-catalog Pi bench passed all 39 looks and encountered one
-unplanned `Errno 19` disconnect. This time the worker reconnected functionally:
-the run ended connected after 62 messages, every required action was observed,
-and no action errors occurred. This validates the reader recovery path when the
-pedal emits the selected bank's mapped messages. The formerly unexplained
-silent-pedal case is now covered by CONTROL-003's bank-selection mitigation.
-
-A post-move launch found the explicit `/dev/snd/midiC3D0` path absent and
-previously crashed before the reconnect thread started. Initial open failure is
-now recoverable: browser/audio control stays running, disconnected status is
-visible, and the worker retries only the operator-selected path. A changed ALSA
-card number still requires the operator to select the current node or complete
-the stable udev-link acceptance item.
+Acceptance remaining: the button was present but stayed disabled during the
+2026-11-06 show setup. Confirm `/etc/default/phreqed-dmx` contains
+`PHREQED_ALLOW_SYSTEM_SHUTDOWN=1`, rerun the service installer so the helper and
+polkit rule are current, restart `phreqed-dmx.service`, and verify
+`system_shutdown_available` is true in `/api/state`. Then perform one deliberate
+shutdown with fixtures already stopped and one conservative live shutdown with
+QLC+ blackout available. Confirm fixture blackout precedes power loss and the
+journal contains no authorization error.
 
 ### AUDIO-002 — Real-time audio synchronization (`P1`, music)
 
@@ -249,37 +241,6 @@ verify deterministic output and zero values on all reserved fixture channels.
 Acceptance: visually review all eight looks in browser simulation, then perform
 a deliberate low-brightness Pi check before promoting the pack to Done.
 
-### CONTROL-001 — Hotone Ampero foot-controller adapter (`P1`, performance control)
-
-The dependency-free USB MIDI parser and explicit raw-device adapter are
-implemented. The operator updated the pedal to firmware 1.13, verified notes
-60–62 and CC 23 values 127/0 from `/dev/snd/midiC3D0`, and confirmed scene
-navigation, tap tempo, and blackout in browser simulation. Guarded browser-live
-operation was subsequently reported working correctly. Same-path automatic
-reconnect and browser connection counters now prevent a transient device error
-from silently ending the reader thread.
-
-Acceptance: create a stable raw-MIDI udev link and pass a rehearsal-length USB
-soak. Deliberate USB recovery is deferred to CONTROL-002. Bluetooth MIDI remains
-a separate follow-up until Pi pairing and reconnect behavior are characterized.
-
-The stable-link implementation is now in
-`config/udev/70-phreqed-ampero.rules`. It matches USB identity `84ef:0029` and
-targets `/dev/snd/phreqed-ampero-midi`; the show-service installer deploys and
-reloads it. Pi verification across unplug/replug and reboot remains before this
-part of acceptance is closed.
-
-The operator reported scene control and the overall live system working during
-the 2026-10-22 band test after the card-renumbering repair. Because the resolved
-symlink and reconnect counters were not captured, retain explicit stable-link
-and rehearsal-duration evidence as the remaining gate.
-
-The integrated soak's first Pi run observed previous scene 5 times, next scene
-4 times, tap tempo 4 times, and both blackout states 3 times without allowing
-the probe to alter scenes or enable output. A later loss of pedal response led
-to the automatic reconnect fix. Repeat the current-catalog soak with one
-ordinary operation using the stable raw-MIDI udev link.
-
 ### MAP-002 — Correct LF4808 geometry to 12 x 4 (`P0`, mapping)
 
 The package configuration, fixture defaults, simulators, browser previews,
@@ -289,11 +250,13 @@ reconstructed baseline retains its historical 8-by-6 assumption. The prior
 corner-only check could not distinguish the two geometries because zones 1 and
 48 have the same locations under both layouts.
 
-Acceptance: the Windows and Pi test suites pass, browser and Tk previews show
-12 x 4 RGB cells, the browser adds two preview-only center-white reference lines,
-and a low-brightness physical test confirms the zone 12-to-13 row transition
-independently on both fixtures. White-zone commissioning is tracked separately
-by HW-001 and must use its capped steady-output procedure, never a flashing sweep.
+The remaining historical check is narrow: `scripts/fixture-check.py live` has
+steady markers for blue zone 12 at the bottom-left and green zone 13 at the
+right side of the next row. Observing those two markers on each fixture proves
+the physical row wraps after 12 columns rather than after the obsolete 8-column
+baseline. The live-show visuals strongly support the corrected geometry, but
+this exact row-boundary observation was not recorded, so retain it as a short
+low-brightness acceptance check rather than repeating broad commissioning.
 
 ### WEB-001 — Validate browser show control on the Pi (`P0`, show control)
 
@@ -310,9 +273,13 @@ live path. The operator subsequently reported that a basic guarded browser-live
 check worked; that check exposed the preview's obsolete 8-by-6 geometry, now
 tracked by MAP-002.
 
-Remaining acceptance: complete MAP-002, confirm saved looks and scenes survive
-a restart, and separately observe the lost-browser timeout safely on both
-fixtures.
+The operator later deliberately confirmed the five-second lost-browser boundary:
+it blackouts and closes live output. The MIDI reader remains connected, but the
+pedal cannot restart live output by itself. DISPLAY-001 now requires a healthy
+local touchscreen lease to keep output available when only the phone disconnects.
+
+Remaining acceptance: complete the narrow MAP-002 row-boundary observation and
+confirm saved looks and scenes survive a restart.
 
 ### PRESET-002 — User preset persistence (`P1`, show control)
 
@@ -347,34 +314,6 @@ hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
 
-### DISPLAY-001 — Local stage touchscreen and kiosk interface (`P1`, operations)
-
-Add a dedicated local-only performer display for a 7-inch Pi touchscreen, with
-800×480 as the minimum supported landscape viewport. It should auto-launch a
-high-contrast kiosk page against `127.0.0.1`, remain usable without Wi-Fi, and
-leave the existing headless services unchanged when no display is attached.
-The primary view shows a very large song number/title, current and next song,
-current scene, elapsed/remaining time, live/blackout state, and concise QLC+,
-audio, pedal, network, and fixture-output health.
-
-A separate local Operations view may expose the guarded stage/private-Wi-Fi
-switching already implemented by `local_network.sh`. Network mutation must be
-authorized only for a loopback-origin local display through fixed, root-owned
-actions; it must never become a general remote browser or shell endpoint. The
-local page remains connected over loopback while `wlan0` changes, which avoids
-the self-disconnecting remote-browser workflow. Include large touch targets,
-screen brightness/dim controls, explicit confirmation for disruptive actions,
-and visible recovery guidance. Fixture output remains stopped after boot and
-network changes.
-
-Acceptance: Chromium tests cover 800×480 and the official display resolution;
-kiosk startup cannot delay QLC+ or the controller; missing GUI/display falls
-back to headless operation; remote clients cannot invoke local operations;
-network changes preserve loopback status and never enable Art-Net; song and
-health state remain readable at stage distance; and Pi testing covers reboot,
-hotspot/private-Wi-Fi switching, touch input, display blank/wake, and clean
-shutdown before the screen becomes show-critical.
-
 ### RIG-001 — Multi-fixture and multi-universe expansion (`P2`, scaling)
 
 Generalize fixture layout, browser previews, scene targeting, and Art-Net output
@@ -402,8 +341,9 @@ Build a separately scoped tool for detecting, inspecting, verifying, backing
 up, and eventually restoring the known Phreqed banks on the Hotone Ampero
 Control. The later diagnosis found that the motivating silent-pedal incident
 was an accidental bank change from 0 to 1, not demonstrated configuration loss.
-This lowers the urgency and separates immediate show hardening (CONTROL-003)
-from useful long-term backup/recovery research. Do not treat an open descriptor
+This lowers the urgency and separates the completed bank-000 operational
+hardening (CONTROL-003) from useful long-term backup/recovery research. Do not
+treat an open descriptor
 or ALSA enumeration as proof that the expected bank mapping is selected.
 
 Initial static research used the official firmware-1.13 Android application
@@ -605,6 +545,55 @@ Generate representative simulator images for every effect and preset at fixed
 times so performers can browse looks and reviewers can spot visual changes.
 
 ## Done
+
+### OPS-003 — Unattended show startup and private control LAN (`P0`, deployment)
+
+The operator confirmed the private/offline control network, iPhone access,
+unattended service sequence, and show operation fully working. The complete rig
+ran a live show on 2026-11-06 with QLC+, browser control, audio, Ampero, and both
+fixtures. Fixture output still starts stopped and requires the explicit browser
+live action. The later display-suspend problem is an operating-system power
+policy issue tracked separately by OPS-005, not a failure of the stage LAN.
+
+### CONTROL-003 — Performance-safe Ampero bank recovery (`P0`, reliability)
+
+The apparent pedal failure was an accidental change away from bank 000, not
+configuration loss. The accepted operating procedure is to return to bank 000;
+duplicating the mapping into every bank is intentionally not required. The
+hardware-free bank checker remains available if the profile is changed later.
+Browser and future local-touchscreen control remain independent backups.
+
+### HW-002 — Guarded audio peak output for commissioned whites (`P0`, safety)
+
+The operator confirmed the commissioned segmented-white path, including the
+lost-browser disarm boundary, during physical operation. Browser lease loss
+correctly blackouts, stops the timeline, closes live output, and disarms whites.
+It does not disconnect the MIDI reader, although output cannot be restarted by
+the pedal alone; the future local touchscreen lease addresses that operational
+availability concern without removing the fail-dark boundary.
+
+### REL-002 — Persistent show controls and MIDI recovery (`P0`, reliability)
+
+Persistent master brightness, the stable Ampero device path, ordinary MIDI
+operation, and reconnect behavior are operator-confirmed. The rig completed the
+2026-11-06 live show with foot control available. A mapped event remains the
+readiness proof; opening the ALSA node alone is not sufficient.
+
+### CONTROL-001 — Hotone Ampero foot-controller adapter (`P1`, performance control)
+
+USB MIDI scene/song navigation, tap tempo, blackout, the stable
+`/dev/snd/phreqed-ampero-midi` link, same-path reconnect, and browser status are
+implemented and operator-confirmed through rehearsal and the 2026-11-06 live
+show. Bluetooth MIDI remains optional future work rather than an acceptance
+requirement.
+
+### SPRITE-001 — Production sprite renderer (`P2`, visuals)
+
+Deterministic bitmap animation, transforms, clipping, palette tinting, and the
+joined 24-by-4 canvas are covered by automated, Chromium, timing, and safe-DMX
+checks. The operator confirmed the figures and cross-fixture motion working on
+the physical rig. Pixel Flight, Stickman Step, and Shape Shifter remain the
+built-in starting looks.
 
 ### WHITE-ANIM-002 — Curated white accents across the show pack (`P1`, visuals)
 

@@ -25,6 +25,23 @@ if installation or a test fails.
 For unattended boot and phone/foot control without venue Wi-Fi, see
 [`headless-show-control.md`](headless-show-control.md).
 
+The optional Waveshare touchscreen uses the same adaptive web application as
+phones and desktops. Install its kiosk only after normal headless startup is
+working:
+
+```bash
+sudo apt install -y chromium
+bash scripts/pi-install-show-service.sh --enable-kiosk
+```
+
+This installs but does not couple `phreqed-kiosk.service` to QLC+ or the
+controller. The native supervisor waits for loopback HTTP, owns Chromium, and
+renews the local lease while Chromium lives. Missing GUI/display/Chromium must
+leave both headless services healthy. Local backlight and NetworkManager
+actions require the separate `PHREQED_ALLOW_LOCAL_OPERATIONS=1` opt-in and are
+always rejected outside loopback. Full commissioning is in
+[`touchscreen-control-roadmap.md`](touchscreen-control-roadmap.md).
+
 Tkinter is needed only for local simulation. If it is absent on Debian, install
 the distribution's `python3-tk` package. Live mode itself does not use Tkinter.
 
@@ -35,6 +52,26 @@ Push and review changes on the development computer first. Then, on the Pi:
 ```bash
 cd ~/phreqed-stage-dmx-light-controller
 bash scripts/pi-update.sh
+```
+
+The update changes repository and virtual-environment files only. It does not
+write the live user data in `~/.local/share/phreqed-dmx/` or the commissioned
+service configuration in `/etc/default/phreqed-dmx`. In particular,
+`library.json`, `songs.json`, and `tuning-profiles.json` remain authoritative
+and are not seeded, merged, or replaced during an update. Rehearsal, Small
+Stage, and Large Stage are read from the package-owned
+`tuning_profiles.defaults.json`, so they appear without modifying user data.
+
+For a show-critical Pi, make a dated recovery copy before updating:
+
+```bash
+backup="$HOME/phreqed-backups/$(date +%Y%m%d-%H%M%S)"
+mkdir -p "$backup"
+if [[ -d "$HOME/.local/share/phreqed-dmx" ]]; then
+  cp -a "$HOME/.local/share/phreqed-dmx" "$backup/user-data"
+fi
+sudo cp -a /etc/default/phreqed-dmx "$backup/phreqed-dmx.env"
+printf 'Backup saved to %s\n' "$backup"
 ```
 
 The updater refuses to run when the checkout has modified or untracked files,
@@ -230,6 +267,27 @@ Set `PHREQED_RGB_CEILING=1.0` and
 `PHREQED_ACKNOWLEDGE_HIGH_OUTPUT=1`, then restart with
 `sudo systemctl restart phreqed-dmx.service`. This makes Show power available;
 it does not select it or start fixture output.
+
+### Prevent suspend during managed shows
+
+The managed controller requires `phreqed-show-inhibit.service`. While
+`phreqed-dmx.service` is active, the helper holds a systemd block on `sleep` and
+`idle`, preventing desktop power policy or a suspended display session from
+putting the Pi show controller to sleep. It does not inhibit shutdown and stops
+automatically with the controller service.
+
+After installing or updating the service assets, verify both the dependency and
+the active inhibitor before relying on the rig:
+
+```bash
+systemctl status phreqed-show-inhibit.service phreqed-dmx.service --no-pager
+systemd-inhibit --list --what=sleep --no-pager
+.venv/bin/python scripts/show-readiness.py --startup-defaults
+```
+
+The inhibitor protects the controller process, not the LCD pixels. A future
+touchscreen may dim or blank its panel independently, but display power saving
+must not suspend the operating system or stop QLC+, Phreqed, audio, or MIDI.
 
 ### Optional clean shutdown from the browser
 

@@ -1,0 +1,23 @@
+[Unit]
+Description=Phreqed local touchscreen kiosk
+Wants=phreqed-dmx.service
+After=graphical.target phreqed-dmx.service
+ConditionPathExists=/home/mmorley/phreqed-stage-dmx-light-controller/scripts/kiosk-supervisor.py
+
+[Service]
+Type=simple
+User=mmorley
+Environment=HOME=/home/mmorley
+Environment=DISPLAY=:0
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WAYLAND_DISPLAY=wayland-0
+ExecStart=/home/mmorley/phreqed-stage-dmx-light-controller/.venv/bin/python /home/mmorley/phreqed-stage-dmx-light-controller/scripts/kiosk-supervisor.py
+Restart=always
+RestartSec=5
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectSystem=full
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+
+[Install]
+WantedBy=graphical.target

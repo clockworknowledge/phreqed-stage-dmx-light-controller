@@ -47,6 +47,43 @@ def _request_system_poweroff() -> None:
         raise OSError("systemd rejected the clean power-off request") from exc
 
 
+def _start_systemd_helper(unit: str, description: str) -> None:
+    command = ("/usr/bin/systemctl", "start", "--no-block", unit)
+    try:
+        subprocess.run(
+            command,
+            check=True,
+            timeout=5.0,
+            stdin=subprocess.DEVNULL,
+            stdout=subprocess.DEVNULL,
+            stderr=subprocess.DEVNULL,
+        )
+    except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as exc:
+        raise OSError(f"systemd rejected the {description} request") from exc
+
+
+def _request_local_network_action(action: str) -> None:
+    units = {
+        "stage": "phreqed-network@stage.service",
+        "wifi": "phreqed-network@wifi.service",
+        "enable-stage": "phreqed-network@enable-stage.service",
+        "disable-stage": "phreqed-network@disable-stage.service",
+    }
+    try:
+        unit = units[action]
+    except KeyError as exc:
+        raise ValueError("unknown local network action") from exc
+    _start_systemd_helper(unit, "local network")
+
+
+def _request_display_brightness(value: int) -> None:
+    if value not in (20, 40, 60, 80, 100):
+        raise ValueError("unsupported display brightness")
+    _start_systemd_helper(
+        f"phreqed-backlight@{value}.service", "display brightness"
+    )
+
+
 class Controller:
     """Owns visual state; network output remains outside this class."""
 
@@ -304,6 +341,14 @@ def build_parser() -> argparse.ArgumentParser:
         action="store_true",
         help="expose confirmed Pi power-off in explicit live browser mode",
     )
+    parser.add_argument(
+        "--allow-local-operations",
+        action="store_true",
+        help=(
+            "expose loopback-only fixed display and network operations in "
+            "explicit live browser mode"
+        ),
+    )
     parser.add_argument("--host", default="127.0.0.1", help="browser listen address")
     parser.add_argument("--port", type=int, default=8080, help="browser port (default 8080)")
     parser.add_argument(
@@ -417,6 +462,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--web requires the explicit live command; use web for browser simulation")
     if args.allow_system_shutdown and not (args.command == "live" and args.web):
         parser.error("--allow-system-shutdown requires explicit live --web mode")
+    if args.allow_local_operations and not (args.command == "live" and args.web):
+        parser.error("--allow-local-operations requires explicit live --web mode")
     if (args.command == "web" or args.web) and args.duration is not None:
         parser.error("--duration is not supported by browser control")
     if args.command == "simulate" and args.duration is not None:
@@ -493,7 +540,7 @@ def main(argv: list[str] | None = None) -> int:
                 file=sys.stderr,
             )
         if browser_requested:
-            from .web_control import serve
+            from .web_control import LocalOperations, serve
 
             serve(controller, args.library, host=args.host, port=args.port,
                   allow_network=args.allow_network, allow_live=args.command == "live",
@@ -503,6 +550,14 @@ def main(argv: list[str] | None = None) -> int:
                   system_shutdown=(
                       _request_system_poweroff
                       if args.allow_system_shutdown
+                      else None
+                  ),
+                  local_operations=(
+                      LocalOperations(
+                          _request_local_network_action,
+                          _request_display_brightness,
+                      )
+                      if args.allow_local_operations
                       else None
                   ))
         elif args.command == "live":

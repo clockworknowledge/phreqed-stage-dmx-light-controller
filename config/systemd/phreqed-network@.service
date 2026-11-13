@@ -1,0 +1,13 @@
+[Unit]
+Description=Phreqed fixed local network action %i
+After=NetworkManager.service
+
+[Service]
+Type=oneshot
+EnvironmentFile=-/etc/default/phreqed-dmx
+ExecStart=/usr/local/libexec/phreqed-local-network %i
+NoNewPrivileges=true
+PrivateTmp=true
+ProtectHome=true
+ProtectSystem=strict
+RestrictAddressFamilies=AF_UNIX AF_NETLINK

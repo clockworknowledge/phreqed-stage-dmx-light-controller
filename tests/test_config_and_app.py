@@ -38,6 +38,7 @@ class ConfigurationTests(unittest.TestCase):
         self.assertTrue(args.audio_auto_level)
         self.assertEqual(args.contrast, 1.0)
         self.assertFalse(args.allow_system_shutdown)
+        self.assertFalse(args.allow_local_operations)
 
     def test_command_line_help_renders_literal_percentages(self) -> None:
         help_text = build_parser().format_help()
@@ -222,6 +223,61 @@ class ConfigurationTests(unittest.TestCase):
         ):
             app._request_system_poweroff()
 
+    def test_local_operations_are_explicit_browser_live_only(self) -> None:
+        for arguments in (
+            ["simulate", "--allow-local-operations"],
+            ["web", "--allow-local-operations"],
+            ["live", "--allow-local-operations"],
+        ):
+            with self.subTest(arguments=arguments), self.assertRaises(SystemExit):
+                main(arguments)
+
+        with patch("phreqed_dmx.web_control.serve") as serve:
+            self.assertEqual(
+                main(["live", "--web", "--allow-local-operations"]), 0
+            )
+        operations = serve.call_args.kwargs["local_operations"]
+        self.assertIs(operations.run_network_action, app._request_local_network_action)
+        self.assertIs(operations.set_display_brightness, app._request_display_brightness)
+
+    def test_local_operations_start_only_fixed_systemd_units(self) -> None:
+        with patch("phreqed_dmx.app._start_systemd_helper") as start:
+            for action, unit in (
+                ("stage", "phreqed-network@stage.service"),
+                ("wifi", "phreqed-network@wifi.service"),
+                ("enable-stage", "phreqed-network@enable-stage.service"),
+                ("disable-stage", "phreqed-network@disable-stage.service"),
+            ):
+                app._request_local_network_action(action)
+                self.assertEqual(start.call_args.args, (unit, "local network"))
+            app._request_display_brightness(60)
+            self.assertEqual(
+                start.call_args.args,
+                ("phreqed-backlight@60.service", "display brightness"),
+            )
+        with self.assertRaisesRegex(ValueError, "unknown"):
+            app._request_local_network_action("stage; reboot")
+        with self.assertRaisesRegex(ValueError, "unsupported"):
+            app._request_display_brightness(61)
+
+    def test_kiosk_and_local_operation_units_are_optional_and_fixed(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        kiosk = (root / "config/systemd/phreqed-kiosk.service").read_text(
+            encoding="utf-8"
+        )
+        policy = (root / "config/polkit/49-phreqed-local-operations.rules").read_text(
+            encoding="utf-8"
+        )
+        installer = (root / "scripts/pi-install-show-service.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("After=graphical.target phreqed-dmx.service", kiosk)
+        self.assertNotIn("Requires=phreqed-kiosk.service", kiosk)
+        self.assertIn("--enable-kiosk", installer)
+        self.assertIn("phreqed-network@stage.service", policy)
+        self.assertIn("phreqed-backlight@100.service", policy)
+        self.assertNotIn("action.lookup(\"unit\").startsWith", policy)
+
     def test_pi_poweroff_policy_is_limited_to_dedicated_helper(self) -> None:
         root = Path(__file__).resolve().parents[1]
         policy = (root / "config/polkit/49-phreqed-poweroff.rules").read_text(
@@ -239,6 +295,24 @@ class ConfigurationTests(unittest.TestCase):
         self.assertNotIn("reboot", helper.lower())
         self.assertIn("ExecStart=/usr/bin/systemctl poweroff --no-wall", helper)
         self.assertIn("phreqed-poweroff.service", installer)
+
+    def test_managed_show_service_blocks_sleep_but_not_shutdown(self) -> None:
+        root = Path(__file__).resolve().parents[1]
+        controller = (root / "config/systemd/phreqed-dmx.service").read_text(
+            encoding="utf-8"
+        )
+        inhibitor = (
+            root / "config/systemd/phreqed-show-inhibit.service"
+        ).read_text(encoding="utf-8")
+        installer = (root / "scripts/pi-install-show-service.sh").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("Requires=phreqed-show-inhibit.service", controller)
+        self.assertIn("PartOf=phreqed-dmx.service", inhibitor)
+        self.assertIn("--what=sleep:idle", inhibitor)
+        self.assertNotIn("--what=shutdown", inhibitor)
+        self.assertNotIn("sleep:idle:shutdown", inhibitor)
+        self.assertIn("phreqed-show-inhibit.service", installer)
 
     def test_controller_blackout_produces_complete_zero_dmx_frame(self) -> None:
         config = load_config()

@@ -59,9 +59,10 @@ blackout immediately available.
 3. Disconnect and reconnect Ampero USB. Require a newly observed mapped action,
    not just a recreated device node. Repeat after deliberately selecting each
    CONTROL-003 fallback bank.
-4. While a song runs in simulation, close all controller tabs or interrupt the
-   network until the browser lease expires. Confirm the timeline stops and does
-   not resume on reconnect.
+4. While a song runs in simulation, remove every trusted controller surface
+   until all leases expire. Confirm the timeline stops and does not resume on
+   reconnect. Separately confirm that losing only one phone does not stop the
+   timeline while a healthy local kiosk lease remains.
 5. Restart `phreqed-dmx.service` and repeat the startup-default check. Confirm
    the saved library/setlist remains but runtime position does not resume.
 6. With QLC+ blackout immediately available and people warned, repeat one short

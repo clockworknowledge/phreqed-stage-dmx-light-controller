@@ -11,6 +11,7 @@ SCRIPT = runpy.run_path(
     run_name="show_readiness",
 )
 assess_state = SCRIPT["assess_state"]
+active_dependency_check = SCRIPT["active_dependency_check"]
 stage_lan_check = SCRIPT["stage_lan_check"]
 
 
@@ -33,6 +34,22 @@ def safe_state() -> dict[str, object]:
 
 
 class ShowReadinessTests(unittest.TestCase):
+    def test_required_sleep_inhibitor_must_be_active(self) -> None:
+        for returncode, expected in ((0, "PASS"), (3, "FAIL")):
+            completed = type("Completed", (), {
+                "returncode": returncode,
+                "stdout": "active\n" if returncode == 0 else "inactive\n",
+                "stderr": "",
+            })()
+            with self.subTest(returncode=returncode), patch.dict(
+                active_dependency_check.__globals__,
+                {"command": lambda *args: completed},
+            ):
+                self.assertEqual(
+                    active_dependency_check("phreqed-show-inhibit.service")[0],
+                    expected,
+                )
+
     def test_safe_startup_with_required_peripherals_passes(self) -> None:
         results = assess_state(
             safe_state(), startup_defaults=True,

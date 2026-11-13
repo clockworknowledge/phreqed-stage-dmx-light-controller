@@ -1,7 +1,8 @@
 [Unit]
 Description=Phreqed Stage DMX browser controller
 Wants=sound.target qlcplus.service
-After=network.target sound.target qlcplus.service
+Requires=phreqed-show-inhibit.service
+After=network.target sound.target qlcplus.service phreqed-show-inhibit.service
 ConditionPathExists=/home/mmorley/phreqed-stage-dmx-light-controller/.venv/bin/phreqed-dmx
 StartLimitIntervalSec=60
 StartLimitBurst=6

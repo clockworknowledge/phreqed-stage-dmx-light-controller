@@ -1,8 +1,87 @@
 # Codex Resume: Live Show Baseline and Song/Setlist Roadmap
 
-Last updated: 2026-11-06
+Last updated: 2026-11-13
 
-## Current checkpoint -- Curated center-white animation across all scenes
+## Current checkpoint -- Adaptive touchscreen and multi-surface control
+
+The shared stage-control application now has Perform, Setlist, Build, Tune, and
+Operations workspaces across the 1280 x 800 Waveshare target, phones, and
+desktop browsers. Perform contains manual/setlist transport, master brightness,
+compact fixture previews, structured health, output state, and persistent
+blackout in one touchscreen viewport. Chromium measured document and viewport
+height at exactly 800 pixels with no Perform overflow; a 390 x 844 phone exposed
+all workspace tabs and the Operations boundary with zero console errors.
+
+Songs, cue sheets, and ordered setlists now have their own top-level Setlist
+workspace; Build contains only Looks and Scenes. Tune now provides immutable
+Rehearsal (25%), Small Stage (49%, approximately three quarters of the safe
+range), and Large Stage (65%, the full persistent safe range) profiles plus
+atomic user profiles. Applying a profile cannot unlock Show power or raise a
+ceiling and always disarms physical whites.
+
+The single browser deadline is now a named lease registry. Remote browsers have
+independent leases and the optional native kiosk supervisor holds a loopback-
+only local lease while its Chromium process lives. Only loss of every lease
+fails dark. The kiosk service is optional and cannot block headless QLC+ or
+controller startup. Fixed loopback-only Operations endpoints can request five
+backlight levels and four NetworkManager actions through exact systemd/polkit
+allowlists; they are absent unless explicit `live --web` local-operation
+authority is enabled, and network mutation is blocked while output or a song
+timeline is active.
+
+Windows Python 3.12 now passes 241 tests. The software work is in Validation
+pending the Raspberry Pi touch, Chromium
+crash/restart, blank/wake, NetworkManager, backlight, service-order, and guarded
+shutdown run in `docs/touchscreen-control-roadmap.md`. `OPS-005` remains in
+Validation until that run records blanking duration, service continuity,
+inhibitor release, and clean shutdown. Relate is documented only as a removable
+offline AI-memory spike; it is not installed and cannot become a live-show
+dependency.
+
+## Current checkpoint -- Friday live show and suspend hardening
+
+The complete rig ran a live show on Friday, 2026-11-06. The operator confirmed
+the private stage network and iPhone access (`OPS-003`), stable Ampero operation
+and reconnect path (`CONTROL-001`/`REL-002`), browser-lease-loss blackout and
+white disarm (`HW-002`), sprite readability, and the curated RGB/white visual
+pack. The known Ampero incident is an accidental change away from bank 000; the
+accepted recovery is to return to bank 000, so duplicating the mapping into
+every bank is no longer an acceptance requirement for `CONTROL-003`.
+
+The show exposed one new P0 operating-system problem. When the attached display
+entered power saving, the Pi could suspend or stop servicing the controller.
+An attached screen/mouse and an operator-applied administrative workaround kept
+the show running, but future shows must not depend on those measures. `OPS-005`
+adds a root-managed `phreqed-show-inhibit.service` that holds only a systemd
+`sleep:idle` block while `phreqed-dmx.service` is active. It intentionally does
+not inhibit shutdown. Installation and an actual display-blank/suspend attempt
+on the Pi remain the hardware acceptance step.
+
+Browser lease loss does not close the Ampero reader; it deliberately blackouts,
+stops the timeline, and closes Art-Net, leaving the pedal unable to restart live
+output by itself. Do not remove that fail-dark boundary. `DISPLAY-001` now
+requires the local touchscreen to be a persistent trusted control surface: loss
+of the phone alone must not stop output while the local controller remains
+healthy, but loss of every trusted controller must still fail dark. Its lease
+must survive LCD dim/blank behavior without relying on throttled browser timers.
+
+`OPS-004` remains in Validation. The shutdown button was visible but disabled,
+which is expected when the preserved `/etc/default/phreqed-dmx` still has
+`PHREQED_ALLOW_SYSTEM_SHUTDOWN=0`. Enable it explicitly, rerun the installer,
+restart the service, and verify `system_shutdown_available` before the guarded
+physical shutdown test.
+
+`MAP-002` has one narrow historical observation left: at low brightness, confirm
+the supplied zone-12 bottom-left and zone-13 next-row-right markers on each
+fixture. That proves the physical wrap occurs after 12 columns. Do not repeat
+general mapping or live-show commissioning merely for this check.
+
+The local checkout was one documentation-only commit behind `origin/main` when
+this handoff was written; inspect and fast-forward before the next deployment.
+Windows Python 3.12 passed 225 tests at the suspend-inhibitor checkpoint; the
+current adaptive-control checkpoint passes 241.
+
+## Prior checkpoint -- Curated center-white animation across all scenes
 
 `WHITE-ANIM-001` treats the two fixtures' commissioned white parts as one
 sixteen-section accent canvas. `WHITE-ANIM-002` extends curated behavior to every
@@ -18,9 +97,9 @@ lease/failure/mode/shutdown disarm path remain intact. Windows Python 3.12 passe
 223 tests. A real Chromium simulation verified Energy Bridge plus representative
 rain, collision, blade, ember, and tunnel scenes reported their curated patterns,
 exposed no live capability, and had zero console errors. The operator subsequently
-completed the Pi fixture run and confirmed the initial segmented animation behaved
-correctly on 2026-11-05; the extended scene set still needs a low-level physical
-visual review.
+completed the Pi fixture run, confirmed the initial segmented animation on
+2026-11-05, and reported the extended visual set working after the 2026-11-06
+live show.
 Exact RGB-column boundaries were not transcribed; the browser's
 equal sections remain a logical preview, while commissioned Part order is the
 authoritative physical mapping.
