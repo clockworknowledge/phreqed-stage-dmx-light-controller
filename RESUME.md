@@ -34,6 +34,14 @@ clockwise and counter-clockwise rear-screen probes. Physical testing selected
 rear-screen setup; counter-clockwise remains diagnostic only. Next: soak the
 selected player path and prepare the first real Travelling/VFX sequence.
 
+`PROJ-001` is now active. A full-length 146-second Travelling EDL and generated
+1280×720 rear-screen rendition pass package preflight. The new confirmed
+`scripts/projection-soak.py` launches that package through the fixed VLC path
+while a socket-blocked renderer sustains 25 FPS and records timing, reserved
+channels, blackout, VLC exit/fallback, player CPU/RSS, and Pi temperature to an
+atomic JSON report. VLC 3 dropped-frame telemetry remains unavailable and is
+reported as null; visual review and the later actual-DMX soak are still open.
+
 ## Current checkpoint -- Operations telemetry and visual review tooling
 
 `OPS-008`, `SIM-004`, and `EFFECT-020` are implemented and moved to Validation.
@@ -52,7 +60,7 @@ seconds, emitting responsive HTML and a SHA-256 manifest without constructing
 Art-Net, white, or projector output. Chromium checks passed at 1280 x 800 and
 390 x 844 after removing phone-width overflow.
 
-Windows Python 3.12 passes all 263 tests; JavaScript syntax, Python compilation,
+Windows Python 3.12 passes all 279 tests; JavaScript syntax, Python compilation,
 and diff checks also pass. The next planning review is the baseline video sprint;
 the operator will provide representative music-video and VFX source material.
 

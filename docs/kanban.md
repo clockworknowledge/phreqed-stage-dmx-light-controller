@@ -34,12 +34,12 @@ browser-based Studio authoring application is sequenced in
 detailed user stories, package/sync rules, and sprint acceptance. The cards
 below remain independently movable and are the source of truth for status.
 
-Pause checkpoint (updated 2026-11-16): no implementation is active. Perform touch
+Active checkpoint (updated 2026-11-16): `PROJ-001` is in progress. Perform touch
 polish, timeline editing, venue-profile shortcuts, prepared-white adjustment,
 the Pac-Man ghost/power-pellet cycle, and the Burning Dynamite animation are
 implemented. The White Output v2 drive/power contract and the base touchscreen
 iteration are accepted in deployed Pi use; the complete controller is covered
-by the 254-test Windows Python 3.12 suite. Remaining touchscreen work is
+by the 279-test Windows Python 3.12 suite. Remaining touchscreen work is
 ongoing performance acceptance under `DISPLAY-003`, the `OPS-007` local-action
 checks, and the controlled shutdown/power-cycle evidence under `OPS-005`. Pi
 thermal telemetry is optional follow-up work and is not a show-control
@@ -55,7 +55,29 @@ failure can block new hosted work but never an active show.
 
 ## In progress
 
-No active implementation.
+### PROJ-001 — Projector playback foundation (`P1`, visual output)
+
+Add an explicitly enabled projection adapter that plays validated packaged
+video/image renditions on a selected Pi HDMI output. Playback runs in a separate
+process from the 25 FPS DMX loop and supports pre-load, invisible pre-roll,
+play, pause, stop, loop, seek, output black, position/health reporting, and clean
+shutdown. It never streams show-critical media from Studio.
+
+Implementation checkpoint (2026-11-16): package preflight, the disabled-by-
+default transport boundary, fixed confirmation-gated VLC launch, commissioned
+clockwise rear-screen profile, and full-length soak harness are implemented.
+The 146-second package passes local preflight. The soak records player exit and
+runtime, VLC fallback diagnostics, Linux player CPU/RSS, Pi temperature, 25 FPS
+renderer misses/overruns, reserved-channel integrity, and final blackout while
+blocking Art-Net. VLC 3 dropped-frame telemetry is explicitly unavailable rather
+than assumed to be zero.
+
+Acceptance remaining: run and preserve the Pi full-length soak, record visual
+smoothness, compare or instrument a backend with queryable frame telemetry,
+then implement and fault-test the managed pre-load/play/pause/seek/stop/black
+adapter. Missing media, player crash, and display loss must fail black without
+disturbing lighting, audio, MIDI, browser control, or shutdown. See
+`docs/projector-output.md`.
 
 ## Ready
 
@@ -879,23 +901,6 @@ Acceptance: cues remain valid when no wearable is paired; target groups and
 performer assignments are explicit; missing devices report health without
 blocking scene changes; show shutdown fades all wearables black; and no pedal
 message can implicitly enable DMX or wearable output.
-
-### PROJ-001 — Projector playback foundation (`P1`, visual output)
-
-Add an explicitly enabled projection adapter that plays validated packaged
-video/image renditions on a selected Pi HDMI output. Playback runs in a separate
-process from the 25 FPS DMX loop and supports pre-load, invisible pre-roll,
-play, pause, stop, loop, seek, output black, position/health reporting, and clean
-shutdown. It never streams show-critical media from Studio. Compare VLC, `mpv`,
-and GStreamer/direct-rendering on the current Debian Trixie Pi before selecting
-the backend.
-
-Acceptance: no projector is opened by default; hardware-free tests use a fake
-player; missing media, decode failure, player crash, and display disconnect fall
-back to black without disrupting DMX, audio, MIDI, browser control, or blackout;
-pre-roll cannot present before explicit song start; and a Pi soak documents
-video drift/drops, CPU/GPU/memory/temperature, and DMX missed frames at an
-initial 1080p target. Planned Sprint 6. See `docs/projector-output.md`.
 
 ### PROJ-002 — Projector effects and overlay compositor (`P2`, visuals)
 

@@ -169,3 +169,9 @@ py -3.12 scripts/render-video-edl.py `
 The commissioned vertical rear-screen profile is therefore `clockwise` with
 `horizontal_flip: true`. Keep both choices explicit in the EDL; do not rotate or
 mirror the desktop compositor to achieve this output.
+
+The full-length soak source is
+`examples/video/travelling-baseline-hdmi720-clockwise-rear.edl.json`. It compiles
+the 146-second Travelling master into the same commissioned 1280×720 profile.
+Generated media remains ignored; transfer
+`output/video-render/phreqed-projector-full-soak.tar.gz` separately to the Pi.

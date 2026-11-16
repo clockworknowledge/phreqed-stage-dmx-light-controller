@@ -68,6 +68,21 @@ compiler, an audio-free H.264 Stage rendition, package hashes, fail-closed
 preflight, and a disabled-by-default player boundary. A real player is not yet
 selected or enabled. See `docs/video-edl-baseline.md`.
 
+The first measured-runtime slice uses `scripts/projection-soak.py`. It launches
+one hash-verified package through the same fixed, audio-free VLC command as the
+bounded probe, while independently rendering a safe preset at the configured
+25 FPS with Art-Net construction blocked. Its atomic JSON report records player
+exit/runtime, VLC fallback evidence, player CPU/RSS where Linux `/proc` exposes
+them, Pi CPU temperature, renderer missed slots/overruns, reserved-channel
+integrity, and final renderer blackout. This is a candidate-backend soak, not a
+managed projection service or unified song transport.
+
+VLC 3's CLI does not provide a dependable per-run dropped-frame count through
+this launch path. The report records that field as unavailable rather than
+claiming zero drops. Visual smoothness remains an operator observation, and a
+backend with queryable frame telemetry is still preferred before `PROJ-001`
+acceptance.
+
 VLC is a useful first playback probe because Raspberry Pi OS documents its
 hardware acceleration. The implementation should compare VLC, `mpv`, and a
 GStreamer or OpenGL path on the actual Debian Trixie installation before fixing
@@ -103,3 +118,26 @@ status display and rehearsal validation.
 - A target-Pi soak records decode/composite latency, dropped frames, CPU, GPU,
   memory, temperature, and DMX missed frames.
 - Initial live validation uses non-flashing test media and conservative output.
+
+## Commissioned Pi soak
+
+The current vertical rear-screen profile is a logical 720×1280 canvas compiled
+clockwise with `horizontal_flip: true` into a 1280×720 H.264 signal. Transfer
+the generated full-length package into the existing local probe directory, then
+run:
+
+```bash
+cd "$HOME/phreqed-stage-dmx-light-controller"
+.venv/bin/python scripts/projection-soak.py \
+  "$HOME/.local/share/phreqed-dmx/video-probes/travelling-hdmi720-clockwise-rear-soak--portrait-hdmi720-clockwise-rear.manifest.json" \
+  --screen 1 \
+  --output /tmp/phreqed-projection-soak.json \
+  --confirm-projector-output
+```
+
+The command does not send Art-Net or enable fixture output. Keep QLC+ and the
+normal controller services running to reproduce the Pi load, watch the complete
+146-second image for visible judder or tearing, and preserve the JSON report.
+Passing this harness proves only independent render scheduling and packaged VLC
+playback; later validation must exercise the actual DMX transport and queryable
+video-frame telemetry.

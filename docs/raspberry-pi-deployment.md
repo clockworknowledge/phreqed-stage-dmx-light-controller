@@ -262,6 +262,24 @@ This does not rotate a display or launch video. Preserve the JSON for the
 development/Studio computer; Stage receives only the built rendition and its
 hash-verified manifest. See `docs/video-edl-baseline.md`.
 
+After the bounded orientation probe passes, run the confirmed full-length VLC
+candidate soak. This launches visible projector output but blocks Art-Net in
+the harness; it does not enable fixtures:
+
+```bash
+.venv/bin/python scripts/projection-soak.py \
+  "$HOME/.local/share/phreqed-dmx/video-probes/travelling-hdmi720-clockwise-rear-soak--portrait-hdmi720-clockwise-rear.manifest.json" \
+  --screen 1 \
+  --output /tmp/phreqed-projection-soak.json \
+  --confirm-projector-output
+```
+
+Review `passed`, every item under `checks`, `render.missed_slots`,
+`render.over_budget_frames`, `render.temperature_max_c`, player CPU/RSS, and the
+VLC diagnostic flags. Also record visual judder or tearing manually: VLC 3 does
+not expose a reliable dropped-frame count through this command path, and the
+report intentionally leaves that field null.
+
 Before a performance, run a sustained 25 FPS soak test on the Pi while watching
 CPU temperature and QLC+ input stability. Start with `--brightness 0.25` during
 fixture validation. The default RGB software ceiling is 0.65, but that limit is
