@@ -975,6 +975,26 @@ and an optional dependency-free animation capture workflow.
 Generate representative simulator images for every effect and preset at fixed
 times so performers can browse looks and reviewers can spot visual changes.
 
+### EFFECT-021 — Curated center-white scene language (`P2`, visuals)
+
+Review the existing look catalog for scenes where the commissioned center-white
+strip can act as an intentional visual layer: travelling paths, segmented
+accents, impact flashes, sweeps, pulses, and character props. Build on the
+proven Burning Dynamite fuse pattern without making every scene use white or
+turning the strip into an undifferentiated audio strobe.
+
+User outcome: suitable scenes gain a readable RGB-plus-white composition while
+the performer retains the existing drive, prepared-level, White Show, arm,
+blackout, lease-loss, and shutdown controls.
+
+Acceptance: inventory and rank candidate looks; define fixed-time regression
+frames for each selected pattern; keep continuous authored whites inside the
+Rehearsal envelope and route deliberate high-output events through the existing
+bounded effect-flash path; prove deterministic timing, physical part order,
+fixture independence, full blackout recovery, and unchanged RGB-only behavior
+when whites are disarmed. Validate the final set on both commissioned fixtures
+before enabling any pattern by default in a show package.
+
 ## Done
 
 ### OPS-003 — Unattended show startup and private control LAN (`P0`, deployment)
@@ -1091,19 +1111,21 @@ acceptance on 2026-11-04.
 Pac-Man Chase now adds colored ghosts with directional eyes, a deterministic
 power pellet, and a bounded frightened interval in which the ghosts turn blue
 and reverse smoothly before resuming the chase. Its commissioned-white pattern
-uses sparse travelling pellets, but physical whites remain behind the existing
-explicit browser-live, audio-onset, level/ceiling, blackout, lease, and shutdown
-gates. Fixed-time frames and the complete 249-test suite cover the enhancement.
-Burning Dynamite uses the lower two RGB rows on Cube B: each row contains three
-red body blocks and one yellow fuse-cap block. The center-white strip is the
-fuse, with a dim unburned section and much brighter travelling head whenever
-the existing white pulse gate permits output. Yellow and orange RGB blocks track
-the head and alternate above and below the strip eight times per second. It then
+uses sparse travelling pellets, but physical whites remain behind explicit
+browser-live, drive-mode, prepared-level, White Show, arm, blackout, lease, and
+shutdown controls. Fixed-time frames and the complete 254-test suite cover the
+enhancement.
+Burning Dynamite uses five columns across the complete four-row height of Cube
+B: four red body columns and one yellow fuse-cap column, with rounded row
+shading for a clearer stage-scale cylinder. The center-white strip is the
+fuse, with a dim unburned section and much brighter travelling head while its
+Effect or Hybrid white layer is armed. Yellow and orange RGB blocks track the
+head and alternate above and below the strip eight times per second. It then
 produces one broad amber flash, an expanding two-fixture
 starburst, embers, and smoke. The original effect and preset IDs remain stable
 for saved user looks and cues. Browser simulation at 1280 x 800 exposed the
 quick look, rendered both fixture previews, and reported no console errors. The
-complete 250-test suite covers deterministic phase timing, alternating spark
+complete 254-test suite covers deterministic phase timing, alternating spark
 rows, the dim/bright white-pattern relationship, and reserved white
 channels; physical-fixture visual acceptance remains part of `DISPLAY-003`.
 

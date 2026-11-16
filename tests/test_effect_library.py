@@ -451,7 +451,8 @@ class EffectLibraryTests(unittest.TestCase):
             sparks = [
                 (position[0], color.green)
                 for position, color in frame(animation_time)
-                if color.red > 0.5 and color.green > 0.35 and color.blue < 0.25
+                if position[0] < 19 and color.red > 0.5
+                and color.green > 0.35 and color.blue < 0.25
             ]
             self.assertTrue(sparks)
             return sum(x * weight for x, weight in sparks) / sum(
@@ -462,7 +463,7 @@ class EffectLibraryTests(unittest.TestCase):
             sparks = [
                 (color.green, position[1])
                 for position, color in frame(animation_time)
-                if position[0] < 20 and color.red > 0.5
+                if position[0] < 19 and color.red > 0.5
                 and color.green > 0.35 and color.blue < 0.25
             ]
             self.assertTrue(sparks)
@@ -474,14 +475,14 @@ class EffectLibraryTests(unittest.TestCase):
         self.assertEqual(spark_row(1.0), 1)
         self.assertEqual(spark_row(1.13), 2)
         early_map = dict(early)
-        for y in (0, 1):
+        for y in range(4):
+            self.assertGreater(early_map[(19, y)].green, 0.25)
             for x in range(20, 24):
-                self.assertEqual(early_map[(x, y)], BLACK_NORMALIZED)
-        for y in (2, 3):
-            self.assertGreater(early_map[(20, y)].green, 0.25)
-            for x in range(21, 24):
                 self.assertGreater(early_map[(x, y)].red, 0.4)
                 self.assertLess(early_map[(x, y)].green, 0.1)
+        self.assertTrue(all(
+            early_map[(18, y)] == BLACK_NORMALIZED for y in range(4)
+        ))
 
         detonation = frame(7.02)
         self.assertGreater(sum(

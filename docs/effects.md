@@ -86,8 +86,10 @@ physical output still requires explicit browser-live white arming and retains
 the level, blackout, lease-loss, and shutdown boundaries.
 
 `cartoon-bomb` retains its original internal ID so existing user looks remain
-valid, but now renders Burning Dynamite as fixture-scale pixel art. The lower
-two RGB rows on Cube B each show three red body blocks and one yellow fuse cap.
+valid, but now renders Burning Dynamite as fixture-scale pixel art. Five RGB
+columns on Cube B span the complete four-row fixture height: four red body
+columns and one yellow fuse-cap column, with row shading that suggests a rounded
+cylinder without sacrificing the bold pixel silhouette.
 The commissioned center-white strip is the fuse itself: its unburned section is
 dim while a much brighter head travels toward the cap. Yellow and orange RGB
 blocks follow that head and alternate above and below the white strip eight

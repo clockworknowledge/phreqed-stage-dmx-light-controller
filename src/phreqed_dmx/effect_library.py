@@ -727,13 +727,14 @@ def _burning_dynamite(
     phase = t % cycle_seconds
     level = parameters.number("brightness")
 
-    # Four columns across the lower two RGB rows make a legible stage-scale
-    # dynamite stick: three red blocks and one yellow fuse cap. The physical
-    # center-white strip is the fuse itself.
-    stick_width = min(4.0, float(total_width))
+    # Five full-height columns make the stick unmistakable at stage distance:
+    # four red body blocks and one yellow fuse cap. Subtle row shading rounds
+    # the rectangular pixel silhouette into a cylinder. The physical
+    # center-white strip remains the fuse itself.
+    stick_width = min(5.0, float(total_width))
     stick_right = total_width - 1.0
     stick_left = max(0.0, stick_right - stick_width + 1.0)
-    stick_top = max(0.0, height - 2.0)
+    stick_top = 0.0
     stick_bottom = height - 1.0
     detonation_x = (stick_left + stick_right) / 2.0
     detonation_y = (stick_top + stick_bottom) / 2.0
@@ -761,7 +762,9 @@ def _burning_dynamite(
             stick_left <= global_x <= stick_right
             and stick_top <= y <= stick_bottom
         ):
-            row_shading = 0.94 if y <= stick_top else 0.72
+            row_shading = 0.72 + 0.26 * math.sin(
+                math.pi * (y + 0.5) / max(1.0, height)
+            )
             if global_x - stick_left < 0.55:
                 return NormalizedRGB(1.0, 0.55, 0.035).scaled(
                     level * row_shading
@@ -1132,7 +1135,7 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("fright_seconds", "Frightened duration", 3.5, 2.0, 6.0, 0.5, "Seconds ghosts turn blue and run away"),
         ), brightness=0.72), _pacman_chase),
         # Keep the original effect ID so existing user looks remain valid.
-        ProceduralEffect(_metadata("cartoon-bomb", "Burning Dynamite", "A white-strip fuse spark alternates above and below its bright head as it burns toward a two-row red dynamite stick with a yellow cap.", "sprite", (
+        ProceduralEffect(_metadata("cartoon-bomb", "Burning Dynamite", "A white-strip fuse spark alternates above and below its bright head as it burns toward a full-height five-column red dynamite stick with a yellow cap.", "sprite", (
             number("fuse_seconds", "Fuse duration", 7.0, 3.0, 14.0, 0.5, "Seconds the spark takes to reach the dynamite"),
             number("blast_seconds", "Blast duration", 1.2, 0.5, 2.5, 0.1, "Seconds for the expanding cartoon blast"),
             number("smoke_seconds", "Smoke duration", 2.2, 0.5, 5.0, 0.1, "Seconds for the smoke to clear before repeating"),
