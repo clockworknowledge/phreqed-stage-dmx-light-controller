@@ -111,12 +111,11 @@ does not change display configuration or launch playback.
 The 2026-11-16 Pi probe found the touchscreen on `DSI-1` at 1280×800 and the
 projector on `HDMI-A-2` at its preferred/current 1280×720@60 mode, positioned to
 the right at `1280,0`. The projector is physically vertical but the compositor
-transform remains `normal`. The commissioned candidate is therefore a logical
-720×1280 portrait canvas rotated into a 1280×720 signal at build time. Both
-clockwise and counter-clockwise five-second packages are provided so the
-physical direction can be selected by observation without changing display
-configuration. VLC/cVLC and FFmpeg/FFprobe are present; mpv and GStreamer are
-not installed.
+transform remains `normal`. The commissioned profile is therefore a logical
+720×1280 portrait canvas rotated clockwise into a 1280×720 signal at build
+time. The counter-clockwise package remains a diagnostic probe rather than a
+show profile. VLC/cVLC and FFmpeg/FFprobe are present; mpv and GStreamer are not
+installed.
 
 Both front-projection orientation packages completed on the commissioned HDMI
 output. VLC reported that its V4L2 H.264 decoder could not start, then opened an
@@ -153,9 +152,8 @@ cd "$HOME/phreqed-stage-dmx-light-controller"
 
 If Qt screen 1 targets the touchscreen instead of the projector, let the
 five-second probe exit and repeat with `--screen 0`; do not change the DSI or
-Wayland display configuration during this orientation check. Then run the
-counter-clockwise manifest on the confirmed projector screen and record which
-direction is upright.
+Wayland display configuration during this orientation check. Physical testing
+selected the clockwise package as upright.
 
 For a projector behind the screen, render and transfer the matching `-rear`
 EDL instead. The resulting package is pre-mirrored; VLC receives the same fixed
@@ -163,7 +161,11 @@ EDL instead. The resulting package is pre-mirrored; VLC receives the same fixed
 
 ```powershell
 py -3.12 scripts/render-video-edl.py `
-  examples/video/travelling-five-second-hdmi720-counterclockwise-rear.edl.json `
+  examples/video/travelling-five-second-hdmi720-clockwise-rear.edl.json `
   --assets output/video-render/assets.local.json `
   --output output/video-render
 ```
+
+The commissioned vertical rear-screen profile is therefore `clockwise` with
+`horizontal_flip: true`. Keep both choices explicit in the EDL; do not rotate or
+mirror the desktop compositor to achieve this output.

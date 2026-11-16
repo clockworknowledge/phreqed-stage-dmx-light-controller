@@ -29,8 +29,10 @@ Both five-second front-projection orientation packages displayed and exited
 successfully. VLC could not start its V4L2 H.264 decoder but fell back to I420
 Wayland output; CPU, temperature, and dropped-frame soak remains open. Projection
 profiles now also support an explicit build-time horizontal mirror with matching
-clockwise and counter-clockwise rear-screen probes. Next: record the upright
-rotation, verify its rear-screen variant, and soak the selected player path.
+clockwise and counter-clockwise rear-screen probes. Physical testing selected
+`clockwise` plus `horizontal_flip: true` for the commissioned vertical
+rear-screen setup; counter-clockwise remains diagnostic only. Next: soak the
+selected player path and prepare the first real Travelling/VFX sequence.
 
 ## Current checkpoint -- Operations telemetry and visual review tooling
 

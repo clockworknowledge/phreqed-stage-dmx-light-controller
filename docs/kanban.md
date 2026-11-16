@@ -166,18 +166,19 @@ Pi checkpoint (2026-11-16): `DSI-1` is the 1280×800 touchscreen and connected
 `HDMI-A-2` is the projector at its current/preferred 1280×720@60 mode, positioned
 at `1280,0` with compositor transform `normal`. VLC/cVLC and FFmpeg/FFprobe are
 installed; mpv and GStreamer are absent. Clockwise and counter-clockwise logical
-720×1280-to-signal-1280×720 probes now cover the unknown physical rotation
-direction, and the operator-run VLC probe is bounded, audio-free, screen
+720×1280-to-signal-1280×720 probes covered physical commissioning, and the
+operator-run VLC probe is bounded, audio-free, screen
 selectable, Wayland-aware, and confirmation-gated. Both front-projection probes
 displayed and exited successfully. The V4L2 H.264 decoder attempt fell back to
 Wayland I420 output, so full-song CPU, temperature, and frame-drop soak remains
 open. An EDL-level rear-screen horizontal mirror and matching two orientation
-probes now keep front/rear placement independent of physical rotation.
+probes keep front/rear placement independent of physical rotation. Physical
+testing selected `clockwise` plus `horizontal_flip: true` for the commissioned
+vertical rear-screen setup; counter-clockwise remains diagnostic only.
 
-Acceptance remaining: record which probe is physically upright, verify the
-matching rear-screen mirror, select and soak a player backend under `PROJ-001`,
-author the first real Travelling clip/VFX EDL, and verify playback fails black
-without disturbing the 25 FPS lighting path. Overlays and parallel song
+Acceptance remaining: select and soak a player backend under `PROJ-001`, author
+the first real Travelling clip/VFX EDL, and verify playback fails black without
+disturbing the 25 FPS lighting path. Overlays and parallel song
 transport remain `PROJ-002` and `SHOW-002` rather than expanding this baseline.
 
 ### AI-DATA-001 — Relate offline-memory feasibility spike (`P2`)
