@@ -11,6 +11,7 @@ from phreqed_dmx.white_output import (
     logical_white_levels,
     scale_white_pattern,
     select_white_pattern,
+    white_effect_flash_signal,
 )
 
 
@@ -132,6 +133,14 @@ class WhiteOutputTests(unittest.TestCase):
         self.assertGreater(max(later), 0.7)
         self.assertIn(0.10, early)
         self.assertIn(0.10, later)
+
+    def test_dynamite_authors_one_bounded_flash_request_at_impact(self) -> None:
+        self.assertEqual(white_effect_flash_signal('fuse', 6.99), 0.0)
+        self.assertEqual(white_effect_flash_signal('fuse', 7.04), 1.0)
+        self.assertEqual(white_effect_flash_signal('fuse', 7.26), 0.0)
+        self.assertEqual(white_effect_flash_signal('pellets', 7.04), 0.0)
+        with self.assertRaises(ValueError):
+            white_effect_flash_signal('unknown', 1.0)
 
     def test_segmented_patterns_are_deterministic_bounded_and_fixture_independent(self) -> None:
         fixtures = load_config().fixtures

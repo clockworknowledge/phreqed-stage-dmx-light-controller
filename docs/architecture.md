@@ -90,8 +90,11 @@ defaults to 0.10. A value above 0.10 can enter `BrowserControl` only from the
 CLI's explicit `live --web` path with `--white-ceiling` and
 `--acknowledge-high-output-whites`. The browser publishes the selected
 ceiling, constrains its physical-level slider to it, and displays a persistent
-warning. This override does not relax onset thresholding, the 0.10-second pulse
-limit, the 4 Hz limiter, blackout, live-stop, failure, or lease-loss behavior.
+warning. Startup remains in White Rehearsal power at no more than 0.10. A second
+in-page confirmation unlocks White Show power and disarms output so the operator
+must arm it again. Continuous effect motion stays within 0.10; audio accents and
+explicit authored flashes may use the active ceiling but retain the 0.10-second
+pulse limit and 4 Hz limiter.
 
 `AudioReactiveClock` integrates a continuous animation time shared by every
 effect. Tempo establishes the baseline rate, `--speed` is the operator trim,
@@ -173,12 +176,13 @@ the joined sixteen-part canvas. Every registered effect maps to a curated family
 signature motion covers blaster, flame, wave, VU, sprite, energy, bloom, rain,
 current, mirror, collision, blade, ember, lava, and tunnel accents. Unknown
 future effects use an explicit dark fallback. Physical output remains a separate browser-live state:
-presets cannot arm it, and it requires an audio source plus the explicit toggle.
-The normalized pattern is multiplied by the short threshold-crossing pulse,
-operator level, and independent ceiling before DMX quantization. Pulses remain
-no faster than 4 Hz and every stop, blackout, mode-change, failure, lease-loss,
-and shutdown path disarms and zeros all parts. The separately acknowledged
-process-local override can raise the ceiling without relaxing those gates.
+presets cannot arm it, and it requires the explicit toggle. Effect mode supplies
+continuous deterministic motion without audio; Audio mode supplies only onset
+accents; Hybrid combines them. Continuous intent is capped at 0.10. Audio and
+authored flash intent pass through independent short-pulse limiters before the
+operator level and active white-power ceiling are applied. Pulses remain no
+faster than 4 Hz and every stop, blackout, mode-change, failure, lease-loss, and
+shutdown path disarms and zeros all parts.
 
 Every RGB zone maps to R, G, then B. Cube A's RGB data occupies DMX 1-144 and
 its white parts occupy 145-152. Cube B's RGB data occupies 153-296 and its white

@@ -14,6 +14,7 @@
       "white_threshold": 0.75,
       "white_preview_level": 0.6,
       "white_output_level": 0.03,
+      "white_drive_mode": "effect",
       "show_on_perform": true
     },
     {
@@ -29,6 +30,7 @@
       "white_threshold": 0.7,
       "white_preview_level": 0.75,
       "white_output_level": 0.05,
+      "white_drive_mode": "effect",
       "show_on_perform": true
     },
     {
@@ -44,6 +46,7 @@
       "white_threshold": 0.65,
       "white_preview_level": 0.9,
       "white_output_level": 0.08,
+      "white_drive_mode": "effect",
       "show_on_perform": true
     }
   ]

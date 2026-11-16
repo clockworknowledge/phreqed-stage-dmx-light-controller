@@ -310,8 +310,8 @@ def build_parser() -> argparse.ArgumentParser:
         default=WHITE_OUTPUT_CEILING,
         metavar="0.0-1.0",
         help=(
-            "physical center-white ceiling (default 0.10; higher values require "
-            "explicit live --web acknowledgement)"
+            "physical center-white capability (default 0.10; higher values require "
+            "explicit live --web acknowledgement and an in-page Show unlock)"
         ),
     )
     parser.add_argument(

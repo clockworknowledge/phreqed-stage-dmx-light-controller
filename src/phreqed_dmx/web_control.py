@@ -37,6 +37,7 @@ from .white_output import (
     DEFAULT_WHITE_OUTPUT_LEVEL,
     MAX_WHITE_FLASH_HZ,
     MAX_WHITE_OUTPUT_CEILING,
+    WHITE_DRIVE_MODES,
     WHITE_OUTPUT_CEILING,
     WHITE_PATTERN_LABELS,
     WhitePeakLimiter,
@@ -44,6 +45,7 @@ from .white_output import (
     logical_white_levels,
     scale_white_pattern,
     select_white_pattern,
+    white_effect_flash_signal,
 )
 
 ASSETS = Path(__file__).with_name('web')
@@ -168,6 +170,10 @@ class BrowserControl:
         self.local_operations = local_operations
         self.shutdown_requested = False
         self.white_output_ceiling = float(white_output_ceiling)
+        self.white_rehearsal_ceiling = min(
+            WHITE_OUTPUT_CEILING, self.white_output_ceiling
+        )
+        self.white_show_power_enabled = False
         self.sender: ArtNetSender | None = None
         self.lock = threading.RLock()
         self.stop_event = threading.Event()
@@ -186,7 +192,9 @@ class BrowserControl:
         self.white_output_enabled = False
         self.white_output_level = DEFAULT_WHITE_OUTPUT_LEVEL
         self.white_output_active_level = 0.0
+        self.white_drive_mode = 'effect'
         self.white_peak_limiter = WhitePeakLimiter()
+        self.white_effect_limiter = WhitePeakLimiter()
         self.white_pattern_id = 'dark'
         self.white_part_levels = {
             fixture.name: (0.0,) * fixture.white_zone_count
@@ -485,13 +493,31 @@ class BrowserControl:
                                 self.allow_live
                                 and self.sender is not None
                                 and white_commissioned
-                                and source is not None
+                                and (
+                                    self.white_drive_mode != 'audio'
+                                    or source is not None
+                                )
                                 and not self.engine.blackout_enabled
                             ),
                             output_enabled=self.white_output_enabled,
                             output_level=self.white_output_level,
                             output_active_level=self.white_output_active_level,
                             output_ceiling=self.white_output_ceiling,
+                            power_mode=(
+                                'show' if self.white_show_power_enabled
+                                else 'rehearsal'
+                            ),
+                            power_ceiling=(
+                                self.white_output_ceiling
+                                if self.white_show_power_enabled
+                                else self.white_rehearsal_ceiling
+                            ),
+                            show_power_available=(
+                                self.allow_live
+                                and self.white_output_ceiling
+                                > self.white_rehearsal_ceiling
+                            ),
+                            drive_mode=self.white_drive_mode,
                             high_output=(
                                 self.white_output_ceiling > WHITE_OUTPUT_CEILING
                             ),
@@ -533,7 +559,7 @@ class BrowserControl:
         self.song_library.validate(self.song_library.document())
 
     def _stop_live(self) -> None:
-        self._disable_white_output()
+        self._set_white_show_power(False)
         self._set_show_power(False)
         sender, self.sender = self.sender, None
         if sender is not None:
@@ -559,6 +585,11 @@ class BrowserControl:
             for fixture in self.controller.config.fixtures
         }
         self.white_peak_limiter.reset()
+        self.white_effect_limiter.reset()
+
+    def _set_white_show_power(self, enabled: bool) -> None:
+        self._disable_white_output()
+        self.white_show_power_enabled = enabled
 
     def _apply_tuning_profile(self, profile: TuningProfile) -> None:
         applied_master = min(
@@ -582,6 +613,7 @@ class BrowserControl:
         self.white_output_level = min(
             profile.white_output_level, self.white_output_ceiling
         )
+        self.white_drive_mode = profile.white_drive_mode
         # Venue changes may prepare a future white level, but never preserve or
         # arm physical white output across the change.
         self._disable_white_output()
@@ -614,7 +646,7 @@ class BrowserControl:
                 )
             elif action == 'blackout':
                 self.engine.set_blackout(True)
-                self._disable_white_output()
+                self._set_white_show_power(False)
                 scenes.playing = False
                 self.performance.blackout()
                 self.controller._transition_from = None
@@ -707,6 +739,28 @@ class BrowserControl:
                 else:
                     self._set_show_power(False)
                     self.notice = 'Rehearsal power restored.'
+            elif action == 'white_power_mode':
+                mode = data.get('value')
+                if mode not in ('rehearsal', 'show'):
+                    raise ValueError('white power mode must be rehearsal or show')
+                if mode == 'show':
+                    if not self.allow_live or (
+                        self.white_output_ceiling <= self.white_rehearsal_ceiling
+                    ):
+                        raise ValueError(
+                            'high-output whites were not enabled when this controller started'
+                        )
+                    if self.sender is None:
+                        raise ValueError(
+                            'start live output before enabling White Show power'
+                        )
+                    self._set_white_show_power(True)
+                    self.notice = (
+                        'White Show power unlocked. Physical whites remain disarmed.'
+                    )
+                else:
+                    self._set_white_show_power(False)
+                    self.notice = 'White Rehearsal power restored.'
             elif action == 'contrast':
                 self.engine.compositor.set_contrast(number(
                     data.get('value'), 'contrast', 1.0, 3.0,
@@ -759,7 +813,10 @@ class BrowserControl:
                         raise ValueError('start explicit browser live output before enabling whites')
                     if self.engine.blackout_enabled:
                         raise ValueError('release blackout before enabling whites')
-                    if self.controller.audio_source is None:
+                    if (
+                        self.white_drive_mode == 'audio'
+                        and self.controller.audio_source is None
+                    ):
                         raise ValueError('audio input is required for white peak output')
                     if not all(
                         fixture.white_commissioned and fixture.white_rows_together
@@ -771,6 +828,15 @@ class BrowserControl:
                 self.active_tuning_profile_id = None
                 if not enabled:
                     self._disable_white_output()
+            elif action == 'white_drive_mode':
+                mode = data.get('value')
+                if mode not in WHITE_DRIVE_MODES:
+                    raise ValueError(
+                        'white drive mode must be effect, audio, or hybrid'
+                    )
+                self.white_drive_mode = mode
+                self.active_tuning_profile_id = None
+                self._disable_white_output()
             elif action == 'apply_tuning_profile':
                 profile_id = data.get('value')
                 profiles = self.tuning_profiles.all_profiles
@@ -1000,25 +1066,51 @@ class BrowserControl:
             analysis = source.sample(now - self.started) if source is not None else None
             onset = analysis.onset if analysis is not None else 0.0
             white_requested = self.white_peak_preview or self.white_output_enabled
-            strength = self.white_peak_limiter.update(
-                now,
-                onset,
-                enabled=white_requested and not self.engine.blackout_enabled,
-                threshold=self.white_preview_threshold,
-            )
-            self.white_preview_active_level = (
-                self.white_preview_level * strength
-                if self.white_peak_preview
-                else 0.0
-            )
-            self.white_output_active_level = (
-                self.white_output_level * strength
-                if self.white_output_enabled and self.sender is not None
-                else 0.0
-            )
             preset = self.engine.presets[self.engine.active_preset_id]
             self.white_pattern_id = select_white_pattern(
                 tuple(layer.effect_id for layer in preset.layers)
+            )
+            effect_driven = self.white_drive_mode in ('effect', 'hybrid')
+            audio_driven = self.white_drive_mode in ('audio', 'hybrid')
+            enabled = white_requested and not self.engine.blackout_enabled
+            audio_strength = self.white_peak_limiter.update(
+                now,
+                onset,
+                enabled=enabled and audio_driven,
+                threshold=self.white_preview_threshold,
+            )
+            effect_flash = white_effect_flash_signal(
+                self.white_pattern_id, self.controller.animation_time
+            )
+            effect_strength = self.white_effect_limiter.update(
+                now,
+                effect_flash,
+                enabled=enabled and effect_driven,
+                threshold=0.5,
+            )
+            pulse_strength = max(audio_strength, effect_strength)
+            preview_strength = 1.0 if effect_driven else pulse_strength
+            self.white_preview_active_level = (
+                self.white_preview_level * preview_strength
+                if self.white_peak_preview
+                else 0.0
+            )
+            power_ceiling = (
+                self.white_output_ceiling
+                if self.white_show_power_enabled
+                else self.white_rehearsal_ceiling
+            )
+            prepared_level = min(self.white_output_level, power_ceiling)
+            continuous_level = (
+                min(prepared_level, WHITE_OUTPUT_CEILING)
+                if effect_driven
+                else 0.0
+            )
+            pulse_level = prepared_level * pulse_strength
+            self.white_output_active_level = (
+                max(continuous_level, pulse_level)
+                if self.white_output_enabled and self.sender is not None
+                else 0.0
             )
             fixtures = self.controller.config.fixtures
             commissioned = all(
@@ -1037,11 +1129,22 @@ class BrowserControl:
                     fixtures, normalized_pattern,
                     self.white_preview_active_level, maximum=1.0,
                 )
-                output_parts = scale_white_pattern(
+                continuous_parts = scale_white_pattern(
                     fixtures, normalized_pattern,
-                    self.white_output_active_level,
+                    continuous_level,
                     maximum=self.white_output_ceiling,
                 )
+                pulse_parts = scale_white_pattern(
+                    fixtures, normalized_pattern,
+                    pulse_level,
+                    maximum=self.white_output_ceiling,
+                )
+                output_parts = {
+                    name: tuple(max(base, pulse) for base, pulse in zip(
+                        continuous_parts[name], pulse_parts[name]
+                    ))
+                    for name in continuous_parts
+                }
             else:
                 self.white_pattern_id = 'dark'
                 preview_parts = output_parts = {

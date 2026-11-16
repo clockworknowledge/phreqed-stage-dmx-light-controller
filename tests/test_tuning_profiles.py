@@ -32,6 +32,7 @@ class TuningProfileTests(unittest.TestCase):
             white_threshold=0.7,
             white_preview_level=0.75,
             white_output_level=0.05,
+            white_drive_mode='effect',
             show_on_perform=False,
         )
 
@@ -67,6 +68,12 @@ class TuningProfileTests(unittest.TestCase):
         parsed = parse_tuning_profile(legacy)
         self.assertFalse(parsed.show_on_perform)
 
+    def test_legacy_profile_without_white_drive_uses_effect_mode(self) -> None:
+        legacy = self.profile()
+        del legacy['white_drive_mode']
+        parsed = parse_tuning_profile(legacy)
+        self.assertEqual(parsed.white_drive_mode, 'effect')
+
     def test_at_most_two_user_profiles_may_appear_on_perform(self) -> None:
         profiles = []
         for index in range(3):
@@ -82,11 +89,16 @@ class TuningProfileTests(unittest.TestCase):
                 dict(version=1, profiles=profiles)
             )
 
-    def test_user_profiles_are_bounded_below_persistent_safety_limits(self) -> None:
+    def test_user_profiles_allow_full_white_range_but_reject_invalid_values(self) -> None:
+        full = self.profile()
+        full['white_output_level'] = 1.0
+        self.assertEqual(parse_tuning_profile(full).white_output_level, 1.0)
         for key, value, message in (
             ('master_level', 0.66, 'master level'),
-            ('white_output_level', 0.11, 'white output level'),
+            ('white_output_level', 1.01, 'white output level'),
             ('contrast', 3.1, 'contrast'),
+            ('white_drive_mode', 'unrestricted', 'white drive mode'),
+            ('white_drive_mode', [], 'white drive mode'),
         ):
             profile = self.profile()
             profile[key] = value

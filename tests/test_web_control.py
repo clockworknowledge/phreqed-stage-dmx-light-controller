@@ -16,6 +16,7 @@ from phreqed_dmx.config import load_config
 from phreqed_dmx.engine import SceneEngine
 from phreqed_dmx.library import Cue, preset_data
 from phreqed_dmx.presets import PRESETS
+from phreqed_dmx.white_output import WHITE_OUTPUT_CEILING
 from phreqed_dmx.web_control import (
     BrowserControl,
     BrowserFootCommands,
@@ -444,7 +445,8 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn("songTitleText.length>64", script)
         self.assertIn('class="song-progress"', html)
         self.assertIn('.song-progress::-webkit-progress-value', touch)
-        self.assertIn('White-strip preview and the prepared physical level can be stored', script)
+        self.assertIn("act('white_power_mode',{value:'show'})", script)
+        self.assertIn('data-white-drive="effect"', html)
         self.assertIn('data-performance-mode="setlist"', html)
         self.assertIn("$('timeline-editor').show()", script)
         self.assertIn("$('scene-dialog').show()", script)
@@ -687,7 +689,7 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn('id="white-preview"', html)
         self.assertIn('id="white-output-warning"', html)
         self.assertIn('href="/safety.css"', html)
-        self.assertIn('The default ceiling is 10%', html)
+        self.assertIn('Effect mode runs deterministic segmented animation without audio', html)
 
     def test_segmented_white_preview_is_simulation_only_and_reports_exact_parts(self):
         source = ManualAudioAnalysisSource(
@@ -802,6 +804,8 @@ class BrowserControlTests(unittest.TestCase):
         with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
             control.command(dict(action='preset', value='flame-thrower'))
             control.command(dict(action='start_live'))
+            control.command(dict(action='white_drive_mode', value='audio'))
+            control.command(dict(action='white_power_mode', value='show'))
             control.command(dict(action='white_output', enabled=True, level=0.55))
             control.step(control.started + 1.0)
             payload = sender.return_value.send.call_args.args[0]
@@ -811,6 +815,59 @@ class BrowserControlTests(unittest.TestCase):
         self.assertGreater(len(set(white_parts)), 1)
         with self.assertRaises(ValueError):
             control.command(dict(action='white_output', enabled=True, level=0.61))
+
+    def test_effect_whites_need_no_audio_and_show_power_resets_on_blackout(self):
+        control = BrowserControl(
+            Controller(load_config()),
+            self.path,
+            allow_live=True,
+            white_output_ceiling=0.60,
+        )
+        self.addCleanup(control.close)
+        control.command(dict(action='performance_mode', mode='manual'))
+        with patch('phreqed_dmx.web_control.ArtNetSender') as sender:
+            control.command(dict(action='preset', value='burning-fuse'))
+            control.command(dict(action='start_live'))
+            self.assertTrue(control.state()['white_preview']['output_available'])
+            control.command(dict(action='white_output', enabled=True, level=0.55))
+            control.step(control.started + 1.0)
+            rehearsal = sender.return_value.send.call_args.args[0]
+            self.assertGreater(max(rehearsal[144:152] + rehearsal[296:304]), 0)
+            self.assertLessEqual(
+                max(rehearsal[144:152] + rehearsal[296:304]),
+                round(WHITE_OUTPUT_CEILING * 255),
+            )
+
+            control.command(dict(action='white_power_mode', value='show'))
+            self.assertFalse(control.state()['white_preview']['output_enabled'])
+            control.command(dict(action='white_output', enabled=True, level=0.55))
+            control.leases['test-surface'] = (
+                'remote', control.started + 12.0
+            )
+            control.step(control.started + 7.04)
+            show = sender.return_value.send.call_args.args[0]
+            self.assertGreater(
+                max(show[144:152] + show[296:304]),
+                round(WHITE_OUTPUT_CEILING * 255),
+            )
+            control.command(dict(action='blackout'))
+        white = control.state()['white_preview']
+        self.assertEqual(white['power_mode'], 'rehearsal')
+        self.assertFalse(white['output_enabled'])
+
+    def test_audio_white_drive_still_requires_an_audio_source(self):
+        control = BrowserControl(
+            Controller(load_config()), self.path, allow_live=True
+        )
+        self.addCleanup(control.close)
+        with patch('phreqed_dmx.web_control.ArtNetSender'):
+            control.command(dict(action='start_live'))
+            control.command(dict(action='white_drive_mode', value='audio'))
+            self.assertFalse(control.state()['white_preview']['output_available'])
+            with self.assertRaisesRegex(ValueError, 'audio input is required'):
+                control.command(dict(
+                    action='white_output', enabled=True, level=0.05
+                ))
 
     def test_live_requires_two_steps_and_watchdog_closes_with_blackout(self):
         config = load_config()

@@ -81,9 +81,9 @@ musical peaks cannot make the chase unstable. Direction, ghost count and
 spacing, power timing, and travel/chomp rates remain deterministic and editable.
 
 The commissioned center-white pattern for `pacman` is a sparse travelling pill
-row. It remains independently gated: physical pill accents occur only through
-explicit browser-live white enablement and the existing onset, 0.10-second,
-4 Hz, level, blackout, lease-loss, and shutdown safeguards.
+row. In Effect or Hybrid drive it travels continuously inside the 10% envelope;
+physical output still requires explicit browser-live white arming and retains
+the level, blackout, lease-loss, and shutdown boundaries.
 
 `cartoon-bomb` retains its original internal ID so existing user looks remain
 valid, but now renders Burning Dynamite as fixture-scale pixel art. The lower
@@ -179,10 +179,12 @@ background pattern in a layered user look. `dark` remains only as a defensive
 fallback for an unknown future effect.
 
 These patterns are requests, not output commands. They are visible in simulation,
-but physical parts remain zero until browser live, microphone input, and the
-separate white-output toggle are all active. Onset pulse duration/rate limits,
-the operator ceiling, per-part and aggregate clamps, and all disarm paths remain
-outside the effects engine.
+but physical parts remain zero until browser live and the separate white-output
+toggle are active. Effect mode needs no microphone; Audio mode does. Continuous
+intent remains inside the 10% envelope, while onset and explicitly authored
+flash intent retain the pulse duration/rate limits. The active power ceiling,
+per-part and aggregate clamps, and all disarm paths remain outside the effects
+engine.
 
 All presets default below the 0.65 global safety ceiling and cannot arm
 center-white output. The added show pack is capped at 0.48 global brightness.

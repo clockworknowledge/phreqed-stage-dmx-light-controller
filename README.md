@@ -59,9 +59,9 @@ mode; the 12-by-4 front-view orientation comes from physical fixture testing.
 - physical commissioning confirmed Parts 1-8 progress right-to-left and each
   part drives both rows, identically on both fixtures
 - normal output keeps those parts at zero; browser live can separately arm
-  audio-onset accents with a default 10% ceiling, 0.10-second pulse limit, and
-  4 Hz rate limit; a separately acknowledged live override can raise only the
-  process-local ceiling
+  deterministic effect motion, audio accents, or both. Continuous motion stays
+  inside the 10% Rehearsal envelope; explicitly authored flashes and audio
+  accents retain the 0.10-second/4 Hz pulse limiter
 
 The committed settings are in [`config/fixtures.toml`](config/fixtures.toml).
 
@@ -170,16 +170,17 @@ Settings includes immutable **Rehearsal**, **Small Stage**, and **Large Stage**
 profiles. Rehearsal restores the recommended 25% starting master, Small Stage
 uses approximately three quarters of the persistent safe range (49%), and
 Large Stage uses the complete persistent safe range (65%). Profiles also group
-contrast, audio-dimming, onset, and prepared white-level settings. Applying a
-profile never unlocks Show power, raises a ceiling, or arms physical whites.
+contrast, audio-dimming, onset, white drive, and prepared white-level settings.
+Applying a profile never unlocks Show power, raises a ceiling, or arms physical
+whites, even when the profile stores a requested level above 10%.
 Configure the Settings controls and choose **Save as new** to create an
 atomic user profile in `tuning-profiles.json`; built-ins cannot be overwritten
 or deleted. Select an existing user profile and use **Save to _profile_** to
 update it in place. Mark up to two custom profiles **Show on Perform** to add
 them beside the three built-in stage shortcuts. Small Stage prepares the
-commissioned center whites at 5%;
-their Perform-bar action remains disabled until explicit live output, audio,
-and the other white-output gates are satisfied. The three built-ins come from the package-owned
+commissioned center whites at 5%; their Effect drive works without audio after
+explicit live output and separate white arming. Audio mode remains unavailable
+without a configured source. The three built-ins come from the package-owned
 `tuning_profiles.defaults.json`; upgrades replace that read-only baseline but
 never copy it over the user's tuning profile file, song library, or look/scene
 library.
@@ -401,13 +402,14 @@ the page. It is never available in simulation-only browser mode. See the
 deployment guide before enabling it.
 
 Center-white output is an additional explicit step after browser live starts.
-It requires an active microphone and the **Enable physical segmented white
-output** toggle. Every registered effect now selects a deterministic pattern on
+It requires the **Arm physical segmented white output** toggle. Effect drive runs
+deterministic motion without a microphone; Audio Accents requires an active
+source, and Hybrid combines both. Every registered effect selects a pattern on
 the sixteen-part left-to-right accent canvas. Signature motion includes blaster,
 flame, wave, VU, sprite, energy-transfer, bloom, rain, current, collision, blade,
 ember, mirror, lava, and tunnel accents. Presets select only a pattern; they
 cannot arm output.
-The default level is 5% and the default ceiling is 10%. Blackout, Stop output,
+The default level is 5% and White Rehearsal power is capped at 10%. Blackout, Stop output,
 performance-mode changes, render failure, or browser-lease loss disarms it; it
 never activates in the simulation-only `web` command or ordinary non-browser
 live mode. The simulator displays the exact eight-part array for each fixture.
@@ -425,9 +427,11 @@ raise it only as needed:
 
 Values above 0.10 are rejected without both explicit `live --web` and the
 white-specific acknowledgement. The browser shows a persistent warning and
-limits the physical slider to the selected ceiling. The onset threshold,
-0.10-second pulse limit, 4 Hz limiter, blackout, stop, and lease-loss safeguards
-remain active even in elevated mode.
+allows that range to be prepared, but a second in-page confirmation must unlock
+White Show power and that change disarms physical output. Continuous effect
+motion remains capped at 10%; authored flashes and audio accents may reach the
+active Show ceiling while retaining the 0.10-second pulse, 4 Hz, blackout, stop,
+failure, and lease-loss controls.
 
 ## Test
 

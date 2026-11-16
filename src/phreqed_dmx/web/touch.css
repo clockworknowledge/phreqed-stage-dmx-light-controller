@@ -144,6 +144,11 @@ button.primary { min-height: var(--touch); }
 #tune input[type=range] { min-height: var(--touch); }
 .form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
 .white-toggle-row { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+.white-control-groups { display: grid; grid-template-columns: 1fr 1fr; gap: 18px; margin: 4px 0 16px; }
+.white-control-groups .control-label { display: block; margin-bottom: 7px; color: var(--muted); font-size: 12px; font-weight: 750; letter-spacing: .08em; text-transform: uppercase; }
+#white-drive-mode { grid-template-columns: repeat(3, 1fr); }
+#white-power-mode { grid-template-columns: repeat(2, 1fr); }
+#white-drive-mode button, #white-power-mode button { min-height: 52px; }
 .health-detail-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 10px; margin-top: 16px; }
 .health-detail { min-height: 88px; border: 1px solid var(--line); border-radius: 10px; padding: 12px; }
 .health-detail strong { display: block; margin-bottom: 4px; }
@@ -222,7 +227,7 @@ button.primary { min-height: var(--touch); }
   .list-pager button { min-width: 0; padding: 8px; }
   .tune-wide, .operations-wide { grid-column: auto; }
   .profile-safety { grid-column: auto; margin: 0; }
-  .form-grid.three, .white-toggle-row, .health-detail-grid { grid-template-columns: 1fr; }
+  .form-grid.three, .white-toggle-row, .white-control-groups, .health-detail-grid { grid-template-columns: 1fr; }
   .health-detail-grid { gap: 7px; }
   .health-detail { min-height: 70px; }
   .network-actions { grid-template-columns: 1fr; }

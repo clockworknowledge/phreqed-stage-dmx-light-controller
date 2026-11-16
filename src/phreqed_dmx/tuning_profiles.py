@@ -11,7 +11,8 @@ import tempfile
 
 
 MAX_SAVED_MASTER = 0.65
-MAX_SAVED_WHITE = 0.10
+MAX_SAVED_WHITE = 1.0
+WHITE_DRIVE_MODES = {'effect', 'audio', 'hybrid'}
 
 
 def _number(value: object, label: str, low: float, high: float) -> float:
@@ -48,6 +49,7 @@ class TuningProfile:
     white_threshold: float
     white_preview_level: float
     white_output_level: float
+    white_drive_mode: str
     show_on_perform: bool
 
     def as_dict(self) -> dict:
@@ -64,6 +66,7 @@ class TuningProfile:
             white_threshold=self.white_threshold,
             white_preview_level=self.white_preview_level,
             white_output_level=self.white_output_level,
+            white_drive_mode=self.white_drive_mode,
             show_on_perform=self.show_on_perform,
         )
 
@@ -72,9 +75,11 @@ PROFILE_FIELDS = {
     'profile_id', 'name', 'description', 'master_level', 'contrast',
     'audio_auto_level', 'deep_dim_enabled', 'quiet_floor',
     'white_preview_enabled', 'white_threshold', 'white_preview_level',
-    'white_output_level', 'show_on_perform',
+    'white_output_level', 'white_drive_mode', 'show_on_perform',
 }
-OPTIONAL_LEGACY_FIELDS = {'white_preview_enabled', 'show_on_perform'}
+OPTIONAL_LEGACY_FIELDS = {
+    'white_preview_enabled', 'white_drive_mode', 'show_on_perform',
+}
 
 
 def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
@@ -86,6 +91,7 @@ def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
         raise ValueError(f'expected fields: {", ".join(sorted(PROFILE_FIELDS))}')
     data = dict(value)
     data.setdefault('white_preview_enabled', False)
+    data.setdefault('white_drive_mode', 'effect')
     data.setdefault('show_on_perform', builtin)
     profile_id = data['profile_id']
     pattern = r'[a-z][a-z0-9-]{0,63}' if builtin else r'user-tune-[a-z0-9-]{1,64}'
@@ -108,6 +114,11 @@ def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
     ):
         if not isinstance(data[key], bool):
             raise ValueError(f'{key.replace("_", " ")} must be boolean')
+    if (
+        not isinstance(data['white_drive_mode'], str)
+        or data['white_drive_mode'] not in WHITE_DRIVE_MODES
+    ):
+        raise ValueError('white drive mode must be effect, audio, or hybrid')
     return TuningProfile(
         profile_id=profile_id,
         name=_text(data['name'], 'name', 100),
@@ -130,6 +141,7 @@ def _parse_profile(value: object, *, builtin: bool) -> TuningProfile:
             data['white_output_level'], 'white output level',
             0.01, MAX_SAVED_WHITE,
         ),
+        white_drive_mode=data['white_drive_mode'],
         show_on_perform=data['show_on_perform'],
     )
 

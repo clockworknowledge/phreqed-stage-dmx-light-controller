@@ -156,7 +156,7 @@ function renderTuningProfileSelection() {
   const profile=tuningProfileById($('tuning-profile').value);
   if(!profile)return;
   $('tuning-profile-description').textContent=profile.description||'Saved operator tuning profile.';
-  $('tuning-profile-summary').textContent=`RGB master ${Math.round(profile.master_level*100)}% · contrast ${profile.contrast.toFixed(2)}x · white preview ${profile.white_preview_enabled?'on':'off'} · prepared white ${Math.round(profile.white_output_level*100)}% · onset ${Math.round(profile.white_threshold*100)}% · Perform ${profile.show_on_perform?'shortcut':'hidden'}`;
+  $('tuning-profile-summary').textContent=`RGB master ${Math.round(profile.master_level*100)}% · contrast ${profile.contrast.toFixed(2)}x · white ${profile.white_drive_mode||'effect'} at ${Math.round(profile.white_output_level*100)}% · preview ${profile.white_preview_enabled?'on':'off'} · onset ${Math.round(profile.white_threshold*100)}% · Perform ${profile.show_on_perform?'shortcut':'hidden'}`;
   if(!tuningProfileDirty)$('profile-show-on-perform').checked=Boolean(profile.show_on_perform);
   for(const choice of $('tuning-profile-choices').querySelectorAll('[data-profile-id]')){
     const active=choice.dataset.profileId===profile.profile_id;
@@ -210,7 +210,8 @@ function tuningProfileSnapshot(profileId,name,description='') {
     white_preview_enabled:Boolean(white.enabled),
     white_threshold:Number(white.threshold??.65),
     white_preview_level:Number(white.level??.8),
-    white_output_level:Math.min(.10,Number(white.output_level??.05)),
+    white_output_level:Math.min(1,Number(white.output_level??.05)),
+    white_drive_mode:white.drive_mode||'effect',
     show_on_perform:Boolean($('profile-show-on-perform').checked),
   };
 }
@@ -354,7 +355,7 @@ function renderState(s) {
   if (document.activeElement !== $('quiet-floor')) $('quiet-floor').value = audio.quiet_floor ?? 0.03;
   $('quiet-floor-value').textContent = `${Math.round((audio.quiet_floor ?? 0.03)*100)}%`;
   $('quiet-floor').disabled = !audio.deep_dim_enabled;
-  const white = s.white_preview || {enabled:false,threshold:0.65,level:0.8,active_level:0,commissioned:false,output_available:false,output_enabled:false,output_level:0.05,output_active_level:0,output_ceiling:0.10};
+  const white = s.white_preview || {enabled:false,threshold:0.65,level:0.8,active_level:0,commissioned:false,output_available:false,output_enabled:false,output_level:0.05,output_active_level:0,output_ceiling:0.10,power_mode:'rehearsal',power_ceiling:0.10,drive_mode:'effect'};
   $('white-output-level').max = white.output_ceiling;
   const highWhite = Boolean(white.high_output || white.output_ceiling > 0.10);
   $('white-output-warning').hidden = !highWhite;
@@ -362,8 +363,8 @@ function renderState(s) {
     ? `WARNING: high-output center whites are available up to ${Math.round(white.output_ceiling*100)}%. Use the lowest workable level; warn everyone nearby and keep blackout immediately available.`
     : '';
   $('white-output-hint').textContent = highWhite
-    ? 'This process was explicitly armed above the normal 10% ceiling. Pulses remain onset-thresholded, at most 0.10 seconds and 4 Hz, and stop on blackout, output stop, failure, or lease loss.'
-    : 'White-strip preview and the prepared physical level can be stored without fixture output. Physical whites remain disarmed until explicit live output, configured audio, released blackout, and the separate output toggle. The default ceiling is 10%; pulses remain onset-thresholded, no more than 0.10 seconds or 4 Hz.';
+    ? 'This process has an explicitly acknowledged high-output capability. Effect animation stays within the 10% continuous envelope; authored flashes and audio accents may reach the active power ceiling and remain limited to 0.10 seconds and 4 Hz.'
+    : 'Effect mode runs deterministic animation without audio inside the 10% envelope. Audio accents and authored flashes remain limited to 0.10 seconds and 4 Hz. Every physical mode still requires separate arming.';
   if (highWhite) {
     $('live-warning').textContent += ` HIGH-OUTPUT CENTER WHITES are also available up to ${Math.round(white.output_ceiling*100)}% and require their separate in-page toggle.`;
   }
@@ -375,20 +376,35 @@ function renderState(s) {
   $('white-threshold-value').textContent = `${Math.round(white.threshold*100)}%`;
   $('white-level-value').textContent = `${Math.round(white.level*100)}%`;
   $('white-output-level-value').textContent = `${Math.round(white.output_level*100)}%`;
-  $('white-threshold').disabled = !(white.enabled || white.output_enabled);
+  $('white-threshold').disabled = !['audio','hybrid'].includes(white.drive_mode);
   $('white-level').disabled = !white.enabled;
   $('white-output').disabled = !white.output_available;
   $('white-output-level').disabled = false;
+  for(const button of document.querySelectorAll('[data-white-drive]')){
+    const active=button.dataset.whiteDrive===white.drive_mode;
+    button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
+  }
+  for(const button of document.querySelectorAll('[data-white-power]')){
+    const active=button.dataset.whitePower===white.power_mode;
+    button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
+    button.disabled=button.dataset.whitePower==='show'&&(!s.live||!white.show_power_available);
+  }
+  $('white-power-status').textContent=white.power_mode==='show'
+    ? `WHITE SHOW POWER ACTIVE · flashes may use the prepared level up to ${Math.round(white.power_ceiling*100)}%. Whites were disarmed when this mode changed.`
+    : white.show_power_available
+      ? `White Rehearsal power · physical output capped at ${Math.round(white.power_ceiling*100)}%. Start live and explicitly unlock Show for the configured ${Math.round(white.output_ceiling*100)}% range.`
+      : `White Rehearsal power · configured ceiling ${Math.round(white.power_ceiling*100)}%.`;
   const stageWhite=$('stage-white-output');
   $('stage-white-down').disabled=white.output_level<=.0101;
   $('stage-white-up').disabled=white.output_level>=white.output_ceiling-.0001;
   stageWhite.disabled=!white.output_available&&!white.output_enabled;
   stageWhite.classList.toggle('active',Boolean(white.output_enabled));
+  const whitePowerLabel=white.power_mode==='show'?'Show':'Rehearsal',whiteLevelLabel=`${Math.round(white.output_level*100)}%`;
   stageWhite.textContent=white.output_enabled
-    ? `Whites on · ${Math.round(white.output_level*100)}%`
-    : white.output_available ? `Enable whites · ${Math.round(white.output_level*100)}%` : `Whites ready · ${Math.round(white.output_level*100)}%`;
+    ? `Whites on · ${whitePowerLabel} ${whiteLevelLabel}`
+    : white.output_available ? `Enable whites · ${whitePowerLabel} ${whiteLevelLabel}` : `Whites ready · ${whiteLevelLabel}`;
   const whitePattern = white.pattern_name || 'Dark by design';
-  $('white-preview-status').textContent = white.output_active_level > 0 ? `LIVE · ${whitePattern}` : white.output_enabled ? `Armed · ${whitePattern} · max ${Math.round(white.output_ceiling*100)}%` : white.commissioned ? `Preview · ${whitePattern}` : 'Physical output locked';
+  $('white-preview-status').textContent = white.output_active_level > 0 ? `LIVE · ${white.drive_mode} · ${whitePattern}` : white.output_enabled ? `Armed · ${white.drive_mode} · ${whitePowerLabel} cap ${Math.round(white.power_ceiling*100)}%` : white.commissioned ? `Preview · ${white.drive_mode} · ${whitePattern}` : 'Physical output locked';
   const foot = s.foot_control || {enabled:false,connected:false,message:'Foot control disabled',messages_received:0,reconnects:0};
   $('foot-status').textContent = foot.enabled ? `${foot.connected ? 'Pedal connected' : foot.message} · ${foot.messages_received} events · ${foot.reconnects} reconnects · ${setlistMode?'song transport':'scene transport'}` : 'Foot control disabled';
   $('stage-audio-status').textContent = !audio.enabled ? 'Audio disabled' : audio.healthy ? 'Audio healthy' : 'Audio unavailable';
@@ -750,6 +766,15 @@ for(const id of ['white-threshold','white-level']){
 }
 function updateWhiteOutput(){act('white_output',{enabled:$('white-output').checked,level:Number($('white-output-level').value)});}
 $('white-output').addEventListener('change',updateWhiteOutput);
+for(const button of document.querySelectorAll('[data-white-drive]'))button.addEventListener('click',()=>{
+  markTuningProfileDirty();act('white_drive_mode',{value:button.dataset.whiteDrive});
+});
+for(const button of document.querySelectorAll('[data-white-power]'))button.addEventListener('click',()=>{
+  if(button.dataset.whitePower==='show'){
+    $('white-show-power-warning').textContent=`This unlocks physical white flash and strobe output up to the configured ${Math.round((state?.white_preview?.output_ceiling??1)*100)}% ceiling. Confirm fixture placement, warn everyone nearby, and keep BLACKOUT immediately available. Whites remain disarmed until separately enabled.`;
+    $('white-show-power-dialog').showModal();
+  }else act('white_power_mode',{value:'rehearsal'});
+});
 $('stage-white-output').addEventListener('click',()=>act('white_output',{enabled:!Boolean(state?.white_preview?.output_enabled),level:Number(state?.white_preview?.output_level??.05)}));
 function adjustStageWhite(delta){
   const white=state?.white_preview||{},minimum=.01,maximum=Number(white.output_ceiling??.10),current=Number(white.output_level??.05),level=Math.max(minimum,Math.min(maximum,Math.round((current+delta)*100)/100));
@@ -772,6 +797,8 @@ $('expand-monitor').addEventListener('click',()=>showWorkspace('tune'));
 for(const chip of document.querySelectorAll('[data-health]')) chip.addEventListener('click',()=>showWorkspace('operations'));
 $('cancel-show-power').addEventListener('click',()=>{$('show-power-dialog').close();$('rgb-power-mode').value=state?.rgb_power_mode||'rehearsal';});
 $('confirm-show-power').addEventListener('click',()=>{$('show-power-dialog').close();act('rgb_power_mode',{value:'show'});});
+$('cancel-white-show-power').addEventListener('click',()=>$('white-show-power-dialog').close());
+$('confirm-white-show-power').addEventListener('click',()=>{$('white-show-power-dialog').close();act('white_power_mode',{value:'show'});});
 $('shutdown-system').addEventListener('click',()=>{$('shutdown-confirmation').value='';$('confirm-shutdown').disabled=true;$('shutdown-dialog').showModal();$('shutdown-confirmation').focus();});
 $('shutdown-confirmation').addEventListener('input',event=>{$('confirm-shutdown').disabled=event.target.value!=='SHUTDOWN';});
 $('cancel-shutdown').addEventListener('click',()=>$('shutdown-dialog').close());

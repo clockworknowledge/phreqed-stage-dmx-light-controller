@@ -319,8 +319,8 @@ for Pi activity to stop before removing power. If the Pi remains on, inspect
 `journalctl -u phreqed-dmx.service -u phreqed-poweroff.service -b` and continue
 using the physical switch; do not broaden the policy rule.
 
-The show controller's center-white peak path also defaults to a separate 10%
-ceiling. After the exact rig has been commissioned at low level, a higher
+The show controller's center-white path also starts in a separate 10% Rehearsal
+power mode. After the exact rig has been commissioned at low level, a higher
 process-local ceiling requires every explicit option below:
 
 ```bash
@@ -331,9 +331,12 @@ process-local ceiling requires every explicit option below:
 ```
 
 The browser will warn continuously and restrict its physical-white slider to
-the selected ceiling. Begin at a low setting and increase only after warning
-everyone nearby. The onset threshold, 0.10-second pulse duration, 4 Hz limiter,
-blackout, stop, render-failure, and browser-lease shutdowns remain mandatory.
+the selected ceiling. High output remains unavailable until live output starts
+and the operator confirms White Show power; that change disarms whites and they
+must then be armed separately. Continuous effect motion stays capped at 10%.
+Audio accents and authored flash events may reach the Show ceiling, but the
+0.10-second pulse duration, 4 Hz limiter, blackout, stop, render-failure, and
+browser-lease shutdowns remain mandatory.
 
 ## Optional Ampero foot control
 

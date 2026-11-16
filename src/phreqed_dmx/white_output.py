@@ -14,6 +14,7 @@ MAX_WHITE_OUTPUT_CEILING = 1.0
 DEFAULT_WHITE_OUTPUT_LEVEL = 0.05
 MAX_WHITE_FLASH_HZ = 4.0
 WHITE_PULSE_SECONDS = 0.08
+WHITE_DRIVE_MODES = ("effect", "audio", "hybrid")
 
 WHITE_PATTERN_LABELS = {
     "dark": "Dark by design",
@@ -89,7 +90,7 @@ _PATTERN_PRIORITY = {
 
 @dataclass(slots=True)
 class WhitePeakLimiter:
-    """Turn onset threshold crossings into short, rate-limited peak accents."""
+    """Turn normalized threshold crossings into short, rate-limited accents."""
 
     maximum_flash_hz: float = MAX_WHITE_FLASH_HZ
     pulse_seconds: float = WHITE_PULSE_SECONDS
@@ -112,28 +113,28 @@ class WhitePeakLimiter:
     def update(
         self,
         now: float,
-        onset: float,
+        signal: float,
         *,
         enabled: bool,
         threshold: float,
     ) -> float:
-        for name, value in (("time", now), ("onset", onset), ("threshold", threshold)):
+        for name, value in (("time", now), ("signal", signal), ("threshold", threshold)):
             if not math.isfinite(value):
                 raise ValueError(f"white {name} must be finite")
-        if not 0.0 <= onset <= 1.0 or not 0.1 <= threshold <= 1.0:
-            raise ValueError("white onset and threshold must be normalized")
+        if not 0.0 <= signal <= 1.0 or not 0.1 <= threshold <= 1.0:
+            raise ValueError("white signal and threshold must be normalized")
         if not enabled:
             self.reset()
             return 0.0
-        if onset < threshold:
+        if signal < threshold:
             self._armed = True
         interval = 1.0 / self.maximum_flash_hz
         if (
             self._armed
-            and onset >= threshold
+            and signal >= threshold
             and now - self._last_trigger >= interval
         ):
-            peak = (onset - threshold) / max(0.001, 1.0 - threshold)
+            peak = (signal - threshold) / max(0.001, 1.0 - threshold)
             self._strength = min(1.0, 0.35 + peak * 0.65)
             self._last_trigger = now
             self._active_until = now + self.pulse_seconds
@@ -141,6 +142,31 @@ class WhitePeakLimiter:
         if now < self._active_until:
             return self._strength
         return 0.0
+
+
+def white_effect_flash_signal(pattern_id: str, animation_time: float) -> float:
+    """Return a deterministic flash request for an explicitly authored event.
+
+    Continuous white animation is rendered separately at the rehearsal envelope.
+    This signal may reach the configured show ceiling, but it still passes through
+    ``WhitePeakLimiter`` before any physical channel is composed.
+    """
+
+    if pattern_id not in WHITE_PATTERN_LABELS:
+        raise ValueError(f"unknown white animation pattern: {pattern_id}")
+    if (
+        isinstance(animation_time, bool)
+        or not isinstance(animation_time, (int, float))
+        or not math.isfinite(animation_time)
+        or animation_time < 0.0
+    ):
+        raise ValueError("white animation time must be finite and nonnegative")
+    if pattern_id == "fuse":
+        # A short request window catches the instant the fuse reaches the stick
+        # across bounded clock-speed variation. The limiter shapes one pulse.
+        phase = animation_time % 10.4
+        return 1.0 if 7.0 <= phase < 7.25 else 0.0
+    return 0.0
 
 
 def commissioned_white_levels(
@@ -310,8 +336,8 @@ def _global_pattern(
         return tuple(_smooth_peak(x, center, 0.72) for x in range(part_count))
     if pattern_id == "pellets":
         # Three restrained pill points travel across the joined white strips.
-        # Physical output remains subject to the independent onset limiter, so
-        # this spatial pattern cannot create sustained or unrestricted whites.
+        # Physical output remains behind the independent drive, arm, and power
+        # boundaries, so this pattern cannot enable or uncap the white parts.
         head = (animation_time * 2.2) % (part_count + 4.0) - 2.0
         return tuple(min(0.82, sum(
             gain * _smooth_peak(x, head - spacing, 0.48)

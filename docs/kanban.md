@@ -34,10 +34,11 @@ browser-based Studio authoring application is sequenced in
 detailed user stories, package/sync rules, and sprint acceptance. The cards
 below remain independently movable and are the source of truth for status.
 
-Pause checkpoint (2026-11-13): no implementation is active. Perform touch
+Pause checkpoint (updated 2026-11-16): no implementation is active. Perform touch
 polish, timeline editing, venue-profile shortcuts, prepared-white adjustment,
 the Pac-Man ghost/power-pellet cycle, and the Burning Dynamite animation are
-committed and covered by the 249-test Windows Python 3.12 suite. Remaining
+implemented. The White Output v2 drive/power contract is in desktop validation;
+the complete controller is covered by the 254-test Windows Python 3.12 suite. Remaining
 touchscreen work is physical Pi and Waveshare validation; Pi thermal telemetry
 is recorded below as optional follow-up work and is not a show-control
 dependency.
@@ -128,6 +129,25 @@ to claim local authority.
 
 Acceptance remaining: phone-only loss, kiosk-only loss, all-loss, browser crash,
 controller restart, render failure, and display blank/wake on the Pi.
+
+### SAFE-004 — White output drive and Show-power contract (`P0`)
+
+The commissioned white path now separates configured capability, Rehearsal/Show
+power, and session-only arming. Effect mode provides deterministic segmented
+motion without audio inside the 10% continuous envelope; Audio Accents retains
+onset-driven pulses; Hybrid combines them. Explicit authored flashes and audio
+accents may use an acknowledged process ceiling up to 100% only after live output
+and a second White Show confirmation. Changing drive, power, profile, performance
+mode, blackout, stopping output, lease loss, failure, or restart disarms physical
+whites; blackout and output loss also restore White Rehearsal power. Profiles may
+store the full requested range but never store armed or unlocked state. Desktop
+automation covers no-audio Effect output, Audio rejection without a source,
+high-output flash intent, power reset, schema migration, and all legacy gates.
+
+Acceptance remaining: on the commissioned Pi and fixtures, validate Effect,
+Audio, and Hybrid at low level first; then step the configured Show ceiling under
+controlled conditions, confirm pulse duration/rate on DMX capture, and record
+blackout, lease-loss, and restart recovery at every power mode.
 
 ### OPS-006 — Optional Chromium kiosk lifecycle (`P0`)
 
