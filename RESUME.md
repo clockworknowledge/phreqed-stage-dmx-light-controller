@@ -43,11 +43,16 @@ Implementation is paused cleanly with no feature work currently active. The
 latest Perform pass keeps song number and time labels
 inside the active-song card, restores the prominent elapsed/remaining time bar,
 keeps the live-monitor footer within its panel, and places Start/Stop output in
-the bottom safety row beside blackout. The stage bar exposes Rehearsal, Small
-Stage, and Large Stage plus up to two custom profiles explicitly marked for
-Perform. Its prepared-white minus/plus controls adjust the bounded stored level
-without arming physical output or bypassing live, audio, blackout, lease, or
-ceiling gates.
+the persistent bottom safety row. Manual quick-look selection now uses a
+64-pixel trigger and non-modal paged picker instead of the touch-hostile native
+dropdown. Six large choices fit the 1280 x 800 touchscreen; compact layouts use
+three or four per page. The picker locates and labels the active look, applies a
+choice with one tap, and leaves BLACKOUT reachable.
+
+The stage bar exposes Rehearsal, Small Stage, and Large Stage plus up to two
+custom profiles explicitly marked for Perform. Its prepared-white minus/plus
+controls adjust the bounded stored level without arming physical output or
+bypassing live, audio, blackout, lease, or ceiling gates.
 
 Pac-Man Chase now includes red, pink, cyan, and optional orange ghosts with
 eyes, a deterministic power pellet, and a smooth blue frightened/reversal

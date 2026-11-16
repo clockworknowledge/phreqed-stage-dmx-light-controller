@@ -42,6 +42,10 @@ button.primary { min-height: var(--touch); }
 .mode-switch button { min-height: 48px; padding: 8px 14px; }
 .mode-switch button.active { color: var(--accent); border-color: var(--accent); background: #243020; }
 .setlist-picker select { min-height: 42px; margin: 4px 0 8px; }
+.quick-look-trigger { width: 100%; min-height: 64px; margin: 10px 0 4px; padding: 9px 14px; display: grid; grid-template-columns: 1fr auto; gap: 1px 12px; align-items: center; text-align: left; }
+.quick-look-trigger > span:first-child { grid-column: 1 / -1; color: var(--accent); font-size: 10px; letter-spacing: .14em; }
+.quick-look-trigger strong { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 16px; }
+.quick-look-trigger > span:last-child { color: var(--muted); font-size: 13px; }
 .stage-primary { display: flex; flex-direction: column; }
 .setlist-stage, .manual-stage { flex: 1; min-height: 0; display: flex; flex-direction: column; }
 .setlist-picker { max-width: 330px; }
@@ -111,6 +115,15 @@ button.primary { min-height: var(--touch); }
 .task-dialog-heading h2 { font-size: 30px; }
 .task-dialog .cue-list { margin-bottom: 18px; }
 .task-dialog .card { margin-bottom: 12px; }
+.quick-look-dialog .task-dialog-content { display: flex; flex-direction: column; }
+.quick-look-help { margin: 0 0 16px; color: var(--muted); }
+.quick-look-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 10px; align-content: start; }
+.quick-look-option { min-height: 72px; padding: 10px 16px; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; text-align: left; }
+.quick-look-option strong { font-size: 16px; line-height: 1.2; }
+.quick-look-option small { margin-top: 5px; color: var(--muted); font-size: 11px; letter-spacing: .04em; }
+.quick-look-option.active { color: var(--accent); border-color: var(--accent); background: #243020; }
+.quick-look-option.active small { color: var(--accent); }
+.quick-look-pager { margin-top: auto; padding-top: 14px; margin-bottom: 0; }
 .timeline-actions { margin-bottom: 8px; }
 .timeline-dialog .cue .row { justify-content: flex-end; }
 .timeline-dialog .cue .row button { min-width: 82px; }
@@ -218,6 +231,8 @@ button.primary { min-height: var(--touch); }
   .task-dialog { inset: 10px 10px 158px; height: calc(100dvh - 168px); max-height: calc(100dvh - 168px); }
   .task-dialog-content { padding: 18px; }
   .task-dialog-heading { top: -18px; margin: -18px -18px 16px; padding: 16px 18px 12px; }
+  .quick-look-grid { grid-template-columns: 1fr; gap: 7px; }
+  .quick-look-option { min-height: var(--touch); }
   .safety-bar { min-height: 82px; flex-wrap: nowrap; }
   .safety-bar > div { min-width: 0; }
   .safety-bar.perform-controls .safety-status { display: none; }

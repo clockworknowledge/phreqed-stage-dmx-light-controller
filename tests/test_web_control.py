@@ -423,6 +423,8 @@ class BrowserControlTests(unittest.TestCase):
             'copy-setlist', 'stage-profile-choices', 'stage-white-output',
             'stage-white-down', 'stage-white-up', 'profile-show-on-perform',
             'safety-bar', 'stage-live-actions', 'song-cue-duration',
+            'quick-preset-open', 'quick-preset-dialog', 'quick-preset-grid',
+            'quick-preset-pager', 'quick-preset-label',
         ):
             self.assertIn(f'id="{control_id}"', html)
         self.assertIn('lease_id:leaseId', script)
@@ -457,6 +459,11 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn('Changing this duration adjusts the next scene', script)
         self.assertIn('.safety-live-actions button { min-width: 132px;', touch)
         self.assertIn('.safety-bar > .safety-live-actions { flex: 1 1 0;', touch)
+        self.assertIn('const QUICK_LOOK_PAGE_SIZE=6;', script)
+        self.assertIn("innerHeight<=720?3:4", script)
+        self.assertIn("$('quick-preset-dialog').show()", script)
+        self.assertIn('.quick-look-option { min-height: 72px;', touch)
+        self.assertNotIn('<select id="quick-preset"', html)
         self.assertLess(html.index('id="safety-bar"'), html.index('id="stage-start-live"'))
         self.assertLess(html.index('id="stage-stop-live"'), html.index('id="blackout"'))
         self.assertLess(html.index('id="setlist"'), html.index('id="songbuilder"'))

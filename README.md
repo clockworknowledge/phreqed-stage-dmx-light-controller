@@ -140,7 +140,12 @@ bar with elapsed and remaining time, while Start live and Stop output share the
 bottom safety row with blackout. Setlist is the startup mode, large
 Setlist/Manual buttons replace the former mode dropdown, and the bottom stage
 bar exposes the three built-in venue profiles plus up to two saved custom
-shortcuts. Touch-sized minus/plus controls adjust the prepared center-white
+shortcuts. Manual look selection also avoids the native dropdown: a 64-pixel
+trigger opens a focused picker with six large choices per touchscreen page and
+three or four per phone page, automatically locating the active look. Selecting
+a look applies it immediately and closes the picker while BLACKOUT remains
+reachable.
+Touch-sized minus/plus controls adjust the prepared center-white
 level in one-percent steps; the adjacent output button remains separately gated
 and level adjustment never arms physical whites. Phones receive compact bottom
 navigation and desktops receive denser split editors. The same show and

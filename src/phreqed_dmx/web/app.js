@@ -14,8 +14,9 @@ let pendingSetlistPanel = 'songs', tuningProfileDirty = false;
 let pendingNetworkAction = null;
 let pendingTuningProfileId = null;
 const TOUCH_PAGE_SIZE=5;
+const QUICK_LOOK_PAGE_SIZE=6;
 const MIN_CUE_DURATION=0.1;
-let presetPage=0,scenePage=0,songPage=0,songCuePage=0,setlistPage=0;
+let presetPage=0,scenePage=0,songPage=0,songCuePage=0,setlistPage=0,quickPresetPage=0;
 function savedMonitorBrightness() {
   try { const value=Number(localStorage.getItem(MONITOR_BRIGHTNESS_KEY)); return value>=1&&value<=5 ? value : 2; }
   catch (_) { return 2; }
@@ -37,8 +38,8 @@ function act(action, data = {}, refresh = false) { command(action, data, refresh
 function button(text, handler, className) { const e = node('button', text, className); e.type = 'button'; e.addEventListener('click', handler); return e; }
 function option(select, value, text) { const o = node('option', text); o.value = value; select.append(o); }
 function boundedPage(page,total){return Math.max(0,Math.min(page,Math.max(0,Math.ceil(total/TOUCH_PAGE_SIZE)-1)));}
-function renderPager(id,page,total,setPage){
-  const pager=$(id),pages=Math.max(1,Math.ceil(total/TOUCH_PAGE_SIZE));pager.replaceChildren();pager.hidden=pages<=1;if(pages<=1)return;
+function renderPager(id,page,total,setPage,pageSize=TOUCH_PAGE_SIZE){
+  const pager=$(id),pages=Math.max(1,Math.ceil(total/pageSize));pager.replaceChildren();pager.hidden=pages<=1;if(pages<=1)return;
   const previous=button('← Previous',()=>setPage(page-1)),status=node('span',`Page ${page+1} of ${pages}`),next=button('Next →',()=>setPage(page+1));
   previous.disabled=page===0;next.disabled=page===pages-1;pager.append(previous,status,next);
 }
@@ -90,13 +91,39 @@ function tab(name) {
 for (const e of document.querySelectorAll('[data-tab]')) e.addEventListener('click', () => tab(e.dataset.tab));
 for (const e of document.querySelectorAll('[data-setlist-panel]')) e.addEventListener('click', () => applySetlistPanel(e.dataset.setlistPanel));
 for (const e of document.querySelectorAll('.workspace-tab')) e.addEventListener('click', () => showWorkspace(e.dataset.workspace));
-function fillPresets(select, selected) { select.replaceChildren(); for (const p of catalog.presets.filter(p => p.builtin || catalog.library.presets.some(u => u.preset_id === p.preset_id))) option(select, p.preset_id, p.name); if (selected) select.value = selected; }
+function availablePresets(){return catalog.presets.filter(p=>p.builtin||catalog.library.presets.some(u=>u.preset_id===p.preset_id));}
+function quickLookPageSize(){return matchMedia('(max-width: 760px)').matches?(innerHeight<=720?3:4):QUICK_LOOK_PAGE_SIZE;}
+function fillPresets(select, selected) { select.replaceChildren(); for (const p of availablePresets()) option(select, p.preset_id, p.name); if (selected) select.value = selected; }
+function renderQuickPresetPicker(){
+  if(!catalog)return;
+  const all=availablePresets(),grid=$('quick-preset-grid'),pageSize=quickLookPageSize();
+  quickPresetPage=Math.max(0,Math.min(quickPresetPage,Math.max(0,Math.ceil(all.length/pageSize)-1)));
+  grid.replaceChildren();
+  for(const preset of all.slice(quickPresetPage*pageSize,(quickPresetPage+1)*pageSize)){
+    const choice=button('',()=>{
+      $('quick-preset-label').textContent=preset.name;
+      $('quick-preset-dialog').close();
+      act('preset',{value:preset.preset_id});
+    },'quick-look-option');
+    choice.dataset.quickPreset=preset.preset_id;
+    choice.setAttribute('role','option');
+    const selected=preset.preset_id===state?.preset_id;
+    choice.classList.toggle('active',selected);
+    choice.setAttribute('aria-selected',String(selected));
+    choice.append(node('strong',preset.name),node('small',preset.builtin?'Built-in look':'Your saved look'));
+    grid.append(choice);
+  }
+  renderPager('quick-preset-pager',quickPresetPage,all.length,page=>{
+    quickPresetPage=page;
+    renderQuickPresetPicker();
+  },pageSize);
+}
 async function loadCatalog() {
   const next=await request('/api/catalog'),fingerprint=JSON.stringify(next);catalog=next;
   if(fingerprint!==catalogFingerprint){catalogFingerprint=fingerprint;renderCatalog();}
 }
 function renderCatalog() {
-  fillPresets($('quick-preset'), state?.preset_id); fillPresets($('cue-preset'), $('cue-preset').value);
+  renderQuickPresetPicker(); fillPresets($('cue-preset'), $('cue-preset').value);
   const performanceSetlist=$('performance-setlist'),selectedPerformanceSetlist=state?.performance?.setlist_id||performanceSetlist.value;
   performanceSetlist.replaceChildren();for(const setlist of catalog.song_library.setlists)option(performanceSetlist,setlist.setlist_id,setlist.name);
   if(selectedPerformanceSetlist)performanceSetlist.value=selectedPerformanceSetlist;
@@ -265,7 +292,7 @@ function renderState(s) {
     $('tuning-profile').value=s.active_tuning_profile_id;
     renderTuningProfileSelection();
   }
-  if (document.activeElement !== $('quick-preset')) $('quick-preset').value = s.preset_id;
+  $('quick-preset-label').textContent=s.active_name||'Custom look';
   $('bpm').textContent = Math.round(s.tempo);
   $('blackout-status').textContent = s.blackout ? 'Blackout is active.' : s.live ? 'Fixture output is live.' : 'Simulation. Fixtures are off.';
   $('release-blackout').hidden = !s.blackout; $('blackout').classList.toggle('latched',s.blackout);
@@ -296,7 +323,7 @@ function renderState(s) {
     const active=button.dataset.performanceMode===performance.mode;
     button.classList.toggle('active',active);button.setAttribute('aria-pressed',String(active));
   }
-  const setlistMode=performance.mode==='setlist';$('setlist-performance').hidden=!setlistMode;$('manual-transport').hidden=setlistMode;$('quick-preset').disabled=setlistMode;
+  const setlistMode=performance.mode==='setlist';$('setlist-performance').hidden=!setlistMode;$('manual-transport').hidden=setlistMode;$('quick-preset-open').disabled=setlistMode;
   $('performance-heading').textContent=setlistMode?'Setlist performance':'Manual scene control';
   if(performance.setlist_id&&document.activeElement!==$('performance-setlist'))$('performance-setlist').value=performance.setlist_id;
   $('performance-song-number').textContent=performance.song_index===null?'NO SONG SELECTED':`${String(performance.song_index+1).padStart(2,'0')} / ${String(performance.song_count).padStart(2,'0')}`;
@@ -370,6 +397,7 @@ function renderState(s) {
   if(catalog)renderTuningProfileSelection();
   if(catalog)updateStageProfileSelection();
   document.querySelectorAll('[data-preset]').forEach(e => e.classList.toggle('active', e.dataset.preset === s.preset_id));
+  document.querySelectorAll('[data-quick-preset]').forEach(e=>{const active=e.dataset.quickPreset===s.preset_id;e.classList.toggle('active',active);e.setAttribute('aria-selected',String(active));});
   const frames = Object.entries(s.frames); const whiteParts=white.part_levels||{};
   if (frames[0]) draw($('cube-a'),frames[0][1],whiteParts[frames[0][0]]||[]);
   if (frames[1]) draw($('cube-b'),frames[1][1],whiteParts[frames[1][0]]||[]);
@@ -651,7 +679,15 @@ $('performance-setlist').addEventListener('change',event=>act('load_setlist',{se
 $('previous-song').addEventListener('click',()=>act('previous_song'));
 $('next-song').addEventListener('click',()=>act('next_song'));
 $('toggle-song').addEventListener('click',()=>act(state?.performance?.running?'stop_song':'start_song'));
-$('quick-preset').addEventListener('change',e=>act('preset',{value:e.target.value}));
+$('quick-preset-open').addEventListener('click',()=>{
+  const all=availablePresets(),index=all.findIndex(preset=>preset.preset_id===state?.preset_id);
+  quickPresetPage=index<0?0:Math.floor(index/quickLookPageSize());
+  renderQuickPresetPicker();
+  if(!$('quick-preset-dialog').open)$('quick-preset-dialog').show();
+  $('quick-preset-grid').querySelector('.active')?.focus();
+});
+$('close-quick-preset').addEventListener('click',()=>$('quick-preset-dialog').close());
+window.addEventListener('resize',()=>{if($('quick-preset-dialog').open){const index=availablePresets().findIndex(preset=>preset.preset_id===state?.preset_id);quickPresetPage=index<0?0:Math.floor(index/quickLookPageSize());renderQuickPresetPicker();}});
 async function applyTuningProfile(profileId){
   const profile=tuningProfileById(profileId);if(!profile)return;
   const apply=$('apply-tuning-profile');apply.disabled=true;apply.textContent='Applying…';

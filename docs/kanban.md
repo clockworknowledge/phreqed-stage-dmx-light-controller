@@ -106,7 +106,14 @@ controls that cannot arm physical whites. Song metadata and live-monitor labels
 remain inside their cards at the target and phone breakpoints. At 1280 x 800
 Chromium measured both document and viewport at exactly 800 pixels, with no
 Perform workspace overflow; the 390 x 844 phone layout retained usable safety
-controls and reported no application console errors.
+controls and reported no application console errors. Manual look selection no
+longer relies on the native dropdown: a 64-pixel trigger opens a focused picker
+with six large choices per touchscreen page and three or four per compact page.
+Previous/Next paging, text-selected state, automatic active-page location, and
+one-tap application are usable without precision scrolling; BLACKOUT stays
+available because the picker is non-modal. Chromium validation selected Burning
+Dynamite through page three at 1280 x 800 and verified the compact 390 x 844
+layout with no console errors.
 
 Acceptance remaining: touch accuracy, glare/readability, wake behavior, and a
 full rehearsal on the commissioned display.

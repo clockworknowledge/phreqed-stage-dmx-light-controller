@@ -1,6 +1,6 @@
 # Adaptive stage control
 
-Last updated: 2026-11-13
+Last updated: 2026-11-16
 
 ## Delivered software baseline
 
@@ -18,7 +18,11 @@ viewport is 1280 x 800 landscape. The shared application has five workspaces:
   venue profiles, up to two operator-selected custom profile shortcuts, and
   touch-sized prepared-white level controls beside the separately gated white
   output action. Selection and level adjustment never arm physical whites or
-  start playback.
+  start playback. The manual quick-look control is a large button and focused
+  paged picker rather than a native dropdown. It presents six 72-pixel choices
+  per touchscreen page, reduces compact layouts to three or four choices so no
+  precision scrollbar is required, identifies the active look without color
+  alone, and leaves the persistent BLACKOUT row available.
 - **Setlist** separates Songs/cue-sheet authoring and ordered Setlist editing
   into two full-width touch screens. Neither workflow shares a compressed split
   pane with the other. Running orders can be copied. The focused timeline
