@@ -11,8 +11,10 @@ from phreqed_dmx.video_edl import (
 )
 
 
-def edl_document(*, rotation: str = "none") -> dict:
-    return {
+def edl_document(
+    *, rotation: str = "none", horizontal_flip: bool = False
+) -> dict:
+    document = {
         "version": 1,
         "edl_id": "video-edl-test",
         "title": "Test projection",
@@ -37,6 +39,9 @@ def edl_document(*, rotation: str = "none") -> dict:
             }
         ],
     }
+    if horizontal_flip:
+        document["projection"]["horizontal_flip"] = True
+    return document
 
 
 class VideoEdlTests(unittest.TestCase):
@@ -45,8 +50,13 @@ class VideoEdlTests(unittest.TestCase):
         self.assertEqual(edl.as_dict(), edl_document())
         self.assertEqual(edl.duration_seconds, 5.0)
         self.assertEqual(edl.projection.output_dimensions, (1080, 1920))
+        self.assertFalse(edl.projection.horizontal_flip)
+        self.assertNotIn("horizontal_flip", edl.as_dict()["projection"])
         rotated = parse_video_edl(edl_document(rotation="clockwise"))
         self.assertEqual(rotated.projection.output_dimensions, (1920, 1080))
+        mirrored = parse_video_edl(edl_document(horizontal_flip=True))
+        self.assertTrue(mirrored.projection.horizontal_flip)
+        self.assertTrue(mirrored.as_dict()["projection"]["horizontal_flip"])
         self.assertNotIn(b"filesystem", edl.canonical_bytes())
 
     def test_loads_edl_and_local_asset_map_without_embedding_paths(self) -> None:
@@ -86,6 +96,10 @@ class VideoEdlTests(unittest.TestCase):
         invalid["projection"]["canvas_width"] = 1920
         invalid["projection"]["canvas_height"] = 1920
         with self.assertRaisesRegex(ValueError, "1080p target"):
+            parse_video_edl(invalid)
+        invalid = edl_document()
+        invalid["projection"]["horizontal_flip"] = "yes"
+        with self.assertRaisesRegex(ValueError, "horizontal flip"):
             parse_video_edl(invalid)
         with self.assertRaisesRegex(ValueError, "local filesystem"):
             parse_asset_map({

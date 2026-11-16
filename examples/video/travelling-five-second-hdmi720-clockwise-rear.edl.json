@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "edl_id": "travelling-hdmi720-clockwise-rear-probe",
+  "title": "Travelling HDMI 720 portrait clockwise rear-screen probe",
+  "projection": {
+    "profile_id": "portrait-hdmi720-clockwise-rear",
+    "canvas_width": 720,
+    "canvas_height": 1280,
+    "output_rotation": "clockwise",
+    "frame_rate": 30.0,
+    "horizontal_flip": true
+  },
+  "clips": [
+    {
+      "clip_id": "travelling-opening-clockwise-rear",
+      "asset_id": "travelling-master",
+      "source_in_seconds": 0.0,
+      "source_out_seconds": 5.0,
+      "fit_mode": "cover",
+      "focal_x": 0.5,
+      "focal_y": 0.5,
+      "fade_in_seconds": 0.25,
+      "fade_out_seconds": 1.0
+    }
+  ]
+}

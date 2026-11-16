@@ -105,13 +105,18 @@ def build_ffmpeg_command(
     filter_parts.append(
         f"{clip_inputs}concat=n={len(edl.clips)}:v=1:a=0[sequence]"
     )
+    output_filters = []
+    if edl.projection.horizontal_flip:
+        output_filters.append("hflip")
     rotation = edl.projection.output_rotation
     if rotation == "clockwise":
-        filter_parts.append("[sequence]transpose=clock,format=yuv420p[video]")
+        output_filters.append("transpose=clock")
     elif rotation == "counterclockwise":
-        filter_parts.append("[sequence]transpose=cclock,format=yuv420p[video]")
-    else:
-        filter_parts.append("[sequence]format=yuv420p[video]")
+        output_filters.append("transpose=cclock")
+    output_filters.append("format=yuv420p")
+    filter_parts.append(
+        "[sequence]" + ",".join(output_filters) + "[video]"
+    )
 
     frame_rate = _decimal(edl.projection.frame_rate)
     command.extend([

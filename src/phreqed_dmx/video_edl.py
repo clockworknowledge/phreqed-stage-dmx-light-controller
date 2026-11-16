@@ -68,6 +68,7 @@ class ProjectionProfile:
     canvas_height: int
     output_rotation: str
     frame_rate: float
+    horizontal_flip: bool = False
 
     def __post_init__(self) -> None:
         _identifier(self.profile_id, "projection profile ID")
@@ -78,6 +79,8 @@ class ProjectionProfile:
                 "output rotation must be none, clockwise, or counterclockwise"
             )
         _number(self.frame_rate, "frame rate", 1.0, 30.0)
+        if not isinstance(self.horizontal_flip, bool):
+            raise ValueError("horizontal flip must be boolean")
         if self.canvas_width * self.canvas_height > 1920 * 1080:
             raise ValueError("projection canvas exceeds the initial 1080p target")
 
@@ -88,13 +91,18 @@ class ProjectionProfile:
         return self.canvas_height, self.canvas_width
 
     def as_dict(self) -> dict:
-        return {
+        data = {
             "profile_id": self.profile_id,
             "canvas_width": self.canvas_width,
             "canvas_height": self.canvas_height,
             "output_rotation": self.output_rotation,
             "frame_rate": self.frame_rate,
         }
+        # Omit the default so version-1 front-projection packages keep their
+        # original canonical hashes and remain preflight-compatible.
+        if self.horizontal_flip:
+            data["horizontal_flip"] = True
+        return data
 
 
 @dataclass(frozen=True, slots=True)
@@ -212,17 +220,29 @@ def parse_video_edl(value: object) -> VideoEdl:
     )
     if type(data["version"]) is not int or data["version"] != EDL_VERSION:
         raise ValueError("unsupported video EDL version; expected 1")
-    projection_data = _fields(
-        data["projection"],
-        {
-            "profile_id",
-            "canvas_width",
-            "canvas_height",
-            "output_rotation",
-            "frame_rate",
-        },
-        "projection profile",
+    projection_required = {
+        "profile_id",
+        "canvas_width",
+        "canvas_height",
+        "output_rotation",
+        "frame_rate",
+    }
+    projection_value = data["projection"]
+    projection_fields = (
+        set(projection_value) if isinstance(projection_value, dict) else set()
     )
+    if (
+        not isinstance(projection_value, dict)
+        or not projection_required <= projection_fields
+        or not projection_fields <= projection_required | {"horizontal_flip"}
+    ):
+        raise ValueError(
+            "projection profile requires fields: "
+            + ", ".join(sorted(projection_required))
+            + "; optional: horizontal_flip"
+        )
+    projection_data = dict(projection_value)
+    projection_data.setdefault("horizontal_flip", False)
     clips_data = data["clips"]
     if not isinstance(clips_data, list):
         raise ValueError("video EDL clips must be a list")

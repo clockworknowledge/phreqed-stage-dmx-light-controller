@@ -16,7 +16,9 @@ class VideoRenderTests(unittest.TestCase):
             source = root / "source video.mov"
             source.write_bytes(b"source")
             output = root / "stage.mp4"
-            edl = parse_video_edl(edl_document(rotation="clockwise"))
+            edl = parse_video_edl(
+                edl_document(rotation="clockwise", horizontal_flip=True)
+            )
             command = build_ffmpeg_command(
                 edl,
                 {"asset-master": source},
@@ -28,7 +30,7 @@ class VideoRenderTests(unittest.TestCase):
         self.assertIn("-filter_complex", command)
         filters = command[command.index("-filter_complex") + 1]
         self.assertIn("crop=1080:1920", filters)
-        self.assertIn("transpose=clock", filters)
+        self.assertIn("hflip,transpose=clock", filters)
         self.assertIn("concat=n=1:v=1:a=0", filters)
         self.assertIn("-an", command)
         self.assertNotIn("shell", command)

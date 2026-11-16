@@ -25,7 +25,8 @@ The implemented renderer supports sequential, non-overlapping clips with:
 - `cover` or `contain` fitting;
 - normalized horizontal and vertical focal points;
 - per-clip fade in/out;
-- a logical canvas and optional clockwise/counter-clockwise output rotation;
+- a logical canvas, optional clockwise/counter-clockwise output rotation, and
+  an explicit rear-screen horizontal mirror;
 - normalized 1-30 FPS output within the initial 1080p pixel budget;
 - audio-free H.264 High 4.1, `yuv420p` Stage renditions; and
 - source, EDL, and output SHA-256 hashes in a package manifest.
@@ -35,6 +36,12 @@ The first profile is a logical 1080×1920 portrait canvas. Use `output_rotation:
 `clockwise` or `counterclockwise` to encode the logical portrait canvas into a
 1920×1080 signal for a physically rotated projector that still advertises a
 landscape mode.
+
+Set `horizontal_flip: true` only when projecting through the back of a screen.
+The renderer mirrors the upright logical canvas before applying the selected
+output rotation, so front/rear placement and physical projector rotation remain
+independent choices. The default is `false`, and existing front-projection EDLs
+and package hashes remain unchanged.
 
 This slice deliberately does not yet render overlapping VFX layers, alpha,
 blend modes, live shaders, or song transport. Those remain `PROJ-002` and
@@ -111,6 +118,13 @@ physical direction can be selected by observation without changing display
 configuration. VLC/cVLC and FFmpeg/FFprobe are present; mpv and GStreamer are
 not installed.
 
+Both front-projection orientation packages completed on the commissioned HDMI
+output. VLC reported that its V4L2 H.264 decoder could not start, then opened an
+I420 Wayland `wl_dmabuf` video output and exited successfully after playback.
+That fallback is acceptable for the bounded probe but remains a CPU,
+temperature, and dropped-frame soak-test item before full-song use. The Qt
+global-hotkey interface warning from the SSH/TTY launch was also non-fatal.
+
 The bounded VLC probe preflights the package, resolves the active user Wayland
 socket for an SSH/TTY launch, selects a Qt fullscreen screen, disables audio and
 OSD, plays once, and exits. It still requires explicit
@@ -142,3 +156,14 @@ five-second probe exit and repeat with `--screen 0`; do not change the DSI or
 Wayland display configuration during this orientation check. Then run the
 counter-clockwise manifest on the confirmed projector screen and record which
 direction is upright.
+
+For a projector behind the screen, render and transfer the matching `-rear`
+EDL instead. The resulting package is pre-mirrored; VLC receives the same fixed
+1280×720 signal and needs no runtime video-filter setting:
+
+```powershell
+py -3.12 scripts/render-video-edl.py `
+  examples/video/travelling-five-second-hdmi720-counterclockwise-rear.edl.json `
+  --assets output/video-render/assets.local.json `
+  --output output/video-render
+```
