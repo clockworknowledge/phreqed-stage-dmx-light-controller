@@ -109,6 +109,43 @@ Iteration checkpoint (2026-11-16): the base touchscreen is looking good during
 Pi testing. Keep this card in Validation while real performance use reveals any
 remaining touch, readability, or workflow adjustments.
 
+### OPS-008 — Pi thermal telemetry in Operations (`P2`, diagnostics)
+
+Operations now exposes read-only CPU temperature through structured health. A
+small injected reader parses `/sys/class/thermal/thermal_zone0/temp` without a
+shell, rejects malformed, non-finite, negative, or implausible values, and
+reports **Unknown** without changing output, leases, timelines, startup, or
+headless operation. Informational bands are Normal below 70 C, Warm from 70 C
+to below 80 C, and Hot at 80 C or above. Windows-compatible tests cover parsing,
+thresholds, injection, and the read-only live-state boundary.
+
+Acceptance remaining: confirm a numeric reading and correct state label on the
+commissioned Pi during the next deployment.
+
+### SIM-004 — Simulator usability polish (`P2`, simulator)
+
+The Tk simulator now provides visible shortcut guidance and status feedback,
+Space pause/resume, Right-arrow frame step, `B` blackout, `R` reset, per-fixture
+and global parameter reset controls, and dependency-free PNG as well as PPM
+capture. Resetting keeps the selected effects while restoring their validated
+defaults and the deterministic clock.
+
+Acceptance remaining: exercise the complete control set in the actual Tk window
+on Windows and the Pi, including both fixture previews and saved PNG output.
+
+### EFFECT-020 — Effect gallery and regression frames (`P3`, documentation)
+
+`scripts/render-effect-gallery.py` now generates a responsive, hardware-free
+catalog for all 27 effects and 23 presets at fixed 0.00, 1.75, and 4.00 second
+marks. It writes dependency-free RGB PNGs plus a manifest with stable SHA-256
+digests, calls the scene engine directly, and is tested with socket creation
+blocked. Desktop and phone-width Chromium review confirmed both-fixture previews
+without horizontal overflow.
+
+Acceptance remaining: perform the first human catalog review and decide which
+curated images, if any, should become committed regression baselines. Generated
+working output remains ignored until that policy is chosen.
+
 ### AI-DATA-001 — Relate offline-memory feasibility spike (`P2`)
 
 The proposed song/analysis/section/feature/proposal/evidence/review graph,
@@ -294,23 +331,6 @@ available, follow `docs/pi-script-import.md`: copy it into a new dated directory
 hash it, and compare it without changing either preserved baseline.
 
 ## Backlog
-
-### OPS-008 — Pi thermal telemetry in Operations (`P2`, diagnostics)
-
-Expose the Raspberry Pi CPU temperature as read-only structured health using
-`/sys/class/thermal/thermal_zone0/temp` when available. Operations should show
-the measured degrees Celsius plus a non-color state label; missing, malformed,
-or non-Pi sources must report `unknown` without affecting output, leases,
-timelines, startup, or headless operation. Do not invoke a shell or require
-`vcgencmd` for the primary path.
-
-User outcome: an operator can spot a thermally stressed controller before a
-show without adding a service or live-output dependency.
-
-Acceptance: use an injected/read-only reader with Windows-compatible tests;
-bound and validate millidegree parsing; define and document the informational
-state thresholds before implementation; expose the value through structured
-health and the Operations UI; and verify the reading on the commissioned Pi.
 
 ### STUDIO-000 — Phreqed Studio and Stage separation umbrella (`P1`, architecture)
 
@@ -877,16 +897,6 @@ Sprints 6-7.
 Sample video into two normalized 12 x 4 frames with configurable crop, fit,
 gamma, brightness, and fixture assignment. Quantization remains at the DMX
 boundary.
-
-### SIM-004 — Simulator usability polish (`P2`, simulator)
-
-Add keyboard shortcuts, clearer validation feedback, parameter reset controls,
-and an optional dependency-free animation capture workflow.
-
-### EFFECT-020 — Effect gallery and regression frames (`P3`, documentation)
-
-Generate representative simulator images for every effect and preset at fixed
-times so performers can browse looks and reviewers can spot visual changes.
 
 ### EFFECT-021 — Curated center-white scene language (`P2`, visuals)
 

@@ -120,6 +120,18 @@ canvas. Birds flap, stick figures alternate walking poses, and triangle, circle,
 or diamond outlines can travel in either direction. Palette tint, clipping, and
 fixture splitting happen in normalized render space. See [Sprite authoring](sprites.md).
 
+## Deterministic effect gallery
+
+Run `python scripts/render-effect-gallery.py --output output/effect-gallery` to
+render every effect and preset on both logical fixtures at 0.00, 1.75, and 4.00
+seconds. The generated `index.html` is responsive, and `manifest.json` records
+the source IDs, fixed times, filenames, and SHA-256 digests for review.
+
+This path calls the scene renderer directly and produces RGB PNGs only. It does
+not create a socket, open Art-Net, drive the commissioned center-white channels,
+or start projector output. The generated directory is intentionally ignored;
+reviewers decide separately when a curated baseline belongs in source control.
+
 ## Included presets
 
 - `psychedelic-bloom`: neon plasma plus additive concentric rings.

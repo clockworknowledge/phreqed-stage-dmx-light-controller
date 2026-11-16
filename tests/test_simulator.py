@@ -3,7 +3,7 @@ import unittest
 from pathlib import Path
 
 from phreqed_dmx.color import NormalizedGrid, NormalizedRGB
-from phreqed_dmx.simulator import export_scene_ppm
+from phreqed_dmx.simulator import export_scene_png, export_scene_ppm
 
 
 class SimulatorExportTests(unittest.TestCase):
@@ -26,6 +26,20 @@ class SimulatorExportTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             with self.assertRaises(ValueError):
                 export_scene_ppm({}, Path(directory) / "empty.ppm")
+
+    def test_exports_dependency_free_png_with_expected_dimensions(self) -> None:
+        scene = {
+            "Cube A": NormalizedGrid(2, 1, NormalizedRGB(1.0, 0.0, 0.0)),
+            "Cube B": NormalizedGrid(1, 1, NormalizedRGB(0.0, 0.0, 1.0)),
+        }
+        with tempfile.TemporaryDirectory() as directory:
+            path = Path(directory) / "preview.png"
+            export_scene_png(scene, path, pixel_size=3, gap=2)
+            content = path.read_bytes()
+
+        self.assertTrue(content.startswith(b"\x89PNG\r\n\x1a\n"))
+        self.assertEqual(int.from_bytes(content[16:20], "big"), 11)
+        self.assertEqual(int.from_bytes(content[20:24], "big"), 3)
 
 
 if __name__ == "__main__":

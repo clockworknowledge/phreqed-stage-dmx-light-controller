@@ -133,6 +133,13 @@ class SceneEngine:
         selection.parameters = proposed
         self.manual_mode = True
 
+    def reset_parameters(self, fixture_name: str) -> None:
+        """Restore the selected effect's complete metadata defaults."""
+
+        selection = self._selection(fixture_name)
+        selection.parameters.clear()
+        self.manual_mode = True
+
     def activate_preset(self, preset_id: str) -> None:
         if preset_id not in self.presets:
             raise ValueError(f"unknown preset: {preset_id}")

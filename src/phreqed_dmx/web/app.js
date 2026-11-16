@@ -245,7 +245,7 @@ function clockTime(seconds){const total=Math.max(0,Math.floor(seconds||0)),minut
 function renderHealth(health = {}) {
   const detailGrid = $('health-detail-grid');
   detailGrid.replaceChildren();
-  for (const key of ['controller','qlcplus','audio','pedal','network','fixture_output','local_display']) {
+  for (const key of ['controller','qlcplus','audio','pedal','network','fixture_output','local_display','cpu_temperature']) {
     const item = health[key] || {state:'unknown',label:'Status unavailable',detail:''};
     const chip = document.querySelector(`[data-health="${key}"]`);
     if (chip) {

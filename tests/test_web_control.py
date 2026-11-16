@@ -948,7 +948,7 @@ class BrowserControlTests(unittest.TestCase):
             set(state['health']),
             {
                 'controller', 'qlcplus', 'audio', 'pedal', 'network',
-                'fixture_output', 'local_display',
+                'fixture_output', 'local_display', 'cpu_temperature',
             },
         )
         self.assertTrue(state['local_operations_available'])
@@ -971,6 +971,37 @@ class BrowserControlTests(unittest.TestCase):
             control.command(dict(action='start_live'))
             with self.assertRaisesRegex(ValueError, 'stop fixture output'):
                 control.local_action(dict(action='wifi', confirmation='WIFI'))
+
+    def test_cpu_temperature_health_is_injected_bounded_and_read_only(self):
+        normal = BrowserControl(
+            Controller(load_config()), self.path,
+            temperature_reader=lambda: 49.05,
+        )
+        self.addCleanup(normal.close)
+        state = normal.state()
+        self.assertEqual(state['health']['cpu_temperature'], {
+            'state': 'healthy',
+            'label': 'CPU temperature normal',
+            'detail': '49.0 °C · warm at 70 °C · hot at 80 °C',
+        })
+        self.assertFalse(state['live'])
+
+        warm = BrowserControl(
+            Controller(load_config()), self.path.with_name('warm.json'),
+            temperature_reader=lambda: 72.0,
+        )
+        self.addCleanup(warm.close)
+        self.assertEqual(
+            warm.state()['health']['cpu_temperature']['state'], 'warning'
+        )
+        unavailable = BrowserControl(
+            Controller(load_config()), self.path.with_name('unknown.json'),
+            temperature_reader=lambda: None,
+        )
+        self.addCleanup(unavailable.close)
+        self.assertEqual(
+            unavailable.state()['health']['cpu_temperature']['state'], 'unknown'
+        )
 
     def test_system_shutdown_requires_opt_in_phrase_and_blackouts_first(self):
         self.assertFalse(self.control.state()['system_shutdown_available'])

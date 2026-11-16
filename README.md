@@ -19,11 +19,11 @@ and [Pi comparison checklist](docs/pi-script-import.md).
 
 ## Phase 2 capabilities
 
-- 26 registered effects with validated metadata and deterministic output
+- 27 registered effects with validated metadata and deterministic output
 - spectrum, magma, ocean, neon, ember, monochrome, and matrix palettes
 - alpha, additive, and lighten layers with opacity and masks
 - independent per-cube effects or continuous cross-cube effects
-- twenty-two built-in presets, including animated figures and cross-cube looks
+- twenty-three built-in presets, including animated figures and cross-cube looks
 - conservative global brightness ceiling and frame-rise limiter
 - transport-independent blackout, preset, event, tap-tempo, and navigation APIs
 - normalized, replayable audio analysis with explicit opt-in Blue Snowball/ALSA
@@ -31,7 +31,8 @@ and [Pi comparison checklist](docs/pi-script-import.md).
 - optional Hotone Ampero Control input over an explicitly selected ALSA
   raw-MIDI device, with disconnect recovery and browser status; foot input never
   enables Art-Net output
-- interactive Tk simulator with live FPS, pause, step, parameters, and PPM export
+- interactive Tk simulator with live FPS, keyboard transport, parameter resets,
+  status feedback, and PNG/PPM export
 - versioned user looks and ordered scenes with atomic JSON persistence
 - browser previews and show control with an explicit live gate and disconnect blackout
 
@@ -107,11 +108,23 @@ The preview shows both cubes from the front and provides:
 - palette and validated parameter controls;
 - global speed and brightness;
 - pause/resume and manual frame stepping;
-- measured frame rate, blackout, and PPM screenshot export.
+- measured frame rate, blackout, one-touch parameter resets, keyboard shortcuts,
+  and PNG/PPM screenshot export.
 
 Changing a cube control switches the engine from its active preset to manual
 per-fixture mode. Simulation calls normalized scene rendering only and never
 constructs an Art-Net sender.
+
+Generate the deterministic browser gallery without opening Tkinter or any
+hardware output:
+
+```powershell
+python scripts/render-effect-gallery.py --output output/effect-gallery
+```
+
+Open `output/effect-gallery/index.html` to compare every effect and preset at
+the fixed 0.00, 1.75, and 4.00 second marks. `manifest.json` records each PNG's
+SHA-256 digest so later visual changes can be reviewed deliberately.
 
 ## Run browser simulation
 

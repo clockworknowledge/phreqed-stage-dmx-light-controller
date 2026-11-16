@@ -33,6 +33,7 @@ from .tuning_profiles import (
     TuningProfileLibrary,
     parse_tuning_profile,
 )
+from .thermal import cpu_temperature_band, read_cpu_temperature_c
 from .white_output import (
     DEFAULT_WHITE_OUTPUT_LEVEL,
     MAX_WHITE_FLASH_HZ,
@@ -105,6 +106,7 @@ class BrowserControl:
         white_output_ceiling: float = WHITE_OUTPUT_CEILING,
         system_shutdown: Callable[[], None] | None = None,
         local_operations: LocalOperations | None = None,
+        temperature_reader: Callable[[], float | None] = read_cpu_temperature_c,
     ) -> None:
         if (
             isinstance(white_output_ceiling, bool)
@@ -168,6 +170,7 @@ class BrowserControl:
         self.allow_live = allow_live
         self.system_shutdown = system_shutdown
         self.local_operations = local_operations
+        self.temperature_reader = temperature_reader
         self.shutdown_requested = False
         self.white_output_ceiling = float(white_output_ceiling)
         self.white_rehearsal_ceiling = min(
@@ -273,6 +276,30 @@ class BrowserControl:
             else 'unknown'
         )
         local_state = 'healthy' if leases['local_display_healthy'] else 'unknown'
+        try:
+            temperature_c = self.temperature_reader()
+            temperature_band = cpu_temperature_band(temperature_c)
+        except Exception:
+            # Optional diagnostic callbacks must never disturb show control.
+            temperature_c = None
+            temperature_band = 'unknown'
+        if temperature_band == 'unknown':
+            temperature = health_item(
+                'unknown',
+                'CPU temperature unknown',
+                'Thermal telemetry is unavailable on this host.',
+            )
+        else:
+            temperature_label = {
+                'normal': 'CPU temperature normal',
+                'warm': 'CPU temperature warm',
+                'hot': 'CPU temperature hot',
+            }[temperature_band]
+            temperature = health_item(
+                'healthy' if temperature_band == 'normal' else 'warning',
+                temperature_label,
+                f'{temperature_c:.1f} °C · warm at 70 °C · hot at 80 °C',
+            )
         return dict(
             controller=health_item(
                 controller_state,
@@ -304,6 +331,7 @@ class BrowserControl:
                 'Local display connected' if leases['local_display_healthy']
                 else 'Local display not connected',
             ),
+            cpu_temperature=temperature,
         )
 
     def _activate_song_cue(self, cue: SongCue, scheduled: float) -> None:

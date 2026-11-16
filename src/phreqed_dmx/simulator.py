@@ -2,7 +2,9 @@
 
 from __future__ import annotations
 
+import struct
 import time
+import zlib
 from pathlib import Path
 from typing import TYPE_CHECKING, Any
 
@@ -42,10 +44,20 @@ class TkSimulator:
         self._suppress_callbacks = False
         self._frame_counter = 0
         self._fps_started = self._last_clock
+        self._status_variable = tk.StringVar(
+            value="Shortcuts: Space pause · Right step · B blackout · R reset"
+        )
 
         self._build_preview()
         self._build_global_controls()
         self._build_fixture_controls()
+        self._bind_shortcuts()
+        ttk.Label(
+            self._root,
+            textvariable=self._status_variable,
+            anchor="w",
+            padding=(10, 5),
+        ).pack(fill="x", side="bottom")
         tk.Label(
             self._root,
             text=(
@@ -125,6 +137,7 @@ class TkSimulator:
         )
         speed.set(self._controller.speed)
         speed.grid(row=0, column=3)
+        self._speed_scale = speed
 
         self._ttk.Label(controls, text="Global level").grid(row=0, column=4, padx=(12, 0))
         brightness = self._tk.Scale(
@@ -154,6 +167,9 @@ class TkSimulator:
             variable=self._blackout_variable,
             command=lambda: self._controller.show.blackout(self._blackout_variable.get()),
         ).grid(row=1, column=3, pady=(7, 0))
+        self._ttk.Button(
+            controls, text="Reset effects", command=self._reset_all_effects
+        ).grid(row=1, column=4, pady=(7, 0))
         self._fps_label = self._ttk.Label(controls, text="FPS: --")
         self._fps_label.grid(row=1, column=5, sticky="e", pady=(7, 0))
 
@@ -201,6 +217,11 @@ class TkSimulator:
             parameter_frame.grid(row=2, column=0, columnspan=2, sticky="ew")
             self._parameter_frames[fixture.name] = parameter_frame
             self._rebuild_parameters(fixture.name)
+            self._ttk.Button(
+                panel,
+                text="Reset defaults",
+                command=lambda name=fixture.name: self._reset_effect(name),
+            ).grid(row=3, column=0, columnspan=2, sticky="ew", pady=(6, 0))
 
     def _effect_changed(self, fixture_name: str) -> None:
         self._controller.begin_transition(self._animation_time)
@@ -208,16 +229,21 @@ class TkSimulator:
         self._controller.show.select_effect(fixture_name, effect_id)
         self._palette_variables[fixture_name].set("spectrum")
         self._rebuild_parameters(fixture_name)
+        self._set_status(f"{fixture_name}: selected {effect_id}")
 
     def _palette_changed(self, fixture_name: str) -> None:
         self._controller.begin_transition(self._animation_time)
         self._controller.show.update_parameter(
             fixture_name, "palette", self._palette_variables[fixture_name].get()
         )
+        self._set_status(
+            f"{fixture_name}: palette {self._palette_variables[fixture_name].get()}"
+        )
 
     def _preset_changed(self, preset_id: str) -> None:
         self._controller.begin_transition(self._animation_time)
         self._controller.show.activate_preset(preset_id)
+        self._set_status(f"Preset: {preset_id}")
 
     def _rebuild_parameters(self, fixture_name: str) -> None:
         frame = self._parameter_frames[fixture_name]
@@ -257,23 +283,78 @@ class TkSimulator:
         self._paused = not self._paused
         self._last_clock = time.monotonic()
         self._pause_button.configure(text="Resume" if self._paused else "Pause")
+        self._set_status("Paused" if self._paused else "Playing")
 
     def _step(self) -> None:
         if not self._paused:
             self._toggle_pause()
         self._animation_time += 1.0 / self._controller.config.fps
         self._draw_current_frame()
+        self._set_status(f"Stepped to {self._animation_time:.3f} s")
+
+    def _reset_effect(self, fixture_name: str) -> None:
+        self._controller.begin_transition(self._animation_time)
+        self._controller.show.reset_parameters(fixture_name)
+        effect_id = self._effect_variables[fixture_name].get()
+        defaults = EFFECT_REGISTRY.parameters(effect_id)
+        self._palette_variables[fixture_name].set(defaults.choice("palette"))
+        self._rebuild_parameters(fixture_name)
+        self._set_status(f"{fixture_name}: restored {effect_id} defaults")
+
+    def _reset_all_effects(self) -> None:
+        for fixture in self._controller.config.fixtures:
+            self._reset_effect(fixture.name)
+        self._animation_time = 0.0
+        self._controller.speed = 1.0
+        self._speed_scale.set(1.0)
+        self._blackout_variable.set(False)
+        self._controller.show.blackout(False)
+        self._draw_current_frame()
+        self._set_status("All effect parameters and the animation clock were reset")
+
+    def _toggle_blackout(self) -> None:
+        enabled = not self._blackout_variable.get()
+        self._blackout_variable.set(enabled)
+        self._controller.show.blackout(enabled)
+        self._draw_current_frame()
+        self._set_status("Blackout active" if enabled else "Blackout released")
+
+    def _bind_shortcuts(self) -> None:
+        self._root.bind_all("<space>", lambda event: self._shortcut(self._toggle_pause))
+        self._root.bind_all("<Right>", lambda event: self._shortcut(self._step))
+        self._root.bind_all("<Key-b>", lambda event: self._shortcut(self._toggle_blackout))
+        self._root.bind_all("<Key-r>", lambda event: self._shortcut(self._reset_all_effects))
+
+    @staticmethod
+    def _shortcut(action: Any) -> str:
+        action()
+        return "break"
+
+    def _set_status(self, message: str) -> None:
+        self._status_variable.set(message)
 
     def _save_screenshot(self) -> None:
         if self._current_scene is None:
             return
         filename = self._filedialog.asksaveasfilename(
-            title="Export simulator screenshot",
-            defaultextension=".ppm",
-            filetypes=(("Portable Pixmap", "*.ppm"),),
+            title="Export simulator frame",
+            defaultextension=".png",
+            filetypes=(
+                ("Portable Network Graphics", "*.png"),
+                ("Portable Pixmap", "*.ppm"),
+            ),
         )
         if filename:
-            export_scene_ppm(self._current_scene, Path(filename))
+            try:
+                path = Path(filename)
+                if path.suffix.lower() == ".ppm":
+                    export_scene_ppm(self._current_scene, path)
+                else:
+                    export_scene_png(self._current_scene, path)
+            except (OSError, ValueError) as exc:
+                self._set_status(f"Screenshot failed: {exc}")
+            else:
+                self._set_status(f"Saved screenshot: {filename}")
 
     def _update(self) -> None:
         now = time.monotonic()
@@ -315,6 +396,41 @@ def export_scene_ppm(
     """Export both fixture previews as a dependency-free binary PPM image."""
     if pixel_size <= 0 or gap < 0:
         raise ValueError("pixel_size must be positive and gap cannot be negative")
+    image_width, image_height, rows = _scene_rgb_bytes(
+        scene, pixel_size=pixel_size, gap=gap
+    )
+    header = f"P6\n{image_width} {image_height}\n255\n".encode("ascii")
+    Path(path).write_bytes(header + rows)
+
+
+def export_scene_png(
+    scene: Scene, path: str | Path, *, pixel_size: int = 24, gap: int = 12
+) -> None:
+    """Export both fixture previews as a dependency-free RGB PNG image."""
+
+    width, height, pixels = _scene_rgb_bytes(
+        scene, pixel_size=pixel_size, gap=gap
+    )
+    row_size = width * 3
+    filtered = b"".join(
+        b"\x00" + pixels[offset:offset + row_size]
+        for offset in range(0, len(pixels), row_size)
+    )
+    header = struct.pack(">IIBBBBB", width, height, 8, 2, 0, 0, 0)
+    content = (
+        b"\x89PNG\r\n\x1a\n"
+        + _png_chunk(b"IHDR", header)
+        + _png_chunk(b"IDAT", zlib.compress(filtered, level=9))
+        + _png_chunk(b"IEND", b"")
+    )
+    Path(path).write_bytes(content)
+
+
+def _scene_rgb_bytes(
+    scene: Scene, *, pixel_size: int, gap: int
+) -> tuple[int, int, bytes]:
+    if pixel_size <= 0 or gap < 0:
+        raise ValueError("pixel_size must be positive and gap cannot be negative")
     grids = tuple(scene.values())
     if not grids:
         raise ValueError("cannot export an empty scene")
@@ -332,5 +448,11 @@ def export_scene_ppm(
                 )
             if index < len(grids) - 1:
                 rows.extend((0, 0, 0) * gap)
-    header = f"P6\n{image_width} {image_height}\n255\n".encode("ascii")
-    Path(path).write_bytes(header + rows)
+    return image_width, image_height, bytes(rows)
+
+
+def _png_chunk(kind: bytes, data: bytes) -> bytes:
+    payload = kind + data
+    return struct.pack(">I", len(data)) + payload + struct.pack(
+        ">I", zlib.crc32(payload) & 0xFFFFFFFF
+    )

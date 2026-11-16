@@ -2,6 +2,28 @@
 
 Last updated: 2026-11-16
 
+## Current checkpoint -- Operations telemetry and visual review tooling
+
+`OPS-008`, `SIM-004`, and `EFFECT-020` are implemented and moved to Validation.
+Operations now reads Raspberry Pi CPU temperature directly from sysfs through a
+bounded, injected, read-only helper. It reports Normal below 70 C, Warm from
+70 C to below 80 C, Hot at 80 C or above, and Unknown on non-Pi or malformed
+sources. This diagnostic cannot change output, leases, timelines, or startup;
+the remaining acceptance is to confirm the numeric reading on the commissioned
+Pi.
+
+The Tk simulator now has visible shortcut/status guidance, Space pause/resume,
+Right-arrow step, `B` blackout, `R` reset, per-fixture/global parameter resets,
+and dependency-free PNG/PPM export. The new deterministic gallery script renders
+all 27 effects and 23 presets on both logical fixtures at 0.00, 1.75, and 4.00
+seconds, emitting responsive HTML and a SHA-256 manifest without constructing
+Art-Net, white, or projector output. Chromium checks passed at 1280 x 800 and
+390 x 844 after removing phone-width overflow.
+
+Windows Python 3.12 passes all 263 tests; JavaScript syntax, Python compilation,
+and diff checks also pass. The next planning review is the baseline video sprint;
+the operator will provide representative music-video and VFX source material.
+
 ## Planning checkpoint -- Hosted Phreqed Studio and projection
 
 On 2026-11-16 the Studio roadmap expanded from a primarily local authoring app

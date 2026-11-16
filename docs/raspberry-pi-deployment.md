@@ -233,6 +233,23 @@ The default command remains safe simulation mode:
 .venv/bin/phreqed-dmx simulate
 ```
 
+Operations also reports the Pi CPU temperature from
+`/sys/class/thermal/thermal_zone0/temp`. The read-only status is **Normal** below
+70 C, **Warm** from 70 C to below 80 C, and **Hot** at 80 C or above. Missing or
+malformed data appears as **Unknown** and does not affect output or service
+health. Confirm that the commissioned Pi shows a numeric reading before relying
+on this as a pre-show diagnostic.
+
+For a hardware-free visual catalog on the Pi, generate and open the fixed-time
+gallery:
+
+```bash
+.venv/bin/python scripts/render-effect-gallery.py \
+  --output output/effect-gallery
+```
+
+The gallery does not open Art-Net, white channels, or projector output.
+
 Before a performance, run a sustained 25 FPS soak test on the Pi while watching
 CPU temperature and QLC+ input stability. Start with `--brightness 0.25` during
 fixture validation. The default RGB software ceiling is 0.65, but that limit is

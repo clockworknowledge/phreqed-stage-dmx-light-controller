@@ -96,6 +96,15 @@ class SceneEngineTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.engine.update_parameter("Cube A", "cooling", 2.0)
 
+    def test_parameter_reset_restores_effect_defaults(self) -> None:
+        self.engine.select_effect("Cube A", "fire")
+        self.engine.update_parameter("Cube A", "cooling", 0.5)
+        self.engine.reset_parameters("Cube A")
+        selection = self.engine.fixture_selections["Cube A"]
+        self.assertEqual(selection.parameters, {})
+        defaults = EFFECT_REGISTRY.parameters(selection.effect_id)
+        self.assertNotEqual(defaults.number("cooling"), 0.5)
+
     def test_blackout_returns_black_scene(self) -> None:
         self.engine.set_blackout(True)
         scene = self.engine.render(3.0)
@@ -140,6 +149,8 @@ class ShowControllerTests(unittest.TestCase):
         self.assertTrue(self.engine.blackout_enabled)
         self.controls.blackout(False)
         self.assertFalse(self.engine.blackout_enabled)
+        self.controls.reset_parameters("Cube A")
+        self.assertEqual(self.engine.fixture_selections["Cube A"].parameters, {})
 
     def test_tap_tempo_and_scene_navigation(self) -> None:
         self.controls.tap_tempo(10.0)

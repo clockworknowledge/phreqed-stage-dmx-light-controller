@@ -55,6 +55,7 @@ cover/
 # Local browser automation captures
 .playwright-cli/
 output/playwright/
+output/effect-gallery/
 
 # Translations
 *.mo

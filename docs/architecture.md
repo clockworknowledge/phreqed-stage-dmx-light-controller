@@ -59,6 +59,12 @@ not activate the deterministic timeline or change performance mode.
 Browser lease loss, blackout, Stop output, render failure, and controller close
 all stop any running song timeline without automatic resume.
 
+Operations health reads CPU temperature directly from Linux sysfs through a
+small injected reader. A missing, malformed, non-finite, or out-of-range source
+becomes `unknown`; it never invokes a shell and never changes startup, leases,
+timelines, or fixture output. The informational bands are Normal below 70 C,
+Warm from 70 C to below 80 C, and Hot at 80 C or above.
+
 `VisualEngine` preserves the four formulas from the reconstructed v2 baseline:
 plasma, tunnel, pulse, and chase. It also treats both cubes as one logical 24x4
 surface for cross-cube chase. Mirror, complementary, and independent modes are
@@ -70,6 +76,11 @@ engine. `SceneEngine` renders registry effects into `NormalizedGrid` instances.
 blending, masks, global brightness limiting, and crossfades. `ShowController`
 provides effect, parameter, preset, event, blackout, tap-tempo, and scene
 navigation commands without importing Art-Net.
+
+The deterministic effect gallery also calls `SceneEngine` directly. It renders
+both logical fixtures at fixed supplied times, writes dependency-free PNG files
+and a SHA-256 manifest, and never constructs `Controller`, `ArtNetSender`, white
+output, or projector output. It is a review surface, not a live transport.
 
 The compositor and final frame limiter share the same RGB ceiling. It defaults
 to 0.65; a higher process-local ceiling can be constructed only by the CLI's
