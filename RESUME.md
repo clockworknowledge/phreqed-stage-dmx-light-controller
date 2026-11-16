@@ -23,6 +23,14 @@ and passed package preflight. The generated video, local asset map, and source
 paths remain ignored. Next: run `scripts/projector-probe.py` on the commissioned
 vertical projector, then author the real Travelling/VFX EDL after player soak.
 
+The Pi probe now confirms `DSI-1` at 1280×800 and `HDMI-A-2` at 1280×720@60,
+side by side with a normal compositor transform. VLC/cVLC and FFmpeg are
+installed. Two five-second packages compile a logical 720×1280 portrait canvas
+clockwise and counter-clockwise into the projector's 1280×720 signal. A bounded,
+confirmation-gated VLC probe selects a Qt screen and discovers the Wayland
+socket when launched from SSH/TTY. Physical orientation and screen selection
+remain the next operator observations.
+
 ## Current checkpoint -- Operations telemetry and visual review tooling
 
 `OPS-008`, `SIM-004`, and `EFFECT-020` are implemented and moved to Validation.

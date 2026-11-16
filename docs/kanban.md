@@ -162,7 +162,15 @@ with no audio, and its generated package passed the same Stage preflight.
 `scripts/projector-probe.py` inventories display connectors and installed player
 candidates without changing the Pi or opening a projector.
 
-Acceptance remaining: run the display probe on the commissioned vertical Pi
+Pi checkpoint (2026-11-16): `DSI-1` is the 1280×800 touchscreen and connected
+`HDMI-A-2` is the projector at its current/preferred 1280×720@60 mode, positioned
+at `1280,0` with compositor transform `normal`. VLC/cVLC and FFmpeg/FFprobe are
+installed; mpv and GStreamer are absent. Clockwise and counter-clockwise logical
+720×1280-to-signal-1280×720 probes now cover the unknown physical rotation
+direction, and the operator-run VLC probe is bounded, audio-free, screen
+selectable, Wayland-aware, and confirmation-gated.
+
+Acceptance remaining: play both orientation probes on the commissioned vertical
 projector, select and soak a VLC/mpv/GStreamer backend under `PROJ-001`, author
 the first real Travelling clip/VFX EDL, and verify playback fails black without
 disturbing the 25 FPS lighting path. Overlays and parallel song transport remain

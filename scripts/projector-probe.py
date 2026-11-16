@@ -65,6 +65,7 @@ def collect_probe() -> dict:
         "platform": platform.platform(),
         "session": {
             "type": os.environ.get("XDG_SESSION_TYPE"),
+            "runtime_directory": os.environ.get("XDG_RUNTIME_DIR"),
             "wayland_display": os.environ.get("WAYLAND_DISPLAY"),
             "x_display": os.environ.get("DISPLAY"),
         },

@@ -98,3 +98,47 @@ With the projector attached, run the read-only inventory:
 It records the active session, available display inventories (`wlr-randr`,
 `kmsprint`, or `xrandr`), and installed VLC/mpv/GStreamer/FFmpeg candidates. It
 does not change display configuration or launch playback.
+
+## Commissioned projector checkpoint
+
+The 2026-11-16 Pi probe found the touchscreen on `DSI-1` at 1280×800 and the
+projector on `HDMI-A-2` at its preferred/current 1280×720@60 mode, positioned to
+the right at `1280,0`. The projector is physically vertical but the compositor
+transform remains `normal`. The commissioned candidate is therefore a logical
+720×1280 portrait canvas rotated into a 1280×720 signal at build time. Both
+clockwise and counter-clockwise five-second packages are provided so the
+physical direction can be selected by observation without changing display
+configuration. VLC/cVLC and FFmpeg/FFprobe are present; mpv and GStreamer are
+not installed.
+
+The bounded VLC probe preflights the package, resolves the active user Wayland
+socket for an SSH/TTY launch, selects a Qt fullscreen screen, disables audio and
+OSD, plays once, and exits. It still requires explicit
+`--confirm-projector-output`; it does not start lighting or make projection a
+managed service.
+
+Generated media remains outside Git. Transfer the bounded orientation bundle
+from the development computer, extract it under the Stage user's data directory,
+then run one manifest at a time:
+
+```powershell
+scp output/video-render/phreqed-projector-orientation-probes.tar.gz `
+  mmorley@192.168.1.89:/tmp/
+```
+
+```bash
+probe_dir="$HOME/.local/share/phreqed-dmx/video-probes"
+mkdir -p "$probe_dir"
+tar -xzf /tmp/phreqed-projector-orientation-probes.tar.gz -C "$probe_dir"
+
+cd "$HOME/phreqed-stage-dmx-light-controller"
+.venv/bin/python scripts/vlc-projector-probe.py \
+  "$probe_dir/travelling-hdmi720-clockwise-probe--portrait-hdmi720-clockwise.manifest.json" \
+  --screen 1 --confirm-projector-output
+```
+
+If Qt screen 1 targets the touchscreen instead of the projector, let the
+five-second probe exit and repeat with `--screen 0`; do not change the DSI or
+Wayland display configuration during this orientation check. Then run the
+counter-clockwise manifest on the confirmed projector screen and record which
+direction is upright.
