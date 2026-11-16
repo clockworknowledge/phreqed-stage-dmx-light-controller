@@ -710,12 +710,12 @@ def _pacman_chase(
     return BLACK_NORMALIZED
 
 
-def _cartoon_bomb(
+def _burning_dynamite(
     x: int, y: int, width: int, height: int, animation_time: float,
     fixture: FixtureIdentity, parameters: EffectParameters,
     context: PerformanceContext | None,
 ) -> NormalizedRGB:
-    """Burn a long fuse into a round bomb, then burst into smoke."""
+    """Burn a long fuse into a red dynamite stick, then burst into smoke."""
     del context
     t = _time(animation_time, parameters)
     total_width = width * fixture.count
@@ -727,19 +727,25 @@ def _cartoon_bomb(
     phase = t % cycle_seconds
     level = parameters.number("brightness")
 
-    # The bomb occupies the right-hand fixture while its fuse begins on the
-    # left.  Ratios preserve the composition for simulation geometries other
-    # than the commissioned 24-by-4 canvas.
-    bomb_center_x = total_width - max(2.0, total_width * 0.16)
-    bomb_center_y = (height - 1) * 0.68
-    bomb_radius_x = max(1.5, min(3.2, total_width * 0.13))
-    bomb_radius_y = max(0.9, (height - 1) * 0.62)
+    # The red cylinder occupies the lower-right fixture while its fuse begins
+    # high on the left. Ratios preserve the composition for simulation
+    # geometries other than the commissioned 24-by-4 canvas.
+    stick_width = max(4.0, min(7.0, total_width * 0.30))
+    stick_right = total_width - 1.0
+    stick_left = max(0.0, stick_right - stick_width + 1.0)
+    stick_top = max(1.0, height - 2.0)
+    stick_bottom = height - 1.0
+    detonation_x = (stick_left + stick_right) / 2.0
+    detonation_y = (stick_top + stick_bottom) / 2.0
     fuse_start = min(1.0, max(0.0, total_width - 1.0))
-    fuse_end = max(fuse_start + 1.0, bomb_center_x - bomb_radius_x * 0.72)
+    fuse_end = max(fuse_start + 1.0, stick_left - 0.35)
 
     def fuse_y(position: float) -> float:
-        # A shallow wave reads as a rope on the four-row physical fixtures.
-        return min(height - 1.0, 0.48 + 0.42 * math.sin(
+        # The shallow wave descends visibly toward the dynamite collar.
+        progress = _clamp(
+            (position - fuse_start) / max(1.0, fuse_end - fuse_start)
+        )
+        return min(height - 1.0, 0.25 + progress * 0.88 + 0.24 * math.sin(
             (position - fuse_start) * 0.82
         ))
 
@@ -764,32 +770,37 @@ def _cartoon_bomb(
                 level * fiber * 0.58
             )
 
-        # A small collar joins the fuse to the old-fashioned spherical body.
+        # A bright collar joins the fuse to the upper-left of the stick.
         if (
-            fuse_end - 0.2 <= global_x <= fuse_end + 1.2
-            and abs(y - fuse_y(fuse_end)) < 0.58
+            fuse_end - 0.2 <= global_x <= stick_left + 0.65
+            and abs(y - _lerp(fuse_y(fuse_end), stick_top, _clamp(
+                (global_x - fuse_end) / max(0.1, stick_left - fuse_end + 0.65)
+            ))) < 0.62
         ):
-            return NormalizedRGB(0.46, 0.19, 0.05).scaled(level * 0.62)
+            return NormalizedRGB(0.92, 0.46, 0.035).scaled(level * 0.82)
 
-        ellipse = (
-            ((global_x - bomb_center_x) / bomb_radius_x) ** 2
-            + ((y - bomb_center_y) / bomb_radius_y) ** 2
-        )
-        if ellipse <= 1.0:
-            highlight = math.exp(-(
-                ((global_x - (bomb_center_x - bomb_radius_x * 0.34)) / 0.85) ** 2
-                + ((y - (bomb_center_y - bomb_radius_y * 0.38)) / 0.62) ** 2
-            ))
-            body = NormalizedRGB(0.16, 0.12, 0.28).lerp(
-                NormalizedRGB(0.48, 0.30, 0.68), highlight * 0.72
+        if (
+            stick_left <= global_x <= stick_right
+            and stick_top <= y <= stick_bottom
+        ):
+            distance_from_end = min(
+                global_x - stick_left, stick_right - global_x
             )
-            return body.scaled(level * (0.72 + highlight * 0.20))
+            if distance_from_end < 0.55:
+                return NormalizedRGB(0.48, 0.008, 0.006).scaled(level * 0.82)
+            band_center = stick_left + stick_width * 0.58
+            if abs(global_x - band_center) < 0.62:
+                return NormalizedRGB(0.92, 0.47, 0.035).scaled(level * 0.78)
+            row_shading = 0.94 if y <= stick_top else 0.68
+            return NormalizedRGB(1.0, 0.025, 0.015).scaled(
+                level * row_shading
+            )
         return BLACK_NORMALIZED
 
     if phase < fuse_seconds + blast_seconds:
         blast = (phase - fuse_seconds) / blast_seconds
-        dx = global_x - bomb_center_x
-        dy = (y - bomb_center_y) * 2.45
+        dx = global_x - detonation_x
+        dy = (y - detonation_y) * 2.45
         distance = math.hypot(dx, dy)
         maximum_radius = max(5.0, total_width * 0.55)
         radius = 0.7 + blast * maximum_radius
@@ -800,7 +811,7 @@ def _cartoon_bomb(
         # limits remain the sole brightness controls for this effect.
         flash = _clamp(1.0 - blast / 0.10) * 0.96
         horizontal_ray = (
-            math.exp(-((y - bomb_center_y) / 0.36) ** 2)
+            math.exp(-((y - detonation_y) / 0.36) ** 2)
             * _clamp(1.0 - distance / max(0.1, radius))
             * (1.0 - blast) * 0.55
         )
@@ -820,9 +831,9 @@ def _cartoon_bomb(
 
     smoke = (phase - fuse_seconds - blast_seconds) / smoke_seconds
     smoke_centers = (
-        (bomb_center_x - smoke * 1.8, bomb_center_y - smoke * 2.2),
-        (bomb_center_x + 1.25 + smoke * 0.65, bomb_center_y - 0.45 - smoke * 2.8),
-        (bomb_center_x - 1.45 - smoke * 0.55, bomb_center_y + 0.25 - smoke * 1.7),
+        (detonation_x - smoke * 1.8, detonation_y - smoke * 2.2),
+        (detonation_x + 1.25 + smoke * 0.65, detonation_y - 0.45 - smoke * 2.8),
+        (detonation_x - 1.45 - smoke * 0.55, detonation_y + 0.25 - smoke * 1.7),
     )
     smoke_level = 1.0 - smoke
     for index, (center_x, center_y) in enumerate(smoke_centers):
@@ -840,7 +851,7 @@ def _cartoon_bomb(
     # A few deterministic embers fall away while the smoke clears.
     debris_time = int(smoke * 7.0)
     if _hash01(global_x, y, debris_time + 73) > 0.92:
-        distance = math.hypot(global_x - bomb_center_x, y - bomb_center_y)
+        distance = math.hypot(global_x - detonation_x, y - detonation_y)
         if 1.2 + smoke * 2.0 < distance < 4.2 + smoke * 4.0:
             return NormalizedRGB(1.0, 0.22, 0.015).scaled(
                 level * smoke_level * 0.42
@@ -1146,11 +1157,12 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("power_interval", "Power-pellet interval", 14.0, 10.0, 24.0, 0.5, "Deterministic seconds between power pellets"),
             number("fright_seconds", "Frightened duration", 3.5, 2.0, 6.0, 0.5, "Seconds ghosts turn blue and run away"),
         ), brightness=0.72), _pacman_chase),
-        ProceduralEffect(_metadata("cartoon-bomb", "Burning Fuse Bomb", "A long fuse burns across the first fixture into a round cartoon bomb before an amber blast and smoke.", "sprite", (
-            number("fuse_seconds", "Fuse duration", 7.0, 3.0, 14.0, 0.5, "Seconds the spark takes to reach the bomb"),
+        # Keep the original effect ID so existing user looks remain valid.
+        ProceduralEffect(_metadata("cartoon-bomb", "Burning Dynamite", "A long fuse burns across the first fixture into a bright red dynamite stick before an amber blast and smoke.", "sprite", (
+            number("fuse_seconds", "Fuse duration", 7.0, 3.0, 14.0, 0.5, "Seconds the spark takes to reach the dynamite"),
             number("blast_seconds", "Blast duration", 1.2, 0.5, 2.5, 0.1, "Seconds for the expanding cartoon blast"),
             number("smoke_seconds", "Smoke duration", 2.2, 0.5, 5.0, 0.1, "Seconds for the smoke to clear before repeating"),
-        ), brightness=0.74), _cartoon_bomb),
+        ), brightness=0.74), _burning_dynamite),
         ProceduralEffect(_metadata("blinking-eye", "Blinking Eye", "A stylized eye opens, watches, and blinks on each fixture.", "sprite", (
             number("blink_rate", "Blink rate", 0.32, 0.08, 1.5, 0.02, "Complete blink cycles per animation second"),
             number("blink_duration", "Blink duration", 0.22, 0.08, 0.5, 0.01, "Fraction of the cycle spent closing and reopening"),

@@ -36,7 +36,7 @@ below remain independently movable and are the source of truth for status.
 
 Pause checkpoint (2026-11-13): no implementation is active. Perform touch
 polish, timeline editing, venue-profile shortcuts, prepared-white adjustment,
-the Pac-Man ghost/power-pellet cycle, and the Burning Fuse Bomb animation are
+the Pac-Man ghost/power-pellet cycle, and the Burning Dynamite animation are
 committed and covered by the 249-test Windows Python 3.12 suite. Remaining
 touchscreen work is physical Pi and Waveshare validation; Pi thermal telemetry
 is recorded below as optional follow-up work and is not a show-control
@@ -909,7 +909,7 @@ operator completed the deliberate Pi/fixture check and reported it solid on
 ### EFFECT-003 — Music-driven stage look expansion (`P1`, visuals)
 
 The deterministic Matrix Rain, Blaster Sweep, Flame Thrower, Wave Rider,
-Pac-Man Chase, Burning Fuse Bomb, Watchful Eyes, and Inside-Out VU additions are
+Pac-Man Chase, Burning Dynamite, Watchful Eyes, and Inside-Out VU additions are
 covered by geometry, range, independence, reserved-channel, and timing checks.
 Browser simulation and the full band rehearsal provided the initial visual-pack
 acceptance on 2026-11-04.
@@ -919,9 +919,11 @@ and reverse smoothly before resuming the chase. Its commissioned-white pattern
 uses sparse travelling pellets, but physical whites remain behind the existing
 explicit browser-live, audio-onset, level/ceiling, blackout, lease, and shutdown
 gates. Fixed-time frames and the complete 249-test suite cover the enhancement.
-Burning Fuse Bomb places the bomb on Cube B and burns its rope from Cube A
-across the seam, then produces one broad amber flash, an expanding two-fixture
-starburst, embers, and smoke. Browser simulation at 1280 x 800 exposed the new
+Burning Dynamite uses a simple two-row red cylinder on Cube B with dark end
+caps, a gold band, and a visible collar. Its fuse burns down from Cube A across
+the seam, then produces one broad amber flash, an expanding two-fixture
+starburst, embers, and smoke. The original effect and preset IDs remain stable
+for saved user looks and cues. Browser simulation at 1280 x 800 exposed the
 quick look, rendered both fixture previews, and reported no console errors. The
 complete 249-test suite covers deterministic phase timing and reserved white
 channels; physical-fixture visual acceptance remains part of `DISPLAY-003`.

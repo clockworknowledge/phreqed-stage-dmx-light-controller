@@ -422,7 +422,7 @@ class EffectLibraryTests(unittest.TestCase):
         ]
         self.assertEqual(first, second)
 
-    def test_cartoon_bomb_burns_across_seam_then_flashes_and_smokes(self) -> None:
+    def test_burning_dynamite_crosses_seam_then_flashes_and_smokes(self) -> None:
         effect = EFFECT_REGISTRY.get("cartoon-bomb")
         parameters = EFFECT_REGISTRY.parameters("cartoon-bomb", {
             "palette": "ember", "fuse_seconds": 7.0,
@@ -457,8 +457,13 @@ class EffectLibraryTests(unittest.TestCase):
         self.assertLess(spark_centroid(1.0), 12.0)
         self.assertGreater(spark_centroid(6.4), 12.0)
         self.assertTrue(any(
-            x >= 17 and color.blue > color.red and color.blue > 0.1
-            for (x, _), color in early
+            x >= 17 and y >= 2 and color.red > 0.4
+            and color.green < 0.1 and color.blue < 0.1
+            for (x, y), color in early
+        ))
+        self.assertTrue(any(
+            x >= 17 and y >= 2 and color.red > 0.4 and color.green > 0.2
+            for (x, y), color in early
         ))
 
         detonation = frame(7.02)

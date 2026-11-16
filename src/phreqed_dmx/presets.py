@@ -502,8 +502,8 @@ EXAMPLE_PRESETS = (
     ),
     VisualPreset(
         "burning-fuse",
-        "Burning Fuse Bomb",
-        "A spark crosses Cube A into a round bomb on Cube B, then bursts into smoke.",
+        "Burning Dynamite",
+        "A spark crosses Cube A into a red dynamite stick on Cube B, then bursts into smoke.",
         (
             EffectLayerSpec(
                 "cartoon-bomb",

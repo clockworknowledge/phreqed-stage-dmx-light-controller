@@ -21,13 +21,15 @@ selected by the effect, but actual white output remains under the commissioned
 physical-white safety boundary. Fixed-time visual inspection and the full
 Windows Python 3.12 suite pass with 249 tests.
 
-The Burning Fuse Bomb quick look places a shaded round bomb on Cube B while a
-bright spark burns a long wavy fuse from Cube A across the seam. It follows
-with one broad amber RGB detonation flash, an expanding cross-fixture starburst,
-embers, and purple smoke. Fuse, blast, and smoke durations are editable. The
-flash is governed by the common effect/preset levels, master brightness, RGB
-ceiling, and compositor limiter without an additional bomb-specific cap. A
-matching physical-white spatial pattern remains behind the existing explicit
+The Burning Dynamite quick look uses a simple two-row red cylinder on Cube B
+with dark end caps, a gold band, and a visible fuse collar. A bright spark burns
+a long descending fuse from Cube A across the seam, followed by one broad amber
+RGB detonation flash, an expanding cross-fixture starburst, embers, and purple
+smoke. Fuse, blast, and smoke durations are editable. The original internal
+effect and preset IDs remain unchanged for saved looks and cues. The flash is
+governed by the common effect/preset levels, master brightness, RGB ceiling,
+and compositor limiter without an additional effect-specific cap. A matching
+physical-white spatial pattern remains behind the existing explicit
 white-output and onset gates. Chromium at 1280 x 800 exposed the preset and both
 fixture previews with zero console errors.
 

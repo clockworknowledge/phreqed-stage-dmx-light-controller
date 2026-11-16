@@ -36,7 +36,7 @@ ceiling of 0.65.
 | `flame-jet` | Anchored Flame Jet | cross-fixture | `length` 0.45-1.25, `turbulence` 0.25-2, `strand_width` 0.18-1.2, `muzzle_size` 0.4-3 |
 | `dynamic-wave` | Dynamic Sine Wave | musical | `cycles` 0.5-6, `amplitude` 0.1-1.8, `thickness` 0.12-1.5, `pulse_frequency` 0-1.5 (music velocity), `cosine_morph` 0-1 (legacy key; onset phase push) |
 | `pacman` | Pac-Man Ghost Chase | sprite | `direction` left-right/right-left, `travel_rate` 0.5-10, `radius` 1.1-2.2, `mouth_rate` 0.3-4, `dot_spacing` 2-6, `ghost_count` 1-4, `ghost_spacing` 4-8, `power_interval` 10-24, `fright_seconds` 2-6 |
-| `cartoon-bomb` | Burning Fuse Bomb | sprite | `fuse_seconds` 3-14, `blast_seconds` 0.5-2.5, `smoke_seconds` 0.5-5 |
+| `cartoon-bomb` | Burning Dynamite | sprite | `fuse_seconds` 3-14, `blast_seconds` 0.5-2.5, `smoke_seconds` 0.5-5 |
 | `blinking-eye` | Blinking Eye | sprite | `blink_rate` 0.08-1.5, `blink_duration` 0.08-0.5, `iris_size` 0.16-0.65, `gaze` -0.5-0.5 |
 | `sprite-parade` | Sprite Parade | sprite | `character` bird/stickman/triangle/circle/diamond, `direction` left-right/right-left, `travel_rate` 0.25-12, `animation_rate` 0.1-4, `spacing` 1-16 |
 | `inside-out-vu` | Inside-Out VU | musical | `sensitivity` 0.25-2.5, `peak_width` 0.015-0.25 |
@@ -85,13 +85,16 @@ row. It remains independently gated: physical pill accents occur only through
 explicit browser-live white enablement and the existing onset, 0.10-second,
 4 Hz, level, blackout, lease-loss, and shutdown safeguards.
 
-`cartoon-bomb` places a shaded spherical bomb on Cube B while a bright spark
-burns a wavy fuse from Cube A across the fixture seam. Detonation produces one
-broad amber RGB flash, an expanding starburst that reaches back over both
-fixtures, deterministic embers, and rising purple smoke before the cycle
-restarts. Fuse, blast, and smoke durations are independently editable. The
-flash uses the ordinary effect level, preset level, master brightness, RGB
-ceiling, and compositor limiter; it has no separate per-effect brightness cap.
+`cartoon-bomb` retains its original internal ID so existing user looks remain
+valid, but now renders Burning Dynamite: a simple horizontal red cylinder on
+Cube B with darker end caps, a gold band, and a visible fuse collar. A bright
+spark burns a descending wavy fuse from Cube A across the fixture seam.
+Detonation produces one broad amber RGB flash, an expanding starburst that
+reaches back over both fixtures, deterministic embers, and rising purple smoke
+before the cycle restarts. Fuse, blast, and smoke durations are independently
+editable. The flash uses the ordinary effect level, preset level, master
+brightness, RGB ceiling, and compositor limiter; it has no separate per-effect
+brightness cap.
 
 `digital-rain` uses a sparse deterministic column mask. Bright pale-green heads
 move from logical row 0 toward row 3, leave short darker tails, disappear for a
@@ -134,8 +137,8 @@ fixture splitting happen in normalized render space. See [Sprite authoring](spri
   restrained musical dynamics.
 - `pacman-chase`: Pac-Man leading a colourful ghost train along a dotted
   cross-fixture path.
-- `burning-fuse`: a spark crossing Cube A into a round bomb on Cube B, followed
-  by an amber flash, expanding starburst, embers, and smoke.
+- `burning-fuse`: a spark crossing Cube A into a red dynamite stick on Cube B,
+  followed by an amber flash, expanding starburst, embers, and smoke.
 - `inside-out-vu`: music energy growing from the shared centre to both outer edges.
 - `watchful-eyes`: a synchronized eye on each fixture opening, watching, and
   blinking.
@@ -164,7 +167,7 @@ families:
 - Checkerboard and Bars receive two narrow sweeping blades.
 - Fire and Sparks scatter deterministic ember peaks.
 - Tunnel emits smooth center-out bands.
-- Burning Fuse follows the spark and opens into two points at detonation.
+- Burning Dynamite follows the spark and opens into two points at detonation.
 
 Every registered effect therefore has a curated pattern. A priority table lets
 signature foreground effects such as Blaster, Flame, Wave, or VU override a
@@ -179,7 +182,7 @@ outside the effects engine.
 
 All presets default below the 0.65 global safety ceiling and cannot arm
 center-white output. The added show pack is capped at 0.48 global brightness.
-Burning Fuse intentionally contains one brief broad detonation flash per
+Burning Dynamite intentionally contains one brief broad detonation flash per
 ten-second default cycle; it is governed by the existing RGB controls and
 luminance-rise limiter rather than a separate effect cap. `acid-mirrors`,
 `split-signal`, and `crossfire` deliberately render different material on each

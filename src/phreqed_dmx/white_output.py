@@ -33,7 +33,7 @@ WHITE_PATTERN_LABELS = {
     "vu": "Inside-out level peak",
     "glint": "Sprite glint",
     "pellets": "Arcade pill chase",
-    "fuse": "Travelling fuse spark",
+    "fuse": "Travelling dynamite fuse",
 }
 
 _EFFECT_PATTERNS = {
@@ -319,7 +319,7 @@ def _global_pattern(
         )) for x in range(part_count))
     if pattern_id == "fuse":
         # Match the default ten-second RGB story: a single restrained spark
-        # crosses toward the bomb, then two short points expand from impact.
+        # crosses toward the dynamite, then two short points expand from impact.
         phase = animation_time % 10.4
         bomb = max(0.0, part_count - 3.0)
         if phase < 7.0:
