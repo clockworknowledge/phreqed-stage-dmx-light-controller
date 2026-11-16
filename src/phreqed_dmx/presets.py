@@ -503,7 +503,7 @@ EXAMPLE_PRESETS = (
     VisualPreset(
         "burning-fuse",
         "Burning Dynamite",
-        "A white-strip spark burns into a red dynamite cylinder on Cube B, then bursts into smoke.",
+        "An alternating spark burns along the white strip into a red dynamite stick with a yellow cap.",
         (
             EffectLayerSpec(
                 "cartoon-bomb",

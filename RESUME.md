@@ -61,13 +61,14 @@ selected by the effect, but actual white output remains under the commissioned
 physical-white safety boundary. Fixed-time visual inspection and the full
 Windows Python 3.12 suite pass with 250 tests.
 
-The Burning Dynamite quick look uses a compact vertical red cylinder on Cube B
-with rounded corners and an unlit black inset cap/band. The commissioned
-center-white strip is the fuse itself: a bright white spark travels along a dim
-unburned line while adjacent RGB pixels provide an orange halo. It is followed
-by one broad amber RGB detonation flash, an expanding cross-fixture starburst,
-embers, and purple
-smoke. Fuse, blast, and smoke durations are editable. The original internal
+The Burning Dynamite quick look uses the lower two RGB rows on Cube B, with
+three red blocks and one yellow fuse cap on each row. The commissioned
+center-white strip is the fuse itself: the unburned section is dim and the
+travelling head is much brighter whenever the existing white pulse gate permits
+output. Yellow and orange RGB blocks follow the head, swapping above and below
+the strip eight times per second. It is followed by one broad amber RGB
+detonation flash, an expanding cross-fixture starburst, embers, and purple smoke.
+Fuse, blast, and smoke durations are editable. The original internal
 effect and preset IDs remain unchanged for saved looks and cues. The flash is
 governed by the common effect/preset levels, master brightness, RGB ceiling,
 and compositor limiter without an additional effect-specific cap. A matching

@@ -727,73 +727,48 @@ def _burning_dynamite(
     phase = t % cycle_seconds
     level = parameters.number("brightness")
 
-    # A compact vertical cylinder occupies the far-right fixture. The physical
-    # center-white strip becomes the fuse; RGB pixels immediately above and
-    # below it supply the orange spark halo.
-    stick_width = max(4.0, min(5.0, total_width * 0.21))
+    # Four columns across the lower two RGB rows make a legible stage-scale
+    # dynamite stick: three red blocks and one yellow fuse cap. The physical
+    # center-white strip is the fuse itself.
+    stick_width = min(4.0, float(total_width))
     stick_right = total_width - 1.0
     stick_left = max(0.0, stick_right - stick_width + 1.0)
-    stick_top = 0.0
+    stick_top = max(0.0, height - 2.0)
     stick_bottom = height - 1.0
     detonation_x = (stick_left + stick_right) / 2.0
     detonation_y = (stick_top + stick_bottom) / 2.0
     strobe_axis = (height - 1.0) / 2.0
+    above_fuse = max(0, int(math.floor(strobe_axis)))
+    below_fuse = min(height - 1, int(math.ceil(strobe_axis)))
     fuse_start = min(1.0, max(0.0, total_width - 1.0))
     fuse_end = max(fuse_start + 1.0, stick_left - 0.45)
 
     if phase < fuse_seconds:
         burn = phase / fuse_seconds
         spark_x = _lerp(fuse_start, fuse_end, burn)
-        spark_distance = math.hypot(
-            global_x - spark_x, (y - strobe_axis) * 1.15
-        )
-        if spark_distance < 0.95:
+        spark_above = int(t * 8.0) % 2 == 0
+        bright_row = above_fuse if spark_above else below_fuse
+        ember_row = below_fuse if spark_above else above_fuse
+        if abs(global_x - spark_x) < 0.62 and y == bright_row:
             return NormalizedRGB(1.0, 0.82, 0.18).scaled(level * 0.96)
-        if spark_distance < 1.70 and _hash01(global_x, y, int(t * 11.0)) > 0.22:
-            glow = _clamp(1.0 - (spark_distance - 0.95) / 0.75)
-            return NormalizedRGB(1.0, 0.28, 0.02).scaled(level * glow * 0.72)
-
-        # A dim orange jacket surrounds the unburned portion of the physical
-        # white strip. The independently gated white pattern supplies the
-        # moving bright center; burned sections recover to black.
-        if (
-            spark_x - 0.2 <= global_x <= fuse_end + 0.2
-            and abs(y - strobe_axis) < 0.62
-        ):
-            fiber = 0.72 + 0.28 * math.sin(global_x * 2.35)
-            return NormalizedRGB(0.44, 0.075, 0.012).scaled(
-                level * fiber * 0.36
-            )
-
-        # The gold collar sits at the strobe-height entry point.
-        if (
-            fuse_end - 0.2 <= global_x <= stick_left
-            and abs(y - strobe_axis) < 0.62
-        ):
-            return NormalizedRGB(0.92, 0.46, 0.035).scaled(level * 0.82)
+        # A trailing ember occupies the opposite side of the white strip. The
+        # two RGB blocks swap rows eight times per second as the fuse head moves.
+        ember_x = spark_x - 0.72
+        if abs(global_x - ember_x) < 0.58 and y == ember_row:
+            return NormalizedRGB(1.0, 0.25, 0.015).scaled(level * 0.76)
 
         if (
             stick_left <= global_x <= stick_right
             and stick_top <= y <= stick_bottom
         ):
-            left_edge = global_x - stick_left < 0.55
-            right_edge = stick_right - global_x < 0.55
-            # Rounded top and bottom omit their outer corners.
-            if (y <= stick_top or y >= stick_bottom) and (left_edge or right_edge):
-                return BLACK_NORMALIZED
-            # The unlit inset band is the readable black cap from the reference.
-            if y == min(height - 1, 1) and not (left_edge or right_edge):
-                return BLACK_NORMALIZED
-            if left_edge or right_edge:
-                return NormalizedRGB(0.48, 0.006, 0.004).scaled(level * 0.82)
-            highlight = 1.0 if global_x >= stick_right - 1.5 else 0.0
-            row_shading = (
-                0.95 if y <= stick_top else 0.86 if y < stick_bottom else 0.68
+            row_shading = 0.94 if y <= stick_top else 0.72
+            if global_x - stick_left < 0.55:
+                return NormalizedRGB(1.0, 0.55, 0.035).scaled(
+                    level * row_shading
+                )
+            return NormalizedRGB(1.0, 0.018, 0.012).scaled(
+                level * row_shading
             )
-            body = NormalizedRGB(1.0, 0.025, 0.015).lerp(
-                NormalizedRGB(1.0, 0.17, 0.09), highlight * 0.55
-            )
-            return body.scaled(level * row_shading)
         return BLACK_NORMALIZED
 
     if phase < fuse_seconds + blast_seconds:
@@ -1157,7 +1132,7 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("fright_seconds", "Frightened duration", 3.5, 2.0, 6.0, 0.5, "Seconds ghosts turn blue and run away"),
         ), brightness=0.72), _pacman_chase),
         # Keep the original effect ID so existing user looks remain valid.
-        ProceduralEffect(_metadata("cartoon-bomb", "Burning Dynamite", "A white-strip fuse spark burns toward a vertical red dynamite cylinder before an amber blast and smoke.", "sprite", (
+        ProceduralEffect(_metadata("cartoon-bomb", "Burning Dynamite", "A white-strip fuse spark alternates above and below its bright head as it burns toward a two-row red dynamite stick with a yellow cap.", "sprite", (
             number("fuse_seconds", "Fuse duration", 7.0, 3.0, 14.0, 0.5, "Seconds the spark takes to reach the dynamite"),
             number("blast_seconds", "Blast duration", 1.2, 0.5, 2.5, 0.1, "Seconds for the expanding cartoon blast"),
             number("smoke_seconds", "Smoke duration", 2.2, 0.5, 5.0, 0.1, "Seconds for the smoke to clear before repeating"),

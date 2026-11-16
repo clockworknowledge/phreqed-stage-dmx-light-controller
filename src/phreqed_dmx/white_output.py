@@ -323,7 +323,7 @@ def _global_pattern(
         phase = animation_time % 10.4
         dynamite = max(0.0, part_count - 3.0)
         if phase < 7.0:
-            head = 1.0 + (dynamite - 1.0) * phase / 7.0
+            head = round(1.0 + (dynamite - 1.0) * phase / 7.0)
             return tuple(
                 max(
                     0.82 * _smooth_peak(x, head, 0.46),

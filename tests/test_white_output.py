@@ -128,8 +128,10 @@ class WhiteOutputTests(unittest.TestCase):
         early_head = max(range(len(early)), key=early.__getitem__)
         later_head = max(range(len(later)), key=later.__getitem__)
         self.assertLess(early_head, later_head)
-        self.assertTrue(any(0.0 < value < max(early) for value in early))
-        self.assertTrue(any(0.0 < value < max(later) for value in later))
+        self.assertGreater(max(early), 0.7)
+        self.assertGreater(max(later), 0.7)
+        self.assertIn(0.10, early)
+        self.assertIn(0.10, later)
 
     def test_segmented_patterns_are_deterministic_bounded_and_fixture_independent(self) -> None:
         fixtures = load_config().fixtures
