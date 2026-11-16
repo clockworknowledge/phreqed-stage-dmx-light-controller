@@ -727,55 +727,48 @@ def _burning_dynamite(
     phase = t % cycle_seconds
     level = parameters.number("brightness")
 
-    # The red cylinder occupies the lower-right fixture while its fuse begins
-    # high on the left. Ratios preserve the composition for simulation
-    # geometries other than the commissioned 24-by-4 canvas.
-    stick_width = max(4.0, min(7.0, total_width * 0.30))
+    # A compact vertical cylinder occupies the far-right fixture. The physical
+    # center-white strip becomes the fuse; RGB pixels immediately above and
+    # below it supply the orange spark halo.
+    stick_width = max(4.0, min(5.0, total_width * 0.21))
     stick_right = total_width - 1.0
     stick_left = max(0.0, stick_right - stick_width + 1.0)
-    stick_top = max(1.0, height - 2.0)
+    stick_top = 0.0
     stick_bottom = height - 1.0
     detonation_x = (stick_left + stick_right) / 2.0
     detonation_y = (stick_top + stick_bottom) / 2.0
+    strobe_axis = (height - 1.0) / 2.0
     fuse_start = min(1.0, max(0.0, total_width - 1.0))
-    fuse_end = max(fuse_start + 1.0, stick_left - 0.35)
-
-    def fuse_y(position: float) -> float:
-        # The shallow wave descends visibly toward the dynamite collar.
-        progress = _clamp(
-            (position - fuse_start) / max(1.0, fuse_end - fuse_start)
-        )
-        return min(height - 1.0, 0.25 + progress * 0.88 + 0.24 * math.sin(
-            (position - fuse_start) * 0.82
-        ))
+    fuse_end = max(fuse_start + 1.0, stick_left - 0.45)
 
     if phase < fuse_seconds:
         burn = phase / fuse_seconds
         spark_x = _lerp(fuse_start, fuse_end, burn)
-        spark_y = fuse_y(spark_x)
-        spark_distance = math.hypot(global_x - spark_x, (y - spark_y) * 1.15)
-        if spark_distance < 0.88:
+        spark_distance = math.hypot(
+            global_x - spark_x, (y - strobe_axis) * 1.15
+        )
+        if spark_distance < 0.95:
             return NormalizedRGB(1.0, 0.82, 0.18).scaled(level * 0.96)
-        if spark_distance < 1.55 and _hash01(global_x, y, int(t * 11.0)) > 0.28:
-            glow = _clamp(1.0 - (spark_distance - 0.88) / 0.67)
+        if spark_distance < 1.70 and _hash01(global_x, y, int(t * 11.0)) > 0.22:
+            glow = _clamp(1.0 - (spark_distance - 0.95) / 0.75)
             return NormalizedRGB(1.0, 0.28, 0.02).scaled(level * glow * 0.72)
 
-        # Only the unburned rope remains visible behind the advancing spark.
+        # A dim orange jacket surrounds the unburned portion of the physical
+        # white strip. The independently gated white pattern supplies the
+        # moving bright center; burned sections recover to black.
         if (
             spark_x - 0.2 <= global_x <= fuse_end + 0.2
-            and abs(y - fuse_y(global_x)) < 0.46
+            and abs(y - strobe_axis) < 0.62
         ):
-            fiber = 0.72 + 0.28 * math.sin(global_x * 2.7)
-            return NormalizedRGB(0.62, 0.16, 0.025).scaled(
-                level * fiber * 0.58
+            fiber = 0.72 + 0.28 * math.sin(global_x * 2.35)
+            return NormalizedRGB(0.44, 0.075, 0.012).scaled(
+                level * fiber * 0.36
             )
 
-        # A bright collar joins the fuse to the upper-left of the stick.
+        # The gold collar sits at the strobe-height entry point.
         if (
-            fuse_end - 0.2 <= global_x <= stick_left + 0.65
-            and abs(y - _lerp(fuse_y(fuse_end), stick_top, _clamp(
-                (global_x - fuse_end) / max(0.1, stick_left - fuse_end + 0.65)
-            ))) < 0.62
+            fuse_end - 0.2 <= global_x <= stick_left
+            and abs(y - strobe_axis) < 0.62
         ):
             return NormalizedRGB(0.92, 0.46, 0.035).scaled(level * 0.82)
 
@@ -783,18 +776,24 @@ def _burning_dynamite(
             stick_left <= global_x <= stick_right
             and stick_top <= y <= stick_bottom
         ):
-            distance_from_end = min(
-                global_x - stick_left, stick_right - global_x
+            left_edge = global_x - stick_left < 0.55
+            right_edge = stick_right - global_x < 0.55
+            # Rounded top and bottom omit their outer corners.
+            if (y <= stick_top or y >= stick_bottom) and (left_edge or right_edge):
+                return BLACK_NORMALIZED
+            # The unlit inset band is the readable black cap from the reference.
+            if y == min(height - 1, 1) and not (left_edge or right_edge):
+                return BLACK_NORMALIZED
+            if left_edge or right_edge:
+                return NormalizedRGB(0.48, 0.006, 0.004).scaled(level * 0.82)
+            highlight = 1.0 if global_x >= stick_right - 1.5 else 0.0
+            row_shading = (
+                0.95 if y <= stick_top else 0.86 if y < stick_bottom else 0.68
             )
-            if distance_from_end < 0.55:
-                return NormalizedRGB(0.48, 0.008, 0.006).scaled(level * 0.82)
-            band_center = stick_left + stick_width * 0.58
-            if abs(global_x - band_center) < 0.62:
-                return NormalizedRGB(0.92, 0.47, 0.035).scaled(level * 0.78)
-            row_shading = 0.94 if y <= stick_top else 0.68
-            return NormalizedRGB(1.0, 0.025, 0.015).scaled(
-                level * row_shading
+            body = NormalizedRGB(1.0, 0.025, 0.015).lerp(
+                NormalizedRGB(1.0, 0.17, 0.09), highlight * 0.55
             )
+            return body.scaled(level * row_shading)
         return BLACK_NORMALIZED
 
     if phase < fuse_seconds + blast_seconds:
@@ -1158,7 +1157,7 @@ def _build_effects() -> tuple[ProceduralEffect, ...]:
             number("fright_seconds", "Frightened duration", 3.5, 2.0, 6.0, 0.5, "Seconds ghosts turn blue and run away"),
         ), brightness=0.72), _pacman_chase),
         # Keep the original effect ID so existing user looks remain valid.
-        ProceduralEffect(_metadata("cartoon-bomb", "Burning Dynamite", "A long fuse burns across the first fixture into a bright red dynamite stick before an amber blast and smoke.", "sprite", (
+        ProceduralEffect(_metadata("cartoon-bomb", "Burning Dynamite", "A white-strip fuse spark burns toward a vertical red dynamite cylinder before an amber blast and smoke.", "sprite", (
             number("fuse_seconds", "Fuse duration", 7.0, 3.0, 14.0, 0.5, "Seconds the spark takes to reach the dynamite"),
             number("blast_seconds", "Blast duration", 1.2, 0.5, 2.5, 0.1, "Seconds for the expanding cartoon blast"),
             number("smoke_seconds", "Smoke duration", 2.2, 0.5, 5.0, 0.1, "Seconds for the smoke to clear before repeating"),

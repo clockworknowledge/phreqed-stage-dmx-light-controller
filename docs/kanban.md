@@ -1067,13 +1067,14 @@ and reverse smoothly before resuming the chase. Its commissioned-white pattern
 uses sparse travelling pellets, but physical whites remain behind the existing
 explicit browser-live, audio-onset, level/ceiling, blackout, lease, and shutdown
 gates. Fixed-time frames and the complete 249-test suite cover the enhancement.
-Burning Dynamite uses a simple two-row red cylinder on Cube B with dark end
-caps, a gold band, and a visible collar. Its fuse burns down from Cube A across
-the seam, then produces one broad amber flash, an expanding two-fixture
+Burning Dynamite uses a compact vertical red cylinder on Cube B with rounded
+corners and an unlit black inset cap/band. The center-white strip is the fuse:
+a bright spark travels along a dim unburned line while adjacent RGB pixels form
+an orange halo. It then produces one broad amber flash, an expanding two-fixture
 starburst, embers, and smoke. The original effect and preset IDs remain stable
 for saved user looks and cues. Browser simulation at 1280 x 800 exposed the
 quick look, rendered both fixture previews, and reported no console errors. The
-complete 249-test suite covers deterministic phase timing and reserved white
+complete 250-test suite covers deterministic phase timing and reserved white
 channels; physical-fixture visual acceptance remains part of `DISPLAY-003`.
 
 ### AUDIO-003 — Shared tempo and dynamics clock (`P1`, music)

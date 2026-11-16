@@ -318,23 +318,32 @@ def _global_pattern(
             for gain, spacing in ((0.82, 0.0), (0.48, 4.0), (0.3, 8.0))
         )) for x in range(part_count))
     if pattern_id == "fuse":
-        # Match the default ten-second RGB story: a single restrained spark
-        # crosses toward the dynamite, then two short points expand from impact.
+        # The center-white parts are the fuse itself: a bright spark advances
+        # along a dim unburned line, then two short points expand from impact.
         phase = animation_time % 10.4
-        bomb = max(0.0, part_count - 3.0)
+        dynamite = max(0.0, part_count - 3.0)
         if phase < 7.0:
-            head = 1.0 + (bomb - 1.0) * phase / 7.0
-            return tuple(0.82 * _smooth_peak(x, head, 0.46)
-                         for x in range(part_count))
+            head = 1.0 + (dynamite - 1.0) * phase / 7.0
+            return tuple(
+                max(
+                    0.82 * _smooth_peak(x, head, 0.46),
+                    0.10 if head <= x <= dynamite else 0.0,
+                )
+                for x in range(part_count)
+            )
         if phase < 8.2:
             radius = (phase - 7.0) / 1.2 * min(7.0, part_count * 0.55)
             return tuple(min(0.88,
-                             0.78 * _smooth_peak(abs(x - bomb), radius, 0.55)
-                             + 0.22 * _smooth_peak(x, bomb, 1.1))
+                             0.78 * _smooth_peak(abs(x - dynamite), radius, 0.55)
+                             + 0.22 * _smooth_peak(x, dynamite, 1.1))
                          for x in range(part_count))
         ember = 1.0 - (phase - 8.2) / 2.2
-        return tuple(max(0.0, ember) * 0.24 * _smooth_peak(x, bomb - 1.5, 1.6)
-                     for x in range(part_count))
+        return tuple(
+            max(0.0, ember)
+            * 0.24
+            * _smooth_peak(x, dynamite - 1.5, 1.6)
+            for x in range(part_count)
+        )
     raise ValueError(f"unknown white animation pattern: {pattern_id}")
 
 

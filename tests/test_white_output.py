@@ -112,6 +112,25 @@ class WhiteOutputTests(unittest.TestCase):
             value > 0.2 for parts in first.values() for value in parts
         ))
 
+    def test_dynamite_spark_moves_along_dim_white_fuse(self) -> None:
+        fixtures = load_config().fixtures
+
+        def joined_parts(animation_time: float) -> tuple[float, ...]:
+            pattern = animated_white_pattern(fixtures, "fuse", animation_time)
+            return tuple(
+                value
+                for fixture in fixtures
+                for value in pattern[fixture.name]
+            )
+
+        early = joined_parts(1.0)
+        later = joined_parts(5.5)
+        early_head = max(range(len(early)), key=early.__getitem__)
+        later_head = max(range(len(later)), key=later.__getitem__)
+        self.assertLess(early_head, later_head)
+        self.assertTrue(any(0.0 < value < max(early) for value in early))
+        self.assertTrue(any(0.0 < value < max(later) for value in later))
+
     def test_segmented_patterns_are_deterministic_bounded_and_fixture_independent(self) -> None:
         fixtures = load_config().fixtures
         first = animated_white_pattern(fixtures, "blaster", 1.25, loudness=0.4)

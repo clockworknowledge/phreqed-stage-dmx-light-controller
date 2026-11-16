@@ -2,7 +2,12 @@ import unittest
 import hashlib
 
 from phreqed_dmx.audio_analysis import AudioAnalysis, FrequencyBands
-from phreqed_dmx.color import NormalizedRGB, Palette, palette_color
+from phreqed_dmx.color import (
+    BLACK_NORMALIZED,
+    NormalizedRGB,
+    Palette,
+    palette_color,
+)
 from phreqed_dmx.effect_api import FixtureIdentity, PerformanceContext
 from phreqed_dmx.effect_library import EFFECT_REGISTRY
 
@@ -456,15 +461,13 @@ class EffectLibraryTests(unittest.TestCase):
         early = frame(1.0)
         self.assertLess(spark_centroid(1.0), 12.0)
         self.assertGreater(spark_centroid(6.4), 12.0)
-        self.assertTrue(any(
-            x >= 17 and y >= 2 and color.red > 0.4
-            and color.green < 0.1 and color.blue < 0.1
-            for (x, y), color in early
-        ))
-        self.assertTrue(any(
-            x >= 17 and y >= 2 and color.red > 0.4 and color.green > 0.2
-            for (x, y), color in early
-        ))
+        early_map = dict(early)
+        self.assertGreater(early_map[(21, 0)].red, 0.4)
+        self.assertEqual(early_map[(21, 1)], BLACK_NORMALIZED)
+        self.assertGreater(early_map[(21, 2)].red, 0.4)
+        self.assertGreater(early_map[(21, 3)].red, 0.3)
+        self.assertEqual(early_map[(19, 0)], BLACK_NORMALIZED)
+        self.assertEqual(early_map[(23, 3)], BLACK_NORMALIZED)
 
         detonation = frame(7.02)
         self.assertGreater(sum(

@@ -86,9 +86,10 @@ explicit browser-live white enablement and the existing onset, 0.10-second,
 4 Hz, level, blackout, lease-loss, and shutdown safeguards.
 
 `cartoon-bomb` retains its original internal ID so existing user looks remain
-valid, but now renders Burning Dynamite: a simple horizontal red cylinder on
-Cube B with darker end caps, a gold band, and a visible fuse collar. A bright
-spark burns a descending wavy fuse from Cube A across the fixture seam.
+valid, but now renders Burning Dynamite: a compact vertical red cylinder on
+Cube B with rounded corners and an unlit black inset cap/band. The commissioned
+center-white strip is the fuse itself; a bright white spark travels along it
+toward the cylinder while the RGB pixels above and below provide an orange halo.
 Detonation produces one broad amber RGB flash, an expanding starburst that
 reaches back over both fixtures, deterministic embers, and rising purple smoke
 before the cycle restarts. Fuse, blast, and smoke durations are independently
@@ -167,7 +168,8 @@ families:
 - Checkerboard and Bars receive two narrow sweeping blades.
 - Fire and Sparks scatter deterministic ember peaks.
 - Tunnel emits smooth center-out bands.
-- Burning Dynamite follows the spark and opens into two points at detonation.
+- Burning Dynamite uses a dim fuse line with a travelling spark, then opens into
+  two points at detonation.
 
 Every registered effect therefore has a curated pattern. A priority table lets
 signature foreground effects such as Blaster, Flame, Wave, or VU override a
