@@ -66,17 +66,25 @@ shutdown. It never streams show-critical media from Studio.
 Implementation checkpoint (2026-11-16): package preflight, the disabled-by-
 default transport boundary, fixed confirmation-gated VLC launch, commissioned
 clockwise rear-screen profile, and full-length soak harness are implemented.
-The 146-second package passes local preflight. The soak records player exit and
-runtime, VLC fallback diagnostics, Linux player CPU/RSS, Pi temperature, 25 FPS
-renderer misses/overruns, reserved-channel integrity, and final blackout while
-blocking Art-Net. VLC 3 dropped-frame telemetry is explicitly unavailable rather
-than assumed to be zero.
+The 146-second package passes local preflight. The commissioned Pi soak passed
+all automated checks on 2026-11-16: VLC exited 0 after 146.444 seconds; the
+independent renderer delivered 3,662 frames at 25.006 FPS with zero missed slots
+and zero overruns; mean/p95/max render times were 4.578/5.650/13.389 ms; player
+and renderer CPU were 20.44% and 11.63% of one core; player RSS peaked at
+145,808 KiB; and CPU temperature peaked at 41.35 C. Reserved channels stayed
+zero and final renderer blackout passed. Evidence is in
+`docs/validation/projection-soak-2026-11-16.json`.
 
-Acceptance remaining: run and preserve the Pi full-length soak, record visual
-smoothness, compare or instrument a backend with queryable frame telemetry,
-then implement and fault-test the managed pre-load/play/pause/seek/stop/black
-adapter. Missing media, player crash, and display loss must fail black without
-disturbing lighting, audio, MIDI, browser control, or shutdown. See
+VLC again fell back from unavailable V4L2 H.264 decoding to I420 Wayland
+`wl_dmabuf` output. The SSH/Wayland `globalhotkeys` and `xset` warnings did not
+prevent playback or clean exit. VLC 3 dropped-frame telemetry remains explicitly
+unavailable rather than assumed to be zero.
+
+Acceptance remaining: record explicit visual smoothness, compare or instrument
+a backend with queryable frame telemetry, run actual-DMX coexistence, then
+implement and fault-test the managed pre-load/play/pause/seek/stop/black adapter.
+Missing media, player crash, and display loss must fail black without disturbing
+lighting, audio, MIDI, browser control, or shutdown. See
 `docs/projector-output.md`.
 
 ## Ready

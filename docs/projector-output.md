@@ -141,3 +141,11 @@ normal controller services running to reproduce the Pi load, watch the complete
 Passing this harness proves only independent render scheduling and packaged VLC
 playback; later validation must exercise the actual DMX transport and queryable
 video-frame telemetry.
+
+The commissioned run passed on 2026-11-16. It completed 146.444 seconds with
+VLC exit 0, 3,662 independent render frames at 25.006 FPS, zero missed slots,
+zero over-budget frames, a 13.389 ms maximum render time, and a 41.35 C peak CPU
+temperature. Player RSS peaked at 145,808 KiB. VLC used I420 Wayland `wl_dmabuf`
+after its V4L2 H.264 decoder attempt failed. The complete raw report is retained
+at `docs/validation/projection-soak-2026-11-16.json`; visual smoothness and
+actual-DMX coexistence remain separate gates.

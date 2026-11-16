@@ -42,6 +42,16 @@ channels, blackout, VLC exit/fallback, player CPU/RSS, and Pi temperature to an
 atomic JSON report. VLC 3 dropped-frame telemetry remains unavailable and is
 reported as null; visual review and the later actual-DMX soak are still open.
 
+The commissioned Pi run passed all harness checks. VLC completed the 146-second
+package with exit 0; the independent renderer sustained 25.006 FPS across 3,662
+frames with no misses or overruns and a 13.389 ms maximum render time. Player
+CPU/RSS peaked at 20.44% of one core and 145,808 KiB; the renderer used 11.63%
+of one core; CPU temperature peaked at 41.35 C. VLC fell back to I420 Wayland
+output after V4L2 H.264 decode was unavailable. Raw evidence is preserved in
+`docs/validation/projection-soak-2026-11-16.json`. Explicit visual smoothness,
+queryable drop telemetry, actual-DMX coexistence, and managed fail-black player
+controls remain open.
+
 ## Current checkpoint -- Operations telemetry and visual review tooling
 
 `OPS-008`, `SIM-004`, and `EFFECT-020` are implemented and moved to Validation.

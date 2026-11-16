@@ -1,0 +1,48 @@
+{
+  "checks": {
+    "playback_duration": true,
+    "player_exit": true,
+    "render_blackout": true,
+    "render_timing": true,
+    "reserved_channels": true,
+    "temperature": true
+  },
+  "completed_utc": "2026-11-16T23:54:45.426995+00:00",
+  "fps": 25,
+  "mode": "confirmed VLC projector output plus hardware-free 25 FPS render; no Art-Net transport",
+  "package_duration_seconds": 146.0,
+  "package_id": "travelling-hdmi720-clockwise-rear-soak--portrait-hdmi720-clockwise-rear",
+  "passed": true,
+  "platform": "Linux-6.18.50+rpt-rpi-2712-aarch64-with-glibc2.41",
+  "player_diagnostics": {
+    "global_hotkeys_unavailable": true,
+    "stderr_tail": "[00005556350a9ac0] main interface error: no suitable interface module\n[0000555634ff5530] main libvlc error: interface \"globalhotkeys,none\" initialization failed\n[h264_v4l2m2m @ 0x7ffec404e490] Could not find a valid device\n[h264_v4l2m2m @ 0x7ffec404e490] can't configure decoder\n[00007ffec402aaf0] avcodec decoder error: cannot start codec (h264_v4l2m2m)\n[00007ffeac0013f0] wl_dmabuf vout display: <<< Open: I420 1280x738(1280x720 @ 0,0 0/0), cfg.display: 1280x720, source: 1280x738(1280x720 @ 0,0 1/1), scale=65536/65536\nxset:  unable to open display \"\"\nxset:  unable to open display \"\"\nxset:  unable to open display \"\"\nxset:  unable to open display \"\"\n[0000555634ff6920] main playlist: end of playlist, exiting\n",
+    "v4l2_h264_fallback_observed": true,
+    "video_drop_note": "VLC 3 CLI does not expose a reliable per-run dropped-frame count; visual review and later backend telemetry remain required.",
+    "video_dropped_frames": null,
+    "wayland_dmabuf_output_observed": true
+  },
+  "player_returncode": 0,
+  "python": "3.13.5",
+  "render": {
+    "achieved_fps": 25.006,
+    "blackout_zero": true,
+    "duration_seconds": 146.444,
+    "frames": 3662,
+    "missed_slots": 0,
+    "over_budget_frames": 0,
+    "player_cpu_percent_one_core": 20.44,
+    "player_rss_max_kib": 145808,
+    "preset_id": "phase-collider",
+    "render_max_ms": 13.389,
+    "render_mean_ms": 4.578,
+    "render_p95_ms": 5.65,
+    "render_process_cpu_percent_one_core": 11.63,
+    "temperature_band": "normal",
+    "temperature_max_c": 41.35,
+    "timed_out": false,
+    "unmapped_channels_zero": true
+  },
+  "screen": 1,
+  "started_utc": "2026-11-16T23:52:18.975970+00:00"
+}
