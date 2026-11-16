@@ -37,10 +37,12 @@ below remain independently movable and are the source of truth for status.
 Pause checkpoint (updated 2026-11-16): no implementation is active. Perform touch
 polish, timeline editing, venue-profile shortcuts, prepared-white adjustment,
 the Pac-Man ghost/power-pellet cycle, and the Burning Dynamite animation are
-implemented. The White Output v2 drive/power contract is in desktop validation;
-the complete controller is covered by the 254-test Windows Python 3.12 suite. Remaining
-touchscreen work is physical Pi and Waveshare validation; Pi thermal telemetry
-is recorded below as optional follow-up work and is not a show-control
+implemented. The White Output v2 drive/power contract and the base touchscreen
+iteration are accepted in deployed Pi use; the complete controller is covered
+by the 254-test Windows Python 3.12 suite. Remaining touchscreen work is
+ongoing performance acceptance under `DISPLAY-003`, the `OPS-007` local-action
+checks, and the controlled shutdown/power-cycle evidence under `OPS-005`. Pi
+thermal telemetry is optional follow-up work and is not a show-control
 dependency.
 
 Planning checkpoint (2026-11-16): Phreqed Studio is now planned as a hosted,
@@ -70,111 +72,14 @@ umbrella remains in Validation until `DISPLAY-003` records the complete Pi and
 Waveshare acceptance run. Detailed design and acceptance steps are in
 [`touchscreen-control-roadmap.md`](touchscreen-control-roadmap.md).
 
+Iteration checkpoint (2026-11-16): the operator reports that the base interface
+and UX improvements are solid in current Pi use. Future performance-driven
+refinements will be logged as focused follow-up cards rather than reopening the
+accepted foundation children.
+
 Children: `UX-001`, `WEB-002`, `DISPLAY-002`, `SAFE-003`, `OPS-006`, `WEB-003`,
 `OPS-007`, and `DISPLAY-003`. The optional `AI-DATA-001` spike is related but
 is not a display or live-show dependency.
-
-### UX-001 — Adaptive stage-control information architecture (`P1`)
-
-Perform, Setlist, Build, Settings, and Operations now provide a shared capability
-model for touchscreen, phone, and desktop. The implementation uses 56-pixel primary touch
-targets, visible keyboard focus, text plus color for state, persistent blackout,
-and an explicit stage-lock confirmation before leaving Perform while live.
-
-Acceptance remaining: repeat keyboard, zoom/reflow, contrast, and stage-distance
-readability checks on the physical 10.1-inch display.
-
-### WEB-002 — Shared responsive application shell (`P1`)
-
-The previous long page is now a persistent workspace shell with desktop split
-views and phone bottom navigation. Chromium validates all five workspaces at
-1280 x 800 and 390 x 844 with zero console errors. No controller command or
-safety semantic was removed.
-
-Acceptance remaining: physical Pi Chromium at 100% and 200% zoom plus the
-complete regression suite on the target OS.
-
-### DISPLAY-002 — Setlist-first touchscreen performance dashboard (`P1`)
-
-Perform includes manual and setlist layouts, current/next song, progress and
-remaining time, current scene, transport, master, output state, power profile,
-lease count, structured health, compact fixture previews, and blackout. Setlist
-mode is the default, the active-song time bar keeps elapsed and remaining time
-visible, and Start/Stop output sit in the persistent bottom safety row beside
-blackout. The stage bar exposes the three built-in venue profiles plus up to two
-operator-selected custom shortcuts and touch-sized prepared-white minus/plus
-controls that cannot arm physical whites. Song metadata and live-monitor labels
-remain inside their cards at the target and phone breakpoints. At 1280 x 800
-Chromium measured both document and viewport at exactly 800 pixels, with no
-Perform workspace overflow; the 390 x 844 phone layout retained usable safety
-controls and reported no application console errors. Manual look selection no
-longer relies on the native dropdown: a 64-pixel trigger opens a focused picker
-with six large choices per touchscreen page and three or four per compact page.
-Previous/Next paging, text-selected state, automatic active-page location, and
-one-tap application are usable without precision scrolling; BLACKOUT stays
-available because the picker is non-modal. Chromium validation selected Burning
-Dynamite through page three at 1280 x 800 and verified the compact 390 x 844
-layout with no console errors.
-
-Acceptance remaining: touch accuracy, glare/readability, wake behavior, and a
-full rehearsal on the commissioned display.
-
-### SAFE-003 — Multi-control-plane trusted lease (`P0`)
-
-Named local and remote leases replace the single heartbeat deadline. Losing one
-surface preserves output while another is healthy; losing every surface keeps
-the existing five-second fail-dark stop, blackout, white disarm, timeline stop,
-and Show-power reset. Automated tests cover multiple leases and remote attempts
-to claim local authority.
-
-Acceptance remaining: phone-only loss, kiosk-only loss, all-loss, browser crash,
-controller restart, render failure, and display blank/wake on the Pi.
-
-### SAFE-004 — White output drive and Show-power contract (`P0`)
-
-The commissioned white path now separates configured capability, Rehearsal/Show
-power, and session-only arming. Effect mode provides deterministic segmented
-motion without audio inside the 10% continuous envelope; Audio Accents retains
-onset-driven pulses; Hybrid combines them. Explicit authored flashes and audio
-accents may use an acknowledged process ceiling up to 100% only after live output
-and a second White Show confirmation. Changing drive, power, profile, performance
-mode, blackout, stopping output, lease loss, failure, or restart disarms physical
-whites; blackout and output loss also restore White Rehearsal power. Profiles may
-store the full requested range but never store armed or unlocked state. Desktop
-automation covers no-audio Effect output, Audio rejection without a source,
-high-output flash intent, power reset, schema migration, and all legacy gates.
-
-Acceptance remaining: on the commissioned Pi and fixtures, validate Effect,
-Audio, and Hybrid at low level first; then step the configured Show ceiling under
-controlled conditions, confirm pulse duration/rate on DMX capture, and record
-blackout, lease-loss, and restart recovery at every power mode.
-
-### OPS-006 — Optional Chromium kiosk lifecycle (`P0`)
-
-The native supervisor waits for loopback readiness, launches Chromium kiosk,
-renews the local lease independently of browser timers, and stops renewing when
-Chromium exits. Its graphical service only wants the controller and is not
-required by QLC+ or headless control. Installation is opt-in with
-`--enable-kiosk`.
-
-Acceptance remaining: missing-GUI fallback, Chromium crash/restart, boot
-ordering, LCD blank/wake, and resource measurements on Raspberry Pi OS.
-
-### WEB-003 — Browser authoring and tuning redesign (`P1`)
-
-Songs, cue sheets, and ordered Setlists have a top-level Setlist workspace.
-Build contains searchable Looks and the Scene editor. Settings groups RGB,
-contrast, preview, audio, whites, persistent bounded venue profiles, and output
-controls. Setlist and Song builders are separate full-width task screens;
-Setlists can be copied, and cue timelines expose large duration, transition,
-and Up/Down sequence controls without nested scrolling. User venue profiles can
-be updated in place and up to two can opt into the Perform shortcut bar while
-legacy profile files remain compatible. Phone and desktop share the same
-commands and application logic.
-
-Acceptance remaining: complete representative create/edit/publish/reorder
-workflows on phone, touchscreen, and desktop Chromium, then confirm persistence
-across a Pi service restart.
 
 ### OPS-007 — Loopback-only display and network operations (`P0`)
 
@@ -188,6 +93,10 @@ Acceptance remaining: verify the Waveshare backlight sysfs device, every fixed
 NetworkManager action, loopback continuity, remote rejection, and recovery
 messages on the Pi.
 
+The 2026-11-16 report of stable kiosk operation and no display blanking or
+timeouts supports `OPS-006`; it does not yet exercise this card's backlight and
+network mutation boundaries, so `OPS-007` remains in Validation.
+
 ### DISPLAY-003 — Pi touchscreen and show-readiness acceptance (`P0`)
 
 Run and record Sprint 6 from
@@ -195,6 +104,10 @@ Run and record Sprint 6 from
 readability, service ordering, headless fallback, kiosk recovery, blank/wake,
 25 FPS, all lease-loss combinations, private-network switching, reserved DMX
 channels, and clean shutdown. This card cannot move to Done from desktop tests.
+
+Iteration checkpoint (2026-11-16): the base touchscreen is looking good during
+Pi testing. Keep this card in Validation while real performance use reveals any
+remaining touch, readability, or workflow adjustments.
 
 ### AI-DATA-001 — Relate offline-memory feasibility spike (`P2`)
 
@@ -229,12 +142,12 @@ shutdown, so the confirmed clean-poweroff helper remains usable, and it is
 released when the controller service stops. The installer deploys and verifies
 the unit; the readiness check treats an inactive inhibitor as a failure.
 
-Acceptance remaining: install the updated units on the Pi, verify the inhibitor
-with `systemd-inhibit --list --what=sleep`, then allow the attached display to
-dim/blank for longer than the previous failure interval. QLC+, port 8080, audio,
-MIDI, the active timeline, and fixture output must continue uninterrupted.
-Stopping `phreqed-dmx.service` must release the inhibitor, and browser clean
-shutdown must still power off normally.
+Iteration checkpoint (2026-11-16): current Pi use reports no screen blanking,
+controller timeout, or suspend recurrence. Remaining acceptance is to record
+inhibitor release when `phreqed-dmx.service` stops, confirm browser clean
+shutdown, and complete the requested controlled power-cycle/recovery check with
+fixtures stopped and QLC+ blackout available. Abrupt power loss cannot
+guarantee a DMX blackout and is not a substitute for the normal shutdown path.
 
 ### OPS-004 — Confirmed browser clean shutdown (`P0`, deployment safety)
 
@@ -996,6 +909,63 @@ when whites are disarmed. Validate the final set on both commissioned fixtures
 before enabling any pattern by default in a show package.
 
 ## Done
+
+### UX-001 — Adaptive stage-control information architecture (`P1`)
+
+Perform, Setlist, Build, Settings, and Operations now provide the accepted base
+capability model across touchscreen, phone, and desktop. Large touch targets,
+visible state, persistent blackout, and explicit live stage-lock behavior are
+implemented. The operator accepted this iteration on the Pi on 2026-11-16;
+future refinements discovered in performance use become focused follow-up cards.
+
+### WEB-002 — Shared responsive application shell (`P1`)
+
+The former long page is replaced by the shared workspace shell with touchscreen,
+phone, and desktop layouts. Chromium validation covers 1280 x 800 and 390 x 844
+without removing controller or safety capability. The operator accepted the
+deployed shell for this iteration on 2026-11-16.
+
+### DISPLAY-002 — Setlist-first touchscreen performance dashboard (`P1`)
+
+The deployed Perform dashboard provides setlist-first and manual operation,
+song timing, current/next context, fixture previews, stage profiles, prepared
+white adjustment, output controls, health, and persistent blackout without
+vertical scrolling at 1280 x 800. The touch look picker removes the precision
+dropdown dependency. The operator accepted the base dashboard on 2026-11-16;
+ongoing show-use refinements are tracked separately under `DISPLAY-003`.
+
+### SAFE-003 — Multi-control-plane trusted lease (`P0`)
+
+Named local and remote leases preserve output while any trusted surface is
+healthy and retain the five-second fail-dark stop, blackout, white disarm,
+timeline stop, and Show-power reset when every lease is lost. Automated failure
+coverage and deployed Pi operation support the operator's 2026-11-16 acceptance
+for the current release.
+
+### SAFE-004 — White output drive and Show-power contract (`P0`)
+
+Effect, Audio Accents, and Hybrid white drive now separate configured capability,
+Rehearsal/Show power, prepared level, and session-only arming. Continuous authored
+motion remains in the Rehearsal envelope; deliberate pulses can use an explicitly
+acknowledged White Show ceiling. Every safety boundary disarms output and restores
+the required power state. The operator reported on 2026-11-16 that the deployed
+controls provide the needed creative latitude while preserving safety.
+
+### OPS-006 — Optional Chromium kiosk lifecycle (`P0`)
+
+The native supervisor waits for controller readiness, owns Chromium, and renews
+the local lease independently of browser timers without becoming a dependency
+of QLC+ or headless control. Current Pi testing reports stable kiosk operation
+with no screen blanking or controller timeouts; the operator accepted the card
+on 2026-11-16.
+
+### WEB-003 — Browser authoring and tuning redesign (`P1`)
+
+Setlist, Song, Look, Scene, and Settings workflows now use separate focused
+workspaces, touch-sized editing controls, persistent venue profiles, and shared
+phone/desktop application logic. The operator accepted the deployed iteration
+on 2026-11-16. Further authoring expansion belongs to Phreqed Studio rather than
+reopening this Stage-focused redesign.
 
 ### OPS-003 — Unattended show startup and private control LAN (`P0`, deployment)
 
