@@ -1,6 +1,41 @@
 # Codex Resume: Live Show Baseline and Song/Setlist Roadmap
 
-Last updated: 2026-11-13
+Last updated: 2026-11-16
+
+## Planning checkpoint -- Hosted Phreqed Studio and projection
+
+On 2026-11-16 the Studio roadmap expanded from a primarily local authoring app
+to a hosted, multi-tenant, AI-augmented SaaS product. The reference customer is
+a Pro (`$$$`) band workspace with private VFX/video storage, bulk resumable
+upload, non-destructive clip preparation, complete lighting and Video Scene
+authoring, AI proposal allowances, multiple paired Stage units, and deeper
+revision history. Free and Artist (`$`) tiers use the same application through
+named entitlements and quotas; exact names, prices, and limits remain product
+configuration.
+
+The authoritative hosted model uses tenant-scoped transactional metadata,
+private content-addressed object storage, asynchronous probe/transcode/AI jobs,
+an optional rebuildable graph, and a package registry. Published packages are
+signed, hash-verified, fully downloaded, and preflighted on Stage before local
+activation. Subscription, billing, graph, AI, or cloud failure can block new
+hosted work but cannot interrupt an active or cached show. Cloud, trusted LAN,
+and removable media use the same package format.
+
+Each song revision owns one shared deterministic clock with separate Lighting
+and Video tracks. A reusable Video Scene references immutable clip ranges and
+defines crop/fit, loop, opacity, intensity, fades, black fallback, and later
+bounded overlays. The two tracks may have different cue boundaries but receive
+the same explicit start/pause/resume/seek/stop events. Video runs in a separate
+Pi process, may pre-roll invisibly, and fails black without delaying or rewinding
+the 25 FPS lighting runner.
+
+The dependency plan is now Sprints 0-11: domain/tenancy contracts; hosted
+identity and operations; entitlements/catalog; package pairing/offline delivery;
+Studio and lighting authoring; private media/clip pipeline; Pi playback; Video
+Scene manager/parallel track; composition; reviewed AI authoring; Stage return
+sync/focus; and integrated release validation. New cards are `SAAS-001` through
+`SAAS-003`, `CATALOG-001`, `STAGE-LINK-001`, `MEDIA-002`, and
+`AI-STUDIO-001`. No implementation is active yet.
 
 ## Pause checkpoint -- Perform polish and arcade/cartoon effects
 

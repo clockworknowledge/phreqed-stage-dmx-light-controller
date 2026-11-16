@@ -15,16 +15,17 @@ Official hardware references:
 ## Proposed architecture
 
 ```text
-show command / pedal
+song revision / shared deterministic clock
         |
         v
 show coordinator
-   |             |
-   v             v
-lighting cue     projection cue
-   |             |
-25 FPS DMX       separate player/compositor process
-renderer         -> selected HDMI output
+   |                         |
+   v                         v
+Lighting track              Video track
+scene cues                   Video Scene cues
+   |                         |
+25 FPS DMX renderer          separate player/compositor process
+                             -> selected HDMI output
 ```
 
 The projection process owns video decoding, frame timing, scaling, overlays,
@@ -33,19 +34,31 @@ boundary and never runs inside the DMX render thread. A player crash, missing
 file, slow decode, or disconnected projector must not stall DMX, audio capture,
 pedal input, browser blackout, or shutdown handling.
 
-Media files should live in an operator-configured directory outside the source
-repository. Show data stores validated relative media identifiers rather than
-arbitrary commands or remote URLs. Missing media falls back to a black output
-and a visible controller error.
+Studio originals and derived renditions live in tenant-scoped object storage;
+local development may use an operator-configured directory. A published package
+contains the exact hash-verified Stage renditions and clip ranges required by
+the selected show. Stage downloads and preflights them before activation and
+never streams show-critical video from Studio. Show data stores validated media
+identifiers rather than arbitrary commands or remote URLs. Missing media falls
+back to a black output and a visible controller error.
+
+A reusable Video Scene contains a clip range, still, colour or black layer,
+crop/fit, loop behavior, opacity, intensity, fades, and later bounded overlays.
+Song revisions place Video Scene cues on a separate Video track beside Lighting.
+The two tracks share explicit song start/pause/resume/seek/stop events but may
+have different cue boundaries and intentional black gaps. Decoder pre-roll is
+permitted only on a non-presenting surface; the projector stays black until
+explicit song start.
 
 ## Delivery phases
 
-1. Playback foundation: explicitly enabled local video/image playback, HDMI
-   output selection, play/pause/stop/seek/loop, and reliable black output.
-2. Projector compositor: video plus procedural or shader overlays with opacity,
+1. Playback foundation: explicitly enabled packaged video/image playback, HDMI
+   selection, invisible pre-roll, play/pause/stop/seek/loop, position/health,
+   and reliable black output.
+2. Parallel song transport: a separate Video track of Video Scene cues shares
+   the deterministic song clock with Lighting and keeps independent failures.
+3. Projector compositor: video plus procedural or shader overlays with opacity,
    blend modes, crop/fit, global intensity, and smooth transitions.
-3. Unified show cues: one cue selects both a lighting preset and an optional
-   projection preset, with independent failure handling.
 4. Audio response: reuse normalized `AudioAnalysis` values for bounded overlay
    parameters without coupling capture to the video backend.
 

@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-11-13
+Last reviewed: 2026-11-16
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -41,6 +41,14 @@ committed and covered by the 249-test Windows Python 3.12 suite. Remaining
 touchscreen work is physical Pi and Waveshare validation; Pi thermal telemetry
 is recorded below as optional follow-up work and is not a show-control
 dependency.
+
+Planning checkpoint (2026-11-16): Phreqed Studio is now planned as a hosted,
+multi-tenant, AI-augmented SaaS product with Free, Artist (`$`), and Pro (`$$$`)
+capability envelopes. The current reference persona is a Pro band customer with
+private VFX/video storage, clip preparation, full lighting and Video Scene
+authoring, AI proposal allowances, and paired Stage delivery. Published Stage
+packages remain complete, cached, and playable offline; subscription or cloud
+failure can block new hosted work but never an active show.
 
 ## In progress
 
@@ -368,29 +376,34 @@ health and the Operations UI; and verify the reading on the commissioned Pi.
 
 Separate advanced authoring from the show-critical runtime before lighting,
 video, projection, analysis, and AI workflows make the Stage application too
-complex. Phreqed Studio will own editable library history and publish immutable,
-validated show packages. Phreqed Stage will run an explicitly activated package
-and record bounded local changes in a separate adjustment journal for reviewed
-return sync.
+complex. Phreqed Studio is a hosted multi-tenant SaaS control plane with a
+curated catalog plus private customer libraries. It owns editable history and
+publishes immutable, validated, fully cached show packages. Phreqed Stage runs
+an explicitly activated package offline and records bounded local changes in a
+separate adjustment journal for reviewed return sync.
 
 Children: `STUDIO-001`, `PUBLISH-001`, `SYNC-002`, `STUDIO-002`, `STUDIO-003`,
-`MEDIA-001`, `STUDIO-004`, `AI-DATA-002`, `STAGE-001`, and `STUDIO-005`.
+`SAAS-001`, `SAAS-002`, `SAAS-003`, `CATALOG-001`, `MEDIA-001`, `MEDIA-002`,
+`STAGE-LINK-001`, `STUDIO-004`, `AI-DATA-002`, `AI-STUDIO-001`, `STAGE-001`,
+and `STUDIO-005`.
 Existing `PROJ-001`, `PROJ-002`, `SHOW-002`, `VIDEO-001`, `AI-DATA-001`,
 `ANALYSIS-001`, and `AI-SONG-001` remain linked implementation or research
-cards rather than being duplicated. Detailed user stories and Sprints 0-8 are
+cards rather than being duplicated. Detailed user stories and Sprints 0-11 are
 in [`studio-stage-roadmap.md`](studio-stage-roadmap.md).
 
-Umbrella acceptance: one complete Studio -> package -> Stage -> local
-adjustment -> reviewed Studio revision loop passes over LAN and removable media;
-the previous package can be restored; projection failure remains isolated; and
-Stage starts and runs a lighting-only show with Studio, graph, and media services
-absent.
+Umbrella acceptance: two hosted tenants remain isolated; the Pro reference
+customer can ingest private band media, author parallel Lighting/Video tracks,
+publish and deliver a complete package through cloud/LAN/removable media, run it
+offline on Stage, return local adjustments for review, and restore the previous
+package. Projection failure remains isolated, and Stage runs a lighting-only
+show with Studio, graph, Internet, and media services absent.
 
 ### STUDIO-001 — Shared domain identity and revision model (`P1`, architecture)
 
 Define stable IDs, object and library revisions, schema versions, origin
 identity, supersession metadata, and explicit migrations for shows, songs,
-setlists, looks, scenes, cues, fixtures, projection designs, and assets. Existing
+setlists, looks, scenes, Lighting/Video tracks, Video Scenes, cues, fixtures,
+catalog items, projection designs, assets, renditions, and clips. Existing
 Pi `library.json`, `songs.json`, and `tuning-profiles.json` remain authoritative
 and must migrate without loss, live behavior changes, or overwrite.
 
@@ -405,6 +418,75 @@ backed up, idempotent, and covered by representative legacy fixtures.
 Dependency: none. This is Sprint 0 and blocks all new Studio, package, sync, and
 graph-integration cards.
 
+### SAAS-001 — Tenant, workspace, identity, and role foundation (`P1`, platform)
+
+Create the hosted account boundary for tenants, band workspaces, memberships,
+roles, users, sessions, service identities, Stage devices, audit events, and
+export/deletion requests. Initial roles are owner, administrator, designer,
+operator, and viewer with server-enforced permissions.
+
+User outcome: subscribers sign in to isolated band libraries, invite the right
+people, and revoke access without altering downloaded Stage packages.
+
+Acceptance: tenant/workspace scope is enforced in persistence, APIs, object
+keys, background jobs, caches, logs, and tests; two test tenants cannot observe
+or mutate one another; session revocation, recovery, audit, export, retention,
+backup, and restore paths pass before production media is accepted.
+
+Dependency: `STUDIO-001`. Planned Sprints 0-1.
+
+### SAAS-002 — Subscription entitlements, quotas, and usage ledger (`P1`, product)
+
+Represent Free, Artist (`$`), and Pro (`$$$`) as configurable capabilities and
+numeric quotas rather than separate applications. Cover catalog access, private
+upload, storage, processing, AI allowance, package count, paired devices, team
+roles, and revision retention. The Pro reference customer has the complete
+authoring/media/AI/device capability set.
+
+User outcome: customers understand what is available and consumed, while tier
+names, prices, and quotas can change without forking Studio or Stage.
+
+Acceptance: server-side checks exist at upload, job, AI, publish, pairing, and
+retention boundaries; async usage uses idempotent reserve/commit/release and an
+append-only ledger; failures cannot double-charge; downgrade, billing outage,
+or SaaS outage never disables a downloaded or active Stage package.
+
+Dependencies: `STUDIO-001`, `SAAS-001`. Planned Sprint 2.
+
+### CATALOG-001 — Curated base asset and scene catalog (`P1`, content)
+
+Publish versioned base looks, lighting scenes, Video Scenes, VFX clips, and
+deterministic song templates with stable IDs, previews, tags, provenance,
+license/usage terms, compatibility, entitlements, and retirement metadata.
+
+User outcome: free users can start from useful entitled material, and higher-
+tier users can copy a base item into a private editable draft without losing
+attribution or provenance.
+
+Acceptance: shows pin exact catalog revisions; catalog edits/retirement never
+mutate customer drafts or packages; free/paid access reuses asset bytes without
+leaking private media; initial taxonomy covers mood, energy, palette, motion,
+genre, tempo suitability, loopability, aspect ratio, and projection suitability.
+
+Dependencies: `STUDIO-001`, `SAAS-001`, `SAAS-002`. Planned Sprint 2.
+
+### SAAS-003 — Hosted operations, audit, portability, and recovery (`P1`, reliability)
+
+Define hosted environments, secrets, migrations, backups, restore drills,
+observability, job replay/dead-letter handling, retention, rate limits, abuse
+controls, customer export/deletion, and support audit access.
+
+User outcome: customer data is recoverable and portable, and support can
+diagnose failures without reading private media/prompts by default.
+
+Acceptance: jobs are idempotent/resumable; metadata never commits a derived
+asset before durable object verification; versioned export includes revisions,
+provenance, reviews, packages, and hashes; deletion is staged/auditable;
+disaster-recovery and data-residency targets are explicit before launch.
+
+Dependency: `SAAS-001`; foundation in Sprint 1 and release acceptance in Sprint
+11.
+
 ### PUBLISH-001 — Immutable show package lifecycle (`P1`, deployment)
 
 Create deterministic package manifests containing show revisions, fixture
@@ -415,14 +497,32 @@ rollback package.
 
 User outcome: a designer sees errors before transfer, while an operator can
 import without affecting the current show, activate deliberately, and roll back
-using either trusted LAN or removable media.
+using hosted delivery, trusted LAN, or removable media.
 
 Acceptance: interrupted or rejected import leaves the active show unchanged;
 activation is blocked while output or a timeline is active and never starts
 playback; path traversal, unbounded archives, duplicate entries, executable
 content, missing assets, and incompatible fixtures are rejected.
 
-Dependency: `STUDIO-001`. Planned Sprint 1.
+Dependency: `STUDIO-001`. Planned Sprint 3.
+
+### STAGE-LINK-001 — Secure Stage pairing and hosted package delivery (`P1`, deployment)
+
+Pair Stage to a tenant/workspace with short-lived enrollment and a revocable
+per-device identity. Deliver signed packages through resumable, hash-verified
+downloads into the existing staging boundary; every rendition must preflight
+before local activation becomes available.
+
+User outcome: a higher-tier customer can send a show to one or more Stage units,
+then disconnect the Internet and run or roll back locally.
+
+Acceptance: Stage stores no user password, browser/billing secret, tenant-wide
+object credential, or remote-start capability; delivery cannot activate or
+start output; revocation blocks future downloads without interrupting cached
+shows; replay, expiry, skew, partial download, outage, and replacement recover;
+the same package validates through cloud, LAN, and removable media.
+
+Dependencies: `STUDIO-001`, `SAAS-001`, `PUBLISH-001`. Planned Sprint 3.
 
 ### SYNC-002 — Stage adjustment journal and reviewed return sync (`P1`, synchronization)
 
@@ -440,15 +540,15 @@ comparison and exposes clean changes and conflicts; every accept, reject, or
 manual resolution is explicit and accepted changes create a new revision.
 
 Dependencies: `STUDIO-001`, then `PUBLISH-001` for end-to-end transfer. Planned
-Sprint 2.
+Sprint 10.
 
 ### STUDIO-002 — Browser Studio foundation and authoring migration (`P1`, authoring)
 
-Build the desktop/browser Studio shell for library and show navigation, search,
-master-detail editing, autosaved drafts, validation, revision history, and
-explicit publish. Move songs, setlists, looks, scenes, and tuning-profile design
-into Studio through shared domain/validation code rather than duplicated
-controller logic.
+Build the tenant-aware browser Studio shell for workspace/library/show
+navigation, search, master-detail editing, autosaved drafts, validation,
+revision history, entitlement visibility, usage status, and explicit publish.
+Move songs, setlists, looks, scenes, and tuning-profile design into Studio
+through shared domain/validation code rather than duplicated controller logic.
 
 User outcome: show design receives a spacious dedicated application without
 live-output controls, and existing operators can import their current libraries
@@ -459,7 +559,7 @@ lease; current libraries import and export through a normalized representation;
 representative workflows reach capability parity before any Stage authoring is
 deprecated; package publishing uses `PUBLISH-001`.
 
-Dependencies: `STUDIO-001`, `PUBLISH-001`. Planned Sprint 3.
+Dependencies: `STUDIO-001`, `SAAS-001`, `PUBLISH-001`. Planned Sprint 4.
 
 ### STUDIO-003 — Lighting timeline and preview designer (`P1`, authoring)
 
@@ -480,10 +580,10 @@ Dependencies: `STUDIO-001`, `STUDIO-002`. Planned Sprint 4.
 
 ### MEDIA-001 — Content-addressed media asset library (`P1`, media)
 
-Store imported video, image, and later audio bytes outside the repository under
-an operator-configured asset root, addressed by content hash. Keep original
-names as display metadata and record size, type, duration/dimensions where
-available, provenance, and compatibility information.
+Store imported video, image, and later audio bytes outside the repository in
+tenant-scoped object storage, addressed by content hash. Local development may
+use a filesystem adapter. Keep original names as display metadata and record
+size, type, duration/dimensions, provenance, and compatibility information.
 
 User outcome: designers can reuse and transfer assets without accidental
 duplicates, and Stage can prove all required media is present before activation.
@@ -493,25 +593,46 @@ unsupported, and oversized assets fail package validation; asset removal is
 explicit and reference-aware; retained packages and revisions protect their
 assets from garbage collection.
 
-Dependencies: `STUDIO-001`, `PUBLISH-001`. Planned Sprint 5.
+Dependencies: `STUDIO-001`, `SAAS-001`, `PUBLISH-001`. Planned Sprint 5.
 
-### STUDIO-004 — Video and projection design surface (`P2`, media authoring)
+### MEDIA-002 — Hosted ingest, rendition, and clip-preparation pipeline (`P1`, media)
 
-Add clips, stills, black frames, and projection presets to the unified Studio
-timeline, with preview controls for crop, fit, loop, opacity, fades, intensity,
-and bounded overlays. Reuse the existing projection runtime and unified-cue
-cards rather than creating a second playback architecture.
+Provide resumable private upload, bounded probing, checksum/duplicate checks,
+quarantine, thumbnails/storyboards, non-destructive in/out clip ranges, preview
+proxies, and one conservative Stage rendition. Originals remain immutable;
+derived assets record tool/version/settings and hashes.
+
+User outcome: the Pro reference band can bulk-upload its VFX/video suite, cut it
+into reusable short clips, tag it, and publish only required Stage renditions.
+
+Acceptance: jobs are visible, cancellable, retryable, idempotent, quota-bound,
+and tenant-isolated; manual metadata covers mood, energy, palette, motion,
+tempo suitability, loopability, aspect and rights; automated shot/tag/loop
+results remain proposals; representative band clips package and play on the Pi.
+
+Dependencies: `SAAS-001`, `SAAS-002`, `MEDIA-001`. Planned Sprint 5.
+
+### STUDIO-004 — Video Scene manager and parallel song track (`P1`, media authoring)
+
+Add reusable Video Scenes and a separate Video track beside the Lighting track
+on the shared song clock. Video Scenes contain clip ranges, stills, colour or
+black layers, crop/fit, loop, opacity, fades, intensity, and bounded overlays.
+The timeline provides trim/split, snapping, gaps, explicit overlap rules,
+preview, validation, and shared transport. Reuse the existing projection
+runtime and unified-cue cards rather than creating a second architecture.
 
 User outcome: designers can prepare synchronized lighting and projection in one
 show while an absent or failed clip remains black and never delays lighting.
 
 Acceptance: the package manifest carries versioned projection interpretation
-and content-addressed asset references; preview and Stage agree on timing and
-fallback; a conservative test clip completes Studio publish and Pi playback;
-the simultaneous 25 FPS DMX soak retains its existing safety limits.
+and content-addressed asset/rendition/clip references; deterministic metadata
+templates create editable draft video layouts; preview and Stage agree on
+timing and fallback; explicit song start/stop/pause/seek addresses both runners
+without autostart; a multi-clip band song publishes and plays while player kill
+fails black and the 25 FPS lighting runner stays on time.
 
-Dependencies: `STUDIO-003`, `MEDIA-001`, `PROJ-001`, and the required subset of
-`SHOW-002`; later work uses `PROJ-002`. Planned Sprints 5-6.
+Dependencies: `STUDIO-003`, `MEDIA-001`, `MEDIA-002`, `PROJ-001`, and the
+required subset of `SHOW-002`; later work uses `PROJ-002`. Planned Sprint 7.
 
 ### AI-DATA-002 — Studio knowledge graph and agent-memory integration (`P2`, AI/data)
 
@@ -531,7 +652,28 @@ media bytes, credentials, leases, and mutable Stage runtime state never enter
 the graph.
 
 Dependencies: `STUDIO-001` and the relevant `AI-DATA-001` feasibility gates.
-Parallel Sprint A after Sprint 0; linked to `ANALYSIS-001` and `AI-SONG-001`.
+Planned Sprint 9; linked to `ANALYSIS-001`, `AI-SONG-001`, and
+`AI-STUDIO-001`.
+
+### AI-STUDIO-001 — Reviewed AI lighting and video-layout proposals (`P1`, AI authoring)
+
+Generate structured Lighting and Video track proposals from explicit song
+revisions, analysis evidence, instructions, allowed private/catalog assets,
+metadata, and prior reviewed decisions. Include rationale, evidence, rights/
+entitlement state, confidence, source revisions, and reserved usage.
+
+User outcome: a Pro customer can get a credible first-pass dual-track song
+layout, preview it, accept selected cues/clips, reject others with reasons, and
+continue editing manually.
+
+Acceptance: output is schema validated and references stable revisions; review
+supports compare/selective accept/reject/undo; acceptance creates a draft only;
+AI cannot publish, pair, activate, or control Stage; provider/graph/quota failure
+leaves the draft untouched; deterministic metadata templates remain available;
+private tenant media/prompts never silently enter the shared catalog or training.
+
+Dependencies: `STUDIO-003`, `STUDIO-004`, `AI-DATA-002`, `ANALYSIS-001`, and
+`AI-SONG-001`. Planned Sprint 9.
 
 ### STAGE-001 — Runtime-focused Stage interface (`P1`, operations)
 
@@ -549,26 +691,27 @@ raise ceilings or auto-arm whites; persistent blackout and local-only operations
 remain unchanged; Setlist/Build authoring is hidden or removed only after
 migration, publish, rollback, adjustment, and return-sync evidence is recorded.
 
-Dependencies: `STUDIO-002`, `PUBLISH-001`, `SYNC-002`. Planned Sprint 7.
+Dependencies: `STUDIO-002`, `PUBLISH-001`, `SYNC-002`. Planned Sprint 10.
 
 ### STUDIO-005 — End-to-end Studio/Stage release validation (`P0`, release)
 
-Validate the complete design, package, transfer, activation, rehearsal, local
-correction, return sync, republish, and rollback lifecycle. Include lighting-only
-operation, media/projection operation, and operation with Studio and graph
-services unavailable.
+Validate tenant isolation, entitlements, hosted recovery, design, package,
+cloud/LAN/removable delivery, activation, offline rehearsal, local correction,
+return sync, republish, and rollback. Include lighting-only operation, parallel
+Lighting/Video operation, and operation with Studio and graph unavailable.
 
 User outcome: an operator has a documented, recoverable workflow from show
 design through performance and back to the authoritative library.
 
-Acceptance: exercise LAN/removable-media transfer, interrupted and invalid
-imports, clean and conflicting sync, corrupt journal recovery, missing media,
-player crash, projector disconnect, package rollback, and all existing
-automated/Chromium/Pi/25 FPS/lease/blackout/white/reserved-channel/kiosk/shutdown
-suites. Publish the operating handbook before reducing Stage authoring.
+Acceptance: exercise cross-tenant denial, quota accounting, export/deletion,
+backup/restore, cloud outage, delivery replay/expiry/interruption, LAN/removable
+fallback, invalid import, clean/conflicting sync, corrupt journal, missing media,
+player crash, projector disconnect, package rollback, and all existing automated/
+Chromium/Pi/25 FPS/lease/blackout/white/reserved-channel/kiosk/shutdown suites.
+Publish the operating handbook before reducing Stage authoring.
 
 Dependencies: all `STUDIO-000` children plus the linked projection cards used by
-the first release. Planned Sprint 8.
+the first release. Planned Sprint 11.
 
 ### RIG-001 — Multi-fixture and multi-universe expansion (`P2`, scaling)
 
@@ -742,20 +885,22 @@ performer assignments are explicit; missing devices report health without
 blocking scene changes; show shutdown fades all wearables black; and no pedal
 message can implicitly enable DMX or wearable output.
 
-### PROJ-001 — Projector playback foundation (`P2`, visual output)
+### PROJ-001 — Projector playback foundation (`P1`, visual output)
 
-Add an explicitly enabled projection adapter that plays validated local video
-and image assets on a selected Pi HDMI output. Playback runs in a separate
-process from the 25 FPS DMX loop and supports load, play, pause, stop, loop,
-seek, output blank, and clean shutdown. Media lives outside Git in an
-operator-configured library. Compare VLC, `mpv`, and GStreamer/direct-rendering
-behavior on the current Debian Trixie Pi before selecting the backend.
+Add an explicitly enabled projection adapter that plays validated packaged
+video/image renditions on a selected Pi HDMI output. Playback runs in a separate
+process from the 25 FPS DMX loop and supports pre-load, invisible pre-roll,
+play, pause, stop, loop, seek, output black, position/health reporting, and clean
+shutdown. It never streams show-critical media from Studio. Compare VLC, `mpv`,
+and GStreamer/direct-rendering on the current Debian Trixie Pi before selecting
+the backend.
 
 Acceptance: no projector is opened by default; hardware-free tests use a fake
-player; missing media and player failure fall back to black without disrupting
-DMX, audio, MIDI, browser control, or blackout; and a Pi soak documents video
-drops, CPU/GPU/memory/temperature, and DMX missed frames at an initial 1080p
-target. See `docs/projector-output.md`.
+player; missing media, decode failure, player crash, and display disconnect fall
+back to black without disrupting DMX, audio, MIDI, browser control, or blackout;
+pre-roll cannot present before explicit song start; and a Pi soak documents
+video drift/drops, CPU/GPU/memory/temperature, and DMX missed frames at an
+initial 1080p target. Planned Sprint 6. See `docs/projector-output.md`.
 
 ### PROJ-002 — Projector effects and overlay compositor (`P2`, visuals)
 
@@ -770,19 +915,22 @@ display; overlays cannot stall DMX; audio response is bounded; and the target
 Pi sustains the selected projector frame rate alongside QLC+, browser control,
 microphone analysis, and MIDI input.
 
-### SHOW-002 — Unified lighting and projection cues (`P2`, show control)
+### SHOW-002 — Parallel lighting and video song transport (`P1`, show control)
 
-Extend show cues so one transport-independent cue can select a lighting preset
-and an optional projection preset. The existing Ampero remains sufficient for
-the first version: previous/next advance the unified cue, tap tempo is shared,
-and the safety switch can blank projection after that path is separately tested.
-A second pedal is optional for future independent video transport, not a
-requirement for the foundation.
+Extend each song revision with separate Lighting and Video tracks aligned to one
+transport-independent clock. Track cue boundaries may differ; Video cues select
+versioned Video Scenes and may include intentional black gaps. Explicit song
+start, pause, resume, seek, stop, selection, and no-autostart events address both
+runners. The existing Ampero remains sufficient: previous/next operate show-
+level navigation, tap tempo is shared where supported, and the safety switch can
+blank projection after that path is separately tested.
 
-Acceptance: projector failure cannot block lighting commands; lighting blackout
-and projector blank remain independently testable; unified cue transitions are
-repeatable; missing projection content fails black; and pedal mappings cannot
-start live DMX or projector output implicitly.
+Acceptance: both tracks start from the same explicit event and report drift;
+video pre-roll is invisible; bounded video resync never delays or rewinds
+lighting; projector failure cannot block lighting commands; lighting blackout
+and projector black remain independently testable; missing content fails black;
+and pedal mappings cannot start live DMX or projector output implicitly. Planned
+Sprints 6-7.
 
 ### VIDEO-001 — Video-to-grid sampler (`P2`, visuals)
 

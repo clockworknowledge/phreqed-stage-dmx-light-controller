@@ -1,15 +1,16 @@
 # Phreqed Studio and Stage publishing roadmap
 
-Last updated: 2026-11-13
+Last updated: 2026-11-16
 
 ## Product boundary
 
 Phreqed will separate show design from show execution before the authoring
 surface grows into advanced lighting, video, and projection workflows.
 
-- **Phreqed Studio** is a desktop/browser-first design application for songs,
-  setlists, looks, scenes, lighting timelines, media, projection, analysis, and
-  reviewed AI proposals.
+- **Phreqed Studio** is a hosted, browser-first SaaS design application for
+  songs, setlists, looks, scenes, lighting timelines, media, projection,
+  analysis, and reviewed AI proposals. It is multi-tenant and subscription
+  aware, with a curated shared catalog plus private customer libraries.
 - **Phreqed Stage** is the Raspberry Pi control appliance for choosing and
   running a published show, making bounded venue adjustments, monitoring
   health, and recovering safely.
@@ -38,11 +39,117 @@ The graph sidecar may index Studio data, evidence, and agent memory. It is not
 the publishing or synchronization protocol and never becomes a Stage runtime
 dependency.
 
+## Hosted product model
+
+The initial reference customer is a higher-tier band account with access to
+private media upload, large storage, clip preparation, complete lighting and
+video authoring, revision history, AI-assisted proposals, and multiple paired
+Stage units. The architecture must still express lower tiers through
+entitlements rather than separate applications or forked code.
+
+Working tiers, names, prices, and exact quotas remain product configuration:
+
+| Tier | Initial capability envelope |
+| --- | --- |
+| Free | Curated public looks, scenes, VFX clips, and deterministic song templates; limited projects, storage, exports, and device registrations. |
+| Artist (`$`) | Private uploads, non-destructive clip extraction, larger storage, complete manual show authoring, more published packages, and one or more paired Stage units. |
+| Pro (`$$$`) | Highest storage and processing quotas, AI analysis/authoring allowance, deeper revision history, multiple workspaces/devices, team roles, and priority export/processing. |
+
+Entitlements are named capabilities and numeric quotas such as
+`private_media_upload`, `ai_proposal_minutes`, `storage_bytes`,
+`published_packages`, `stage_devices`, and `revision_retention_days`. Studio
+checks them at upload, job creation, authoring, and publish boundaries. A fully
+published and downloaded package carries an entitlement snapshot and remains
+playable on Stage without an Internet or billing check.
+
+Base catalog assets require explicit ownership/licensing metadata and a tier
+entitlement. Private customer assets remain isolated to their tenant and are
+never silently promoted into the shared catalog. Account cancellation or quota
+reduction cannot invalidate a package already activated for a show; retention,
+export, and deletion policies apply to the hosted library separately.
+
+## Hosted architecture
+
+```text
+browser Studio
+      |
+      v
+authenticated tenant API
+  |          |             |                 |
+  v          v             v                 v
+metadata   object       job queue         derived graph
+revisions  storage      + workers         / AI memory
+  |          |        probe/transcode/AI        |
+  +----------+-------------+--------------------+
+                         |
+                         v
+                 package registry
+                         |
+                 signed device delivery
+                         |
+                         v
+              Stage staging/cache/rollback
+                         |
+            lighting runner | video process
+```
+
+- The transactional metadata/revision store is authoritative for tenant,
+  library, show, entitlement, package, and audit records.
+- Media bytes and derived renditions live in private object storage. The graph
+  stores relationships and evidence only, never media or credentials.
+- Probe, thumbnail, storyboard, transcode, shot-boundary, and AI work runs as
+  idempotent asynchronous jobs with visible status, cancellation, retry, and
+  quota accounting.
+- Stage delivery uses short-lived pairing and package credentials. Stage never
+  receives a general Studio session, billing secret, or object-store listing
+  credential.
+- Every package required for a performance is downloaded, hash-verified, and
+  preflighted before activation. Playback never streams show-critical video
+  from the SaaS service.
+
+## Lighting and video show model
+
+A song revision owns one shared duration and deterministic transport plus two
+independent authored tracks:
+
+```text
+Song revision / shared clock
+  |
+  +-- Lighting track: timed references to lighting scenes/looks
+  |
+  +-- Video track: timed references to reusable Video Scenes
+```
+
+- A **Video Scene** is a reusable revisioned visual definition. It can contain a
+  clip range, still, colour/black layer, crop/fit, loop behavior, opacity,
+  intensity, fades, and later bounded overlays. It references immutable asset
+  and rendition hashes rather than copying media or storing a remote URL.
+- A **Video cue** places a Video Scene on a song range. A song may intentionally
+  contain black gaps. Overlaps require an explicit composition rule; accidental
+  overlap is a validation error.
+- Lighting and Video cues may have different boundaries. Both runners receive
+  the same explicit start, pause, resume, seek, stop, and song-selection events
+  from the transport-independent coordinator.
+- Selecting or arming a song never starts either track. Moving to the next song
+  does not auto-start it. A decoder may pre-roll into a non-presenting surface,
+  but HDMI remains black until the explicit song start.
+- Lighting remains authoritative for its own 25 FPS deadline. Video reports
+  readiness, position, dropped frames, and failure through a separate health
+  channel. Drift correction may seek/restart video at bounded checkpoints; it
+  never delays or rewinds the lighting runner.
+- Video failure, missing media, unsupported decode, or projector disconnect
+  immediately requests black on the projection path and leaves lighting,
+  audio, MIDI, leases, blackout, and song transport controllable.
+- Published packages contain only the exact Stage renditions and clip ranges
+  referenced by the chosen show/setlist plus manifest metadata required for
+  preflight, reducing transfer and local storage use.
+
 ## Authority and synchronization rules
 
 1. Studio owns editable library history. Stable object IDs and monotonic
    revisions identify shows, songs, setlists, looks, scenes, cues, fixture
-   layouts, projection designs, and media manifests.
+   layouts, Lighting/Video tracks, Video Scenes, projection designs, catalog
+   items, media assets/renditions/clips, and manifests.
 2. A published show package is immutable. Stage imports into a staging area,
    validates the complete package, and activates it only through an explicit
    stopped-output operation. The previously active package remains available
@@ -53,14 +160,21 @@ dependency.
    comparison against the recorded base, exposes conflicts at object/field
    level, and requires an explicit accept, reject, or manual resolution. There
    is no silent last-writer-wins merge.
-5. LAN transfer and removable-media transfer use the same package and change-set
-   formats. Neither path may require Internet access.
+5. Hosted delivery, trusted-LAN transfer, and removable-media transfer use the
+   same package and change-set formats. A cloud outage may delay new delivery
+   but cannot affect an already downloaded or active show.
 6. Media bytes live in a content-addressed asset store outside JSON and outside
    the graph. Packages contain bounded relative asset IDs, hashes, sizes, media
    types, and compatibility metadata; no arbitrary shell command or remote URL
    is executable.
 7. Import, export, graph availability, video decode, and projection failure
    cannot delay DMX, leases, blackout, audio, MIDI, or clean shutdown.
+8. Every hosted read and write is scoped by tenant and workspace. Shared
+   catalog access is explicit and read-only; private assets, drafts, prompts,
+   analysis, packages, and audit events cannot cross tenant boundaries.
+9. AI output is always a proposal with model, prompt-policy, evidence, cost,
+   and source revision metadata. It cannot publish, pair a Stage unit, activate
+   a package, or start lighting/video output.
 
 ## User stories
 
@@ -83,6 +197,93 @@ Acceptance:
 - Keep the core model independent of HTTP, graph storage, Art-Net, and media
   decoding.
 
+### SAAS-001 — Tenant, workspace, identity, and role foundation
+
+- As a subscriber, I can sign in and see only my bands, workspaces, shows,
+  assets, devices, and team members.
+- As an account owner, I can invite designers and operators with least-privilege
+  roles and revoke their access without changing published Stage packages.
+- As a maintainer, I can prove every hosted object and background job is tenant
+  scoped.
+
+Acceptance:
+
+- Define tenant, workspace, membership, role, user, session, service identity,
+  Stage device, audit event, and deletion/export request records.
+- Initial roles are owner, administrator, designer, operator, and viewer with an
+  explicit permission matrix; there is no client-only authorization.
+- Tenant/workspace scope is required in database constraints, API access,
+  object-store keys, job payloads, cache keys, logs, and tests.
+- Provide account export, soft-delete/retention states, backup/restore, audit
+  history, session revocation, and recovery paths before accepting production
+  customer media.
+
+### SAAS-002 — Subscription entitlements, quotas, and usage ledger
+
+- As a free user, I can build with entitled base assets without seeing controls
+  that will fail only at the end of the workflow.
+- As a higher-tier customer, I can see storage, processing, AI, package, and
+  Stage-device allowances and understand which action consumed them.
+- As product operations, tier names, prices, and quotas can change without
+  forking Studio or Stage code.
+
+Acceptance:
+
+- Define named boolean capabilities, numeric quotas, reservation/commit/release
+  semantics for asynchronous jobs, and an append-only usage ledger.
+- Enforce entitlements server-side at upload, processing, AI, publish, device
+  pairing, and retention boundaries; the browser mirrors state but is not the
+  authority.
+- Quota retries are idempotent and cannot double-charge usage. Failed or
+  cancelled work releases reservations according to a documented policy.
+- Published offline packages are never disabled by subscription lookup,
+  downgrade, SaaS outage, or billing-provider failure.
+
+### CATALOG-001 — Curated base asset and scene catalog
+
+- As a new customer, I can start from useful lighting scenes, video scenes,
+  VFX clips, and deterministic song templates without uploading media.
+- As a catalog curator, I can publish, supersede, retire, and license a base
+  asset without mutating a customer's existing show revision.
+- As a higher-tier customer, I can copy an entitled catalog item into a private
+  editable draft while preserving attribution and provenance.
+
+Acceptance:
+
+- Catalog items have stable IDs, immutable revisions, type, tags, preview,
+  provenance, license/usage terms, entitlement, compatibility, and retirement
+  metadata.
+- Shows pin exact catalog revisions. A later catalog edit or entitlement change
+  cannot silently change a draft or published package.
+- Free and paid catalog access is testable without duplicating the underlying
+  asset bytes; private customer assets never enter the catalog without a
+  separate explicit curation workflow.
+- Initial catalog taxonomy includes mood, energy, palette, motion, genre,
+  tempo suitability, loopability, aspect ratio, and projection suitability.
+
+### SAAS-003 — Hosted operations, audit, portability, and recovery
+
+- As a subscriber, I can export my authoritative library and private asset
+  manifest in a documented format.
+- As an operator, I can recover from a failed deployment, worker outage, or
+  storage incident without corrupting revisions or active Stage packages.
+- As support, I can diagnose a job or publish failure without reading private
+  media or prompts by default.
+
+Acceptance:
+
+- Define environment separation, secrets handling, migrations, backups,
+  restore drills, retention, observability, rate limiting, abuse controls, and
+  incident/audit access.
+- Background jobs are idempotent, resumable where appropriate, and have dead-
+  letter/replay procedures. Metadata commits never reference a derived asset
+  until that object is durably stored and verified.
+- Customer export includes versioned metadata, provenance, reviews, packages,
+  and asset hashes; account deletion is staged, auditable, and blocked while a
+  legal/operational hold applies.
+- Disaster recovery targets and regional/data-residency requirements are
+  selected before production launch rather than implied by a vendor default.
+
 ### PUBLISH-001 — Immutable show package lifecycle
 
 - As a designer, I can validate a candidate package and see every error before
@@ -90,7 +291,8 @@ Acceptance:
 - As an operator, I can import a package without changing the running show,
   activate it deliberately while output is stopped, and roll back.
 - As a technician, I can transfer the same package over the trusted LAN or by
-  removable media and verify its identity and integrity.
+  removable media, or deliver it through the paired hosted service, and verify
+  its identity and integrity.
 
 Acceptance:
 
@@ -104,6 +306,31 @@ Acceptance:
   rejection, and rollback events without storing secrets.
 - Reject path traversal, unbounded archives, duplicate manifest entries,
   unexpected executable content, missing assets, and incompatible fixtures.
+
+### STAGE-LINK-001 — Secure Stage pairing and hosted package delivery
+
+- As a higher-tier subscriber, I can pair a Stage unit to my workspace using a
+  short, human-verifiable enrollment flow.
+- As an operator, I can choose a published package for delivery, watch download
+  and preflight progress, then activate it locally only while output is stopped.
+- As a touring band, I can run the complete cached show after Internet loss and
+  still use removable media as a recovery path.
+
+Acceptance:
+
+- Pairing uses short-lived enrollment authorization and creates a revocable
+  per-device identity; no reusable user password, browser session, billing
+  credential, or tenant-wide object-store credential is stored on Stage.
+- Package manifests are signed, downloads are resumable and hash-verified, and
+  every referenced rendition is present before a package becomes activatable.
+- Hosted delivery writes only to the existing staging boundary. It cannot
+  activate a show, start a timeline, enable Art-Net, arm whites, or open the
+  projector remotely.
+- Revocation blocks future delivery but does not interrupt an active or fully
+  cached package. Clock skew, replay, partial download, expired credentials,
+  cloud outage, and device replacement have explicit recovery tests.
+- The same package validates identically over cloud, trusted LAN, and removable
+  media; rollback remains local and independent of Studio availability.
 
 ### SYNC-002 — Stage-local adjustment journal and reviewed return sync
 
@@ -129,8 +356,8 @@ Acceptance:
 
 ### STUDIO-002 — Browser Studio foundation and authoring migration
 
-- As a designer, I have a spacious desktop application for managing shows
-  without exposing live-output controls.
+- As a designer, I have a spacious tenant-aware browser workspace for managing
+  shows without exposing live-output controls.
 - As an existing operator, I can migrate songs, setlists, looks, scenes, and
   tuning profiles from the current libraries without re-entering them.
 - As a maintainer, I can share validation and domain code with Stage without
@@ -138,8 +365,9 @@ Acceptance:
 
 Acceptance:
 
-- Provide library/show navigation, search, master-detail editors, autosaved
-  drafts, explicit publish state, validation results, and revision history.
+- Provide workspace/library/show navigation, search, master-detail editors,
+  autosaved drafts, explicit publish state, validation results, revision
+  history, entitlement state, and usage/quota visibility.
 - Reuse the shared domain and validation modules; Studio cannot construct an
   `ArtNetSender` or acquire a Stage control lease.
 - Import current JSON stores and export a byte-stable normalized representation
@@ -153,8 +381,8 @@ Acceptance:
   forms or nested scrolling.
 - As a designer, I can scrub and preview lighting deterministically without
   sending fixture output.
-- As a future projection designer, I can align lighting and media lanes to the
-  same song clock while preserving independent runtime failure boundaries.
+- As a projection designer, I can align lighting and Video lanes to the same
+  song clock while preserving independent runtime failure boundaries.
 
 Acceptance:
 
@@ -164,8 +392,9 @@ Acceptance:
   live output, white channels, or projection hardware.
 - Cues reference immutable published look/scene revisions or explicit drafts;
   missing and superseded references are visible before publish.
-- Timeline data stays transport-independent and can address lighting plus an
-  optional projection cue without putting video work on the DMX thread.
+- Timeline data stays transport-independent and provides the shared ruler and
+  clock later used by the separate Video track without putting video work on
+  the DMX thread.
 
 ### MEDIA-001 — Content-addressed media asset library
 
@@ -177,8 +406,9 @@ Acceptance:
 
 Acceptance:
 
-- Hash imported bytes and store them outside the source repository under a
-  configured asset root; keep original name only as display metadata.
+- Hash imported bytes and store them outside the source repository in a tenant-
+  scoped object store; local development may use a configured filesystem root.
+  Keep original name only as display metadata.
 - Record size, media type, duration/dimensions when available, provenance, and
   compatibility metadata. Do not execute embedded commands or fetch remote URLs.
 - Package validation reports missing, mismatched, unsupported, and oversized
@@ -186,10 +416,41 @@ Acceptance:
 - Garbage collection is explicit and reference-aware; no asset used by a
   retained package or revision can be removed.
 
+### MEDIA-002 — Hosted ingest, rendition, and clip-preparation pipeline
+
+- As a higher-tier band, I can bulk upload our VFX files and videos, see reliable
+  progress, and resume interrupted uploads.
+- As a show designer, I can mark short reusable clip ranges without duplicating
+  the original media and receive Stage-compatible renditions and previews.
+- As a maintainer, malformed or hostile uploads cannot become executable or
+  consume unbounded processing/storage.
+
+Acceptance:
+
+- Support resumable upload, declared and detected type validation, bounded
+  media probing, checksum verification, duplicate detection within the tenant,
+  quarantine, cancellation, retry, and explicit failure messages.
+- Extract duration, dimensions, frame rate, codec, audio presence, aspect ratio,
+  thumbnails, and storyboard. Original bytes remain immutable; a clip is a
+  versioned in/out reference plus transformation metadata.
+- Produce preview proxies and one conservative Stage rendition profile before
+  supporting multiple quality targets. Renditions record tool/version/settings
+  and content hash and are reproducible from the original.
+- Manual tags cover mood, energy, palette, motion, tempo suitability,
+  loopability, and rights/provenance. Automated shot/loop/tag proposals remain
+  drafts and never overwrite human metadata.
+- Enforce tenant storage/processing quotas before work starts, keep uploads and
+  jobs idempotent, and prove one tenant cannot address another tenant's object.
+- Bulk import the band's reference VFX suite, cut representative short clips,
+  and successfully package/play them on the target Pi before accepting the
+  pipeline.
+
 ### STUDIO-004 — Video and projection design surface
 
-- As a show designer, I can place clips, stills, black frames, and projection
-  presets on the unified timeline.
+- As a show designer, I can create reusable Video Scenes from clips, stills,
+  black frames, colour fields, and projection presets.
+- As a song designer, I can edit a Video track in parallel with the Lighting
+  track while both remain aligned to one deterministic song clock.
 - As a designer, I can preview crop, fit, loop, opacity, fades, and overlays
   without requiring the Stage projector.
 - As an operator, missing or failed video fails black without interrupting the
@@ -197,13 +458,27 @@ Acceptance:
 
 Acceptance:
 
-- Build on `MEDIA-001`, `PROJ-001`, `PROJ-002`, and `SHOW-002`; do not create a
-  second projection runtime or cue model.
+- Build on `MEDIA-001`, `MEDIA-002`, `PROJ-001`, and `SHOW-002`; do not create a
+  second projection runtime or cue model. Overlay controls that require the
+  compositor remain disabled until `PROJ-002` is available.
+- Define a versioned Video Scene containing ordered visual layers, clip/range
+  references, crop/fit, loop mode, opacity, fades, intensity, overlays, and
+  black fallback. The scene never contains a remote stream URL or command.
+- The song editor exposes Lighting and Video as separate lanes with independent
+  cue boundaries, drag/trim/split, snapping, gaps, overlaps allowed only by an
+  explicit composition rule, and a shared ruler/playhead/seek operation.
+- Deterministic metadata templates can propose an initial video layout from song
+  duration/sections plus clip mood, energy, palette, motion, tempo suitability,
+  and loopability. The result is an editable draft, not an automatic publish.
 - Export projection presets and media references through the show manifest.
 - Preview and Stage use an explicitly versioned interpretation of crop/fit,
   timing, looping, transitions, intensity, and black fallback.
-- A safe non-flashing test clip completes an end-to-end Studio publish and Pi
-  playback while the DMX 25 FPS soak remains within its existing limits.
+- Song start, stop, pause, seek, next-song selection, and no-autostart semantics
+  address both track runners. Video may pre-roll for decode readiness but cannot
+  present before explicit song start.
+- A band's multi-clip song completes end-to-end Studio publish and Pi playback
+  while the DMX 25 FPS soak remains within its existing limits. Killing the
+  player fails the Video track black while Lighting stays on time.
 
 ### AI-DATA-002 — Studio knowledge graph and agent-memory integration
 
@@ -228,6 +503,35 @@ Acceptance:
 - Do not store media bytes, credentials, live leases, or mutable Stage runtime
   state in the graph.
 
+### AI-STUDIO-001 — Reviewed AI show and video-layout proposals
+
+- As a higher-tier designer, I can ask Studio to propose lighting and Video
+  tracks from song structure, descriptive metadata, my private library, and
+  entitled catalog assets.
+- As a reviewer, I can see why each cue/clip was selected, its source evidence,
+  rights/entitlement status, estimated processing usage, and differences from
+  the current draft.
+- As a band, our approvals and rejected patterns can inform later proposals
+  without allowing the agent to publish or control Stage.
+
+Acceptance:
+
+- Inputs are explicit song revisions, analysis evidence, user instructions,
+  allowed asset scopes, catalog/private tags, prior approved/rejected proposals,
+  and a bounded usage reservation. Private tenant content never becomes global
+  training/catalog data through this workflow.
+- Output is a structured, schema-validated proposal for Lighting and Video lanes
+  with stable references, timing, transitions, confidence/rationale, and
+  evidence links. Missing assets, rights, entitlements, or compatibility are
+  visible validation errors.
+- Review supports preview, compare, accept selected items, reject with reason,
+  and undo. Acceptance creates a new draft revision; publish remains the normal
+  separate `PUBLISH-001` operation.
+- Model/provider failure, timeout, unsafe output, graph loss, or exhausted quota
+  leaves the current draft untouched and does not block manual authoring.
+- Deterministic non-AI metadata templates remain available and testable for the
+  same song/asset inputs.
+
 ### STAGE-001 — Runtime-focused Stage interface
 
 - As a performer, I see only the controls and status required to run the show
@@ -251,114 +555,177 @@ Acceptance:
 
 ### STUDIO-005 — End-to-end release and recovery validation
 
-- As a show operator, I can prepare a show on Studio, transfer it, rehearse it,
-  run it, return corrections, republish it, and recover the previous version.
-- As a maintainer, I can prove Studio, graph, media, and projection failures do
-  not weaken Stage lighting safety.
+- As a Pro subscriber, I can prepare a dual-track show on hosted Studio, deliver
+  it, rehearse and run it offline, return corrections, republish it, and recover
+  the previous version.
+- As a maintainer, I can prove cross-tenant access, cloud, entitlement, graph,
+  media, and projection failures do not weaken Stage lighting safety.
 
 Acceptance:
 
-- Exercise LAN and removable-media package transfer, interrupted import,
-  invalid package, activation, rollback, clean sync, conflicting sync, and
+- Exercise tenant isolation, entitlement/quota accounting, export/deletion,
+  backup/restore, hosted/LAN/removable package delivery, cloud loss, interrupted
+  import, invalid package, activation, rollback, clean/conflicting sync, and
   corrupt adjustment recovery.
 - Run the complete automated, Chromium, Pi, 25 FPS, lease-loss, blackout,
   reserved-channel, white-output, kiosk, and shutdown suites.
-- Run projection failure, missing-media, player-crash, and display-disconnect
-  checks while lighting remains controllable and on time.
+- Run projection failure, missing-media, player-crash, display-disconnect, and
+  video drift/resync checks while lighting remains controllable and on time.
 - Document show preparation, transfer, activation, fallback, return sync, and
   emergency procedures before Stage authoring is reduced.
 
+## Decisions required before implementation commitments
+
+Sprint 0 must record these as explicit architecture/product decisions rather
+than letting the first implementation choose them accidentally:
+
+1. Hosted identity/session provider and account-recovery policy, including team
+   invitation and support-access boundaries.
+2. Tenant-isolation strategy for transactional metadata, object storage, jobs,
+   caches, logs, analytics, and backups.
+3. Billing integration boundary and the authoritative entitlement/usage model;
+   exact tier prices and quotas can remain configuration.
+4. Object-storage, resumable-upload, media-probe, transcode, thumbnail, and job-
+   queue abstractions, plus the first canonical Stage rendition profile.
+5. Stage device enrollment, package signing, credential rotation/revocation,
+   and hosted delivery protocol while preserving LAN/file parity.
+6. Pi projection backend selected from measured `mpv`, VLC, and GStreamer/
+   direct-rendering probes, including HDMI ownership and black-screen recovery.
+7. Initial projection contract: supported containers/codecs, resolution/frame-
+   rate ceiling, aspect/crop semantics, audio treatment, transition set, and
+   acceptable drift/resync behavior.
+8. Customer-media privacy, rights/provenance, retention/export/deletion, AI
+   provider/data-use policy, and whether any region-specific storage promise is
+   made at launch.
+9. Catalog curation and licensing process, including how an entitled catalog
+   revision remains usable inside an already published offline package.
+10. Initial Pro acceptance show: representative songs, lighting scenes, source
+    VFX/videos, derived clips, projector/display, Stage unit, and rehearsal test
+    conditions used as the vertical-slice fixture.
+
 ## Sprint plan
 
-### Sprint 0 — Contracts and migration proof
+### Sprint 0 — Product, domain, and isolation contracts
 
-Cards: `STUDIO-001`.
+Cards: `STUDIO-001`, design portion of `SAAS-001`.
 
-Freeze the Stage/Studio boundary, stable IDs, revision semantics, schema
-migration path, and representative legacy fixtures. Deliver design records,
-schemas, validators, migration dry-run, backups, and round-trip tests before UI
-or graph work relies on the new model.
+Freeze the Stage/Studio boundary, stable IDs, revision semantics, tenant and
+workspace model, role matrix, schema migration, entitlement vocabulary, media
+identity, and representative legacy fixtures. Deliver design records, schemas,
+validators, migration dry-run, backups, and tenant-isolation tests before UI,
+packages, media jobs, or AI depend on the model.
 
-### Sprint 1 — Safe package publishing
+### Sprint 1 — Hosted account and operations foundation
 
-Cards: `PUBLISH-001`.
+Cards: `SAAS-001`, foundation of `SAAS-003`.
 
-Implement deterministic package creation, validation, staging, explicit
-activation, inventory, and rollback. Prove interrupted and malicious imports
-cannot change the active show or start output.
+Implement sign-in/session boundaries, tenant/workspace membership, server-side
+authorization, tenant-scoped persistence/object keys/jobs, audit records,
+environment migrations, backups, and a restore drill. Exit with two test
+tenants that cannot observe or mutate one another through any supported path.
 
-### Sprint 2 — Local adjustment and return sync
+### Sprint 2 — Entitlements and starter catalog
 
-Cards: `SYNC-002`.
+Cards: `SAAS-002`, `CATALOG-001`.
 
-Implement the allowlisted Stage adjustment journal, change-set export/import,
-three-way comparison, conflict presentation, and explicit merge decisions.
-Support LAN and removable-media round trips through the same formats.
+Implement capability/quota evaluation, usage reservation/commit/release, and a
+small versioned catalog of base lighting scenes, Video Scenes, clips, and song
+templates. Exercise Free, Artist, and Pro configurations from the same code and
+prove catalog updates do not mutate pinned customer revisions.
 
-### Sprint 3 — Studio application foundation
+### Sprint 3 — Publishing, pairing, and offline delivery
 
-Cards: `STUDIO-002`.
+Cards: `PUBLISH-001`, `STAGE-LINK-001`.
 
-Build the browser Studio shell and migrate songs, setlists, looks, scenes, and
-tuning-profile authoring. Add draft/revision history, validation, and package
-publishing without any live-output capability.
+Implement deterministic package creation, validation, registry, short-lived
+device pairing, resumable delivery, Stage staging, explicit local activation,
+inventory, and rollback. The same package must pass through hosted, LAN, and
+removable-media delivery, and the Stage must run it after network removal.
 
-### Sprint 4 — Lighting design surface
+### Sprint 4 — Studio authoring and lighting vertical slice
 
-Cards: `STUDIO-003`.
+Cards: `STUDIO-002`, `STUDIO-003`.
 
-Deliver the zoomable multi-lane lighting timeline, inspector, simulator scrub,
-undo/redo, reference validation, and touch/keyboard workflows. Publish and run
-a lighting-only show package before adding media.
+Build the tenant-aware Studio shell and migrate songs, setlists, looks, scenes,
+and tuning profiles. Deliver revision history, autosaved drafts, validation,
+the zoomable lighting timeline, simulator scrub, undo/redo, and package publish.
+Publish and run a lighting-only higher-tier customer show before adding media.
 
-### Sprint 5 — Media and projection vertical slice
+### Sprint 5 — Private media and clip pipeline
 
-Cards: `MEDIA-001`, `STUDIO-004`, `PROJ-001`, and the necessary subset of
-`SHOW-002`.
+Cards: `MEDIA-001`, `MEDIA-002`.
 
-Add the content-addressed asset library, a basic projection track, deterministic
-clip interpretation, manifest transfer, Stage playback/black fallback, and one
-safe test clip. Measure the combined Pi workload without advanced overlays.
+Add resumable private upload, content addressing, probing, previews, storyboards,
+manual tags, non-destructive clip ranges, one Stage rendition, quota accounting,
+and reference-aware retention. Bulk-import representative band VFX/video files
+and produce a reusable short-clip library without placing media in Git or the
+graph.
 
-### Sprint 6 — Projection composition and unified cues
+### Sprint 6 — Projection playback foundation
 
-Cards: `PROJ-002`, `SHOW-002`, and `VIDEO-001` where video-to-fixture sampling
-is still desired.
+Cards: `PROJ-001`, minimal runtime portion of `SHOW-002`.
 
-Add projection presets, bounded overlays, independent projection blanking, and
-unified cue transitions while keeping lighting and projection failure domains
-separate. Video-to-grid remains an optional lighting input, not the media store.
+Select the Pi playback backend from measured `mpv`/VLC/GStreamer probes. Add an
+explicitly enabled separate player process, HDMI selection, load/play/pause/
+stop/seek/loop/blank, fake-player tests, package preflight, and one conservative
+clip. Prove player failure and display disconnect fail black without disturbing
+the 25 FPS lighting loop.
 
-### Parallel Sprint A — Graph memory and AI-assisted design
+### Sprint 7 — Video Scene manager and parallel song track
 
-Cards: `AI-DATA-001`, `AI-DATA-002`, `ANALYSIS-001`, and `AI-SONG-001`.
+Cards: `STUDIO-004`, `SHOW-002`.
 
-Start graph integration only after Sprint 0 produces stable IDs. Evaluate the
-graph on the Studio host first, index evidence and revisions, expose read-only
-recall, and keep every generated cue in the existing review/publish workflow.
-This sprint never blocks a lighting-only package or Stage startup.
+Deliver reusable Video Scenes and the separate Video lane beside Lighting with
+a shared ruler, playhead, song transport, deterministic metadata templates,
+preview, trim/split, transitions, gaps, and validation. Publish a multi-clip
+band song; Lighting and Video start from the same explicit song event, while
+video pre-roll remains invisible.
 
-### Sprint 7 — Runtime-focused Stage transition
+### Sprint 8 — Projection composition and optional video-to-grid
 
-Cards: `STAGE-001`.
+Cards: `PROJ-002`, optional `VIDEO-001`.
 
-Add Shows and Adjust runtime workspaces, record feature-parity evidence, publish
-migration guidance, and then reduce heavy Stage authoring. Preserve a rollback
-release until at least one rehearsal and one show complete with Studio packages.
+Add bounded overlays, colour/still layers, crop/fit, opacity, blend, intensity,
+and transitions after the playback foundation is stable. Video-to-grid remains
+an optional lighting input and never becomes the media store or show clock.
 
-### Sprint 8 — Integrated acceptance and operating handbook
+### Sprint 9 — AI-assisted authoring and memory
 
-Cards: `STUDIO-005` and the final acceptance portions of all linked projection,
-sync, and Stage cards.
+Cards: `AI-DATA-001`, `AI-DATA-002`, `ANALYSIS-001`, `AI-SONG-001`, and
+`AI-STUDIO-001`.
 
-Complete recovery, conflict, media, projection, hardware, safety, and offline
-tests. Document the full design-to-stage-to-Studio loop before declaring the
-new control plane show-critical.
+Index stable Studio revisions and evidence, add rights-safe song analysis, and
+produce structured Lighting/Video proposals with rationale, source and cost
+metadata. Review may accept selected changes into a draft; AI cannot publish or
+control Stage. Deterministic metadata templates remain the fallback and this
+sprint never blocks manual authoring or Stage startup.
 
-## Explicit non-goals for the first release
+### Sprint 10 — Local adjustment, return sync, and Stage focus
+
+Cards: `SYNC-002`, `STAGE-001`.
+
+Implement the allowlisted adjustment journal, cloud/LAN/file change-set return,
+three-way review, Shows/Adjust runtime workspaces, and explicit conflicts. Reduce
+heavy Stage authoring only after migration, package, rollback, media, adjustment,
+and return-sync evidence is recorded through a rehearsal and live show.
+
+### Sprint 11 — Integrated acceptance and operating handbook
+
+Cards: `STUDIO-005`, `SAAS-003`, and final acceptance for all linked cards.
+
+Complete tenant-isolation, quota, export/deletion, recovery, package, conflict,
+media, projection, cloud-offline, hardware, security-boundary, and show-safety
+tests. Document onboarding, asset preparation, design, publish, delivery,
+activation, fallback, return sync, and emergency operation before launch.
+
+## Explicit non-goals for the first hosted release
 
 - Real-time multi-user collaborative editing.
-- Cloud accounts or Internet-required publishing.
+- Internet-dependent show playback or streaming show-critical media.
+- Remote activation or remote start of lighting/video output from Studio.
+- Hard-coded prices or separate application forks for subscription tiers.
+- Automatic ingestion of customer assets into the shared catalog or model
+  training corpus.
 - Editing the active Stage package in place.
 - Automatic conflict resolution or last-writer-wins synchronization.
 - Graph replication as package transfer or Stage state storage.
