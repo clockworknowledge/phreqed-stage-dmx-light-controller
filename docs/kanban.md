@@ -146,6 +146,28 @@ Acceptance remaining: perform the first human catalog review and decide which
 curated images, if any, should become committed regression baselines. Generated
 working output remains ignored until that policy is chosen.
 
+### VIDEO-002 — Local Video EDL and Stage rendition baseline (`P1`, media)
+
+A versioned, non-destructive Video EDL now references logical asset IDs rather
+than developer filesystem paths. The shell-free build pass validates sequential
+clip ranges, cover/contain fitting, focal points, fades, logical portrait or
+landscape canvases, and optional output rotation before producing an audio-free
+H.264 High 4.1 `yuv420p` Stage rendition. The package manifest records the full
+EDL plus source, EDL, and output SHA-256 hashes. Stage preflight rejects missing,
+tampered, escaping, mismatched, or unsupported renditions. Projection remains
+disabled and black without an explicitly injected player backend.
+
+The five-second Travelling probe rendered successfully at 1080×1920, 30 FPS
+with no audio, and its generated package passed the same Stage preflight.
+`scripts/projector-probe.py` inventories display connectors and installed player
+candidates without changing the Pi or opening a projector.
+
+Acceptance remaining: run the display probe on the commissioned vertical Pi
+projector, select and soak a VLC/mpv/GStreamer backend under `PROJ-001`, author
+the first real Travelling clip/VFX EDL, and verify playback fails black without
+disturbing the 25 FPS lighting path. Overlays and parallel song transport remain
+`PROJ-002` and `SHOW-002` rather than expanding this baseline.
+
 ### AI-DATA-001 — Relate offline-memory feasibility spike (`P2`)
 
 The proposed song/analysis/section/feature/proposal/evidence/review graph,

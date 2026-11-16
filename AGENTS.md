@@ -35,6 +35,12 @@ preview them locally or transmit a 512-channel DMX frame to QLC+ using Art-Net.
   setlist playback with explicit start/stop and no automatic next-song start.
 - `src/phreqed_dmx/song_styles.py`: deterministic genre-based baseline cue
   templates scaled to song duration; generated revisions always stay drafts.
+- `src/phreqed_dmx/video_edl.py`: validated non-destructive clip decisions and
+  portrait/landscape projection profiles with logical asset references only.
+- `src/phreqed_dmx/video_render.py`: shell-free FFmpeg Stage-rendition compiler
+  with source, EDL, and output hashes; it never opens a projector.
+- `src/phreqed_dmx/projection.py`: fail-closed Stage-package preflight and an
+  injected player command boundary that remains disabled/black by default.
 - `src/phreqed_dmx/performance.py`: transport-independent Manual/Setlist mode,
   song selection, and performer command routing around `SongTimelineRunner`.
 - `src/phreqed_dmx/fixtures.py`: fixture geometry and logical-pixel-to-DMX mapping.
@@ -133,6 +139,11 @@ not effect code, converts those coordinates to physical zone order.
   execution, or an inhibit override. Pi authorization must be restricted to the
   managed `phreqed-dmx.service` starting only the root-owned
   `phreqed-poweroff.service` helper.
+- Projection is disabled and black by default. EDLs may reference only logical
+  asset IDs and validated local media; they must never contain remote URLs or
+  commands. Rendering and playback stay outside the 25 FPS DMX thread, missing
+  or invalid media fails black, and projection failure must not alter lighting,
+  audio, MIDI, leases, or shutdown control.
 - The managed show controller must not be suspended by desktop/display idle
   policy. Its systemd dependency may inhibit only `sleep` and `idle` while the
   service is active; it must not inhibit shutdown. LCD dimming or blanking must

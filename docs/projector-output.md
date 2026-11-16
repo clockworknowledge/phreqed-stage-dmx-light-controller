@@ -62,6 +62,12 @@ explicit song start.
 4. Audio response: reuse normalized `AudioAnalysis` values for bounded overlay
    parameters without coupling capture to the video backend.
 
+The initial build-time foundation is complete: versioned sequential Video EDLs,
+local asset-ID resolution, portrait/landscape profiles, a shell-free FFmpeg
+compiler, an audio-free H.264 Stage rendition, package hashes, fail-closed
+preflight, and a disabled-by-default player boundary. A real player is not yet
+selected or enabled. See `docs/video-edl-baseline.md`.
+
 VLC is a useful first playback probe because Raspberry Pi OS documents its
 hardware acceleration. The implementation should compare VLC, `mpv`, and a
 GStreamer or OpenGL path on the actual Debian Trixie installation before fixing

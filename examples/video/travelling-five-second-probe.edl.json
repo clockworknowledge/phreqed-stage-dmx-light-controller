@@ -1,0 +1,25 @@
+{
+  "version": 1,
+  "edl_id": "travelling-five-second-probe",
+  "title": "Travelling five-second portrait render probe",
+  "projection": {
+    "profile_id": "portrait-logical-1080x1920",
+    "canvas_width": 1080,
+    "canvas_height": 1920,
+    "output_rotation": "none",
+    "frame_rate": 30.0
+  },
+  "clips": [
+    {
+      "clip_id": "travelling-opening-probe",
+      "asset_id": "travelling-master",
+      "source_in_seconds": 0.0,
+      "source_out_seconds": 5.0,
+      "fit_mode": "cover",
+      "focal_x": 0.5,
+      "focal_y": 0.5,
+      "fade_in_seconds": 0.25,
+      "fade_out_seconds": 0.5
+    }
+  ]
+}

@@ -2,6 +2,27 @@
 
 Last updated: 2026-11-16
 
+## Current checkpoint -- Video EDL and Stage rendition baseline
+
+The first Studio-compatible video build slice is implemented as `VIDEO-002` and
+is in Validation. Versioned EDLs keep logical asset IDs, non-destructive source
+ranges, fit/focal decisions, fades, and portrait/landscape projection profiles
+separate from local filesystem paths. A shell-free FFmpeg pass produces an
+audio-free H.264 High 4.1 `yuv420p` Stage rendition plus source, EDL, and output
+hashes. Stage preflight verifies the embedded EDL, identity, media constraints,
+size, and output hash before playback.
+
+Projection remains disabled and black unless a backend is explicitly injected.
+The transport-independent boundary exposes load/play/pause/seek/stop/black/close
+without importing Art-Net or entering the lighting render thread. A read-only Pi
+probe now records the connected display topology and installed VLC/mpv/GStreamer
+candidates before `PROJ-001` selects a backend.
+
+A real five-second Travelling probe rendered at 1080×1920, 30 FPS with no audio
+and passed package preflight. The generated video, local asset map, and source
+paths remain ignored. Next: run `scripts/projector-probe.py` on the commissioned
+vertical projector, then author the real Travelling/VFX EDL after player soak.
+
 ## Current checkpoint -- Operations telemetry and visual review tooling
 
 `OPS-008`, `SIM-004`, and `EFFECT-020` are implemented and moved to Validation.

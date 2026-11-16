@@ -250,6 +250,18 @@ gallery:
 
 The gallery does not open Art-Net, white channels, or projector output.
 
+With a projector attached, capture the read-only display/player inventory:
+
+```bash
+.venv/bin/python scripts/projector-probe.py \
+  --output /tmp/phreqed-projector-probe.json
+```
+
+This does not rotate a display or launch video. Preserve the JSON for the
+`PROJ-001` VLC/mpv/GStreamer comparison. The EDL renderer normally runs on the
+development/Studio computer; Stage receives only the built rendition and its
+hash-verified manifest. See `docs/video-edl-baseline.md`.
+
 Before a performance, run a sustained 25 FPS soak test on the Pi while watching
 CPU temperature and QLC+ input stability. Start with `--brightness 0.25` during
 fixture validation. The default RGB software ceiling is 0.65, but that limit is

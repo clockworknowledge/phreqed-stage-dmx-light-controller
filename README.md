@@ -35,12 +35,16 @@ and [Pi comparison checklist](docs/pi-script-import.md).
   status feedback, and PNG/PPM export
 - versioned user looks and ordered scenes with atomic JSON persistence
 - browser previews and show control with an explicit live gate and disconnect blackout
+- validated non-destructive Video EDLs, portrait/landscape rendition profiles,
+  and checksummed H.264 Stage-package generation with projection disabled by default
 
 See the complete [effect catalog](docs/effects.md) and
 [Phase 2 implementation report](docs/phase-2-implementation-report.md). Feature
 status and upcoming work are tracked on the [project Kanban](docs/kanban.md).
 The staged audio plan is documented in
 [Audio synchronization](docs/audio-synchronization.md).
+The first projection build path is documented in
+[Video EDL and Stage rendition baseline](docs/video-edl-baseline.md).
 
 ## Hardware configuration
 

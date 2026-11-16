@@ -149,6 +149,15 @@ unified cues; a second pedal is optional only for independent projector
 transport. See `docs/projector-output.md` and PROJ-001/PROJ-002/SHOW-002 in the
 Kanban.
 
+The first build-time slice is now implemented without selecting a live player.
+`video_edl.py` validates logical asset references, clip ranges, crop/fit focal
+points, fades, and portrait/landscape projection profiles. `video_render.py`
+compiles those decisions through a shell-free FFmpeg argument vector into an
+audio-free H.264 Stage rendition and checksummed manifest. `projection.py`
+preflights the package and provides an injected player command boundary; with no
+backend it remains disabled and black. It does not import Art-Net or run inside
+the 25 FPS lighting renderer. See `docs/video-edl-baseline.md`.
+
 Wireless wearables follow the same future show-coordinator boundary. Each unit
 renders a local effect from compact cue, palette, brightness, tempo/phase, and
 bounded audio state; it does not receive DMX-universe frames or block the DMX
