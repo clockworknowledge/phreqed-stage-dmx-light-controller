@@ -109,8 +109,16 @@ XWayland/XCB VLC window plus a Labwc `identifier="vlc"` rule using
 `MoveToOutput output="HDMI-A-2"` and `ToggleFullscreen` passed physical review:
 projection appeared on HDMI while the Stage touchscreen remained visible.
 Labwc reported no configuration errors. The managed adapter and idempotent
-Labwc configuration helper now encode that route; managed-service redeployment
-and repeat Start/Stop validation remain open.
+Labwc configuration helper now encode that route.
+
+Bench acceptance checkpoint (2026-11-16): the redeployed managed service kept
+Stage control on `DSI-1` and projected Video on `HDMI-A-2`. Foot-controlled
+Start and Stop operated the Video lane while the song's Lighting sequence ran
+in parallel. Blackout stopped output and returned the song and Video transport
+to the start. The operator observed no obvious playback lag, although a longer
+full-song drift/soak check remains open. Stop and blackout currently reveal the
+projector desktop, confirming the need for `PROJ-004` before fail-black
+acceptance.
 
 Acceptance remaining: compare or instrument a backend with queryable frame
 telemetry, run actual-DMX coexistence, then fault-test and complete managed
@@ -149,14 +157,35 @@ locally preflighted package, then creates only `video-show.json`. It is
 idempotent for the same publication and refuses to replace a different existing
 sidecar; it never rewrites song, cue-sheet, setlist, or tuning data.
 
-Acceptance remaining: verify real Start/Stop on the newly integrated named-
-output route, audio/song alignment and drift with fixtures, add shared
+Acceptance remaining: verify full-song audio/video/Lighting alignment and drift
+with fixtures, add shared
 pause/resume/seek, expose a Video lane in Song Builder, and wire Ampero
 show-level transport only after projection black is fault-tested.
 
 ## Ready
 
-No implementation-ready work.
+### PROJ-004 — Persistent black projection underlay (`P1`, visual output)
+
+Keep a dedicated fullscreen black surface continuously present on the named
+`HDMI-A-2` projector beneath managed Video. As a performer, I must never expose
+the Pi desktop, wallpaper, panels, notifications, or cursor when Video is idle,
+stopped, blacked out, between cues, unavailable, or has failed.
+
+Next-cycle scope: select the smallest locally supervised implementation, bind
+it to the named Labwc output without covering `DSI-1`, start it independently
+of VLC media playback, keep it black-only, and integrate its health with the
+optional Video supervisor. It must not delay or become a dependency of QLC+,
+Lighting, audio, MIDI, browser control, or headless operation.
+
+Acceptance: boot and idle show black on the projector; Video appears above the
+underlay; Stop, Blackout, cue gaps, normal completion, VLC crash, invalid media,
+controller restart, and display reconnect all return to black without exposing
+the desktop. The Stage touchscreen remains usable throughout. Add hardware-free
+configuration/process tests and repeat the Pi lights-plus-video Start/Stop and
+Blackout checks. Then run a full-song drift/soak observation.
+
+Dependencies: `PROJ-001` named-output routing. This card closes the initial
+managed fail-black gap but does not replace later dual-surface supervision.
 
 ## Validation
 

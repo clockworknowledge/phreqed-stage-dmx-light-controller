@@ -2,6 +2,18 @@
 
 Last updated: 2026-11-16
 
+## Next resume point -- Persistent black projection underlay
+
+Resume with `PROJ-004`: design and implement a continuously present fullscreen
+black underlay on named output `HDMI-A-2`, beneath VLC and independent of media
+playback. It must prevent the Pi desktop, wallpaper, panels, notifications, and
+cursor from appearing while Video is idle, stopped, blacked out, between cues,
+complete, unavailable, or failed. It must never cover the `DSI-1` Stage
+touchscreen or become a dependency of Lighting, QLC+, audio, MIDI, browser
+control, or headless startup. Add hardware-free tests, then repeat the Pi
+lights-plus-video Start/Stop and Blackout checks and run a full-song drift/soak
+observation. Detailed acceptance is on the Ready card in `docs/kanban.md`.
+
 ## Current checkpoint -- Video EDL and Stage rendition baseline
 
 The first Studio-compatible video build slice is implemented as `VIDEO-002` and
@@ -49,8 +61,8 @@ CPU/RSS peaked at 20.44% of one core and 145,808 KiB; the renderer used 11.63%
 of one core; CPU temperature peaked at 41.35 C. VLC fell back to I420 Wayland
 output after V4L2 H.264 decode was unavailable. Raw evidence is preserved in
 `docs/validation/projection-soak-2026-11-16.json`. Explicit visual smoothness,
-queryable drop telemetry, actual-DMX coexistence, and managed fail-black player
-controls remain open.
+queryable drop telemetry, extended actual-DMX coexistence, and managed
+fail-black player controls remain open.
 
 Operator review found playback visually clean. It also showed that the soak's
 `contain` treatment preserved the landscape frame but made it too small on the
@@ -80,9 +92,9 @@ offset, and the existing Setlist Start/Stop path owns the optional Video runner
 behind explicit `live --web --video-output` enablement. The reference installer
 resolves the exact existing title to its real song ID and creates only the
 atomic `video-show.json` sidecar after confirming setlist membership and package
-availability. Pi publication and real song/audio alignment are next;
-independently supervised output black, pause/resume/seek, and Song Builder UI
-remain open.
+availability. Pi publication and initial combined sequencing have passed;
+full-song audio/video/Lighting alignment, independently supervised output
+black, pause/resume/seek, and Song Builder UI remain open.
 
 Initial managed transport testing confirmed that the foot switch starts and
 stops the Travelling Video lane, and a Video-disabled run confirmed that the
@@ -95,8 +107,16 @@ was correctly moved to `HDMI-A-2` and fullscreened by Labwc using
 and Labwc reported no configuration errors. `SetFullscreen` is invalid on this
 Labwc 0.20.2 build. The managed player now uses this commissioned XWayland/XCB
 route and an idempotent configuration helper preserves the touch mapping while
-repairing the VLC rule. A managed-service redeploy and repeat foot-switch test
-are the next acceptance step.
+repairing the VLC rule.
+
+The managed-service redeploy then passed the initial combined bench test. Stage
+control remained on `DSI-1`; the Travelling Video played on `HDMI-A-2`; and the
+Lighting sequence ran concurrently. Foot-controlled Start and Stop worked for
+Video. Blackout stopped output and reset the song and Video transport to the
+start. The operator saw no obvious lag during this check, but longer full-song
+alignment and drift observation remains open. Stop and blackout reveal the Pi
+desktop after VLC exits, so the next cycle begins with the persistent black
+projection underlay tracked as `PROJ-004`.
 
 The planned performance rig is two Betopper cubes flanking the stage plus a
 vertical rear screen for large character visuals. `PROJ-003` adds an optional
