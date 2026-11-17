@@ -1,0 +1,14 @@
+{
+  "version": 1,
+  "assets": {
+    "travelling-master": "REPLACE_WITH_LOCAL_PATH/240122 Travelling Final V2.mov",
+    "vfx-chaotic-energy": "REPLACE_WITH_INFINITY_VFX_PATH/energy-H264_01/energy-H264_01/Chaotic 1.mp4",
+    "vfx-duality": "REPLACE_WITH_INFINITY_VFX_PATH/energy-H264_01/energy-H264_01/Duality.mp4",
+    "vfx-energy-disperse": "REPLACE_WITH_INFINITY_VFX_PATH/energy-H264_01/energy-H264_01/Energy Disperse.mp4",
+    "vfx-ember-patterns": "REPLACE_WITH_INFINITY_VFX_PATH/embers-h264/embers-h264/Ember Patterns 1.mp4",
+    "vfx-energy-ring": "REPLACE_WITH_INFINITY_VFX_PATH/shockwaves-H264/shockwaves-H264/Energy Ring Shockwave.mp4",
+    "vfx-hologram-shockwave": "REPLACE_WITH_INFINITY_VFX_PATH/shockwaves-H264/shockwaves-H264/Hologram Shockwave.mp4",
+    "vfx-fluid-smoke": "REPLACE_WITH_INFINITY_VFX_PATH/smoke-h264/smoke-h264/Fluid Smoke 1.mp4",
+    "vfx-electric-ribbons": "REPLACE_WITH_INFINITY_VFX_PATH/extinction.scifi.fx_HD/Extinction - Sci-Fi Weapon FX_HD/Electric FX/Ribbons Main.mov"
+  }
+}

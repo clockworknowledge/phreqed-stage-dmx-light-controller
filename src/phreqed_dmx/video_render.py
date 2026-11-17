@@ -12,7 +12,14 @@ import tempfile
 from typing import Callable
 import uuid
 
-from .video_edl import VideoClip, VideoEdl
+from .video_edl import (
+    VideoClip,
+    VideoComposition,
+    VideoDocument,
+    VideoEdl,
+    VideoLayer,
+    referenced_asset_ids,
+)
 
 
 RENDER_MANIFEST_VERSION = 1
@@ -66,16 +73,187 @@ def _clip_filter(clip: VideoClip, index: int, edl: VideoEdl) -> str:
     return ",".join(filters) + f"[clip{index}]"
 
 
+def _geometry_filter(
+    *, width: int, height: int, fit_mode: str, focal_x: float, focal_y: float
+) -> str:
+    horizontal = _decimal(focal_x)
+    vertical = _decimal(focal_y)
+    if fit_mode == "cover":
+        return (
+            f"scale={width}:{height}:force_original_aspect_ratio=increase,"
+            f"crop={width}:{height}:"
+            f"(in_w-out_w)*{horizontal}:(in_h-out_h)*{vertical}"
+        )
+    return (
+        f"scale={width}:{height}:force_original_aspect_ratio=decrease,"
+        f"pad={width}:{height}:"
+        f"(out_w-in_w)*{horizontal}:(out_h-in_h)*{vertical}:black"
+    )
+
+
+def _layer_filter(
+    layer: VideoLayer,
+    source_label: str,
+    layer_index: int,
+    composition: VideoComposition,
+) -> str:
+    projection = composition.projection
+    filters = [
+        f"[{source_label}]trim=start={_decimal(layer.source_in_seconds)}:"
+        f"end={_decimal(layer.source_out_seconds)}",
+        "setpts=PTS-STARTPTS",
+        f"fps={_decimal(projection.frame_rate)}",
+        _geometry_filter(
+            width=projection.canvas_width,
+            height=projection.canvas_height,
+            fit_mode=layer.fit_mode,
+            focal_x=layer.focal_x,
+            focal_y=layer.focal_y,
+        ),
+        "setsar=1",
+    ]
+    if layer.blend_mode == "normal":
+        filters.append("format=rgba")
+        if layer.fade_in_seconds:
+            filters.append(
+                "fade=t=in:st=0:"
+                f"d={_decimal(layer.fade_in_seconds)}:alpha=1"
+            )
+        if layer.fade_out_seconds:
+            start = layer.duration_seconds - layer.fade_out_seconds
+            filters.append(
+                "fade=t=out:"
+                f"st={_decimal(start)}:d={_decimal(layer.fade_out_seconds)}:alpha=1"
+            )
+        if layer.opacity < 1.0:
+            filters.append(
+                f"colorchannelmixer=aa={_decimal(layer.opacity)}"
+            )
+        remaining = max(0.0, composition.duration_seconds - layer.end_seconds)
+        filters.append(
+            "tpad=start_mode=add:start_duration="
+            f"{_decimal(layer.at_seconds)}:stop_mode=add:"
+            f"stop_duration={_decimal(remaining)}:color=black@0"
+        )
+        filters.extend([
+            f"trim=duration={_decimal(composition.duration_seconds)}",
+            "setpts=PTS-STARTPTS",
+        ])
+    else:
+        filters.append("format=gbrp")
+        if layer.fade_in_seconds:
+            filters.append(
+                f"fade=t=in:st=0:d={_decimal(layer.fade_in_seconds)}"
+            )
+        if layer.fade_out_seconds:
+            start = layer.duration_seconds - layer.fade_out_seconds
+            filters.append(
+                "fade=t=out:"
+                f"st={_decimal(start)}:d={_decimal(layer.fade_out_seconds)}"
+            )
+        remaining = max(0.0, composition.duration_seconds - layer.end_seconds)
+        filters.append(
+            "tpad=start_mode=add:start_duration="
+            f"{_decimal(layer.at_seconds)}:stop_mode=add:"
+            f"stop_duration={_decimal(remaining)}:color=black"
+        )
+        filters.extend([
+            f"trim=duration={_decimal(composition.duration_seconds)}",
+            "setpts=PTS-STARTPTS",
+        ])
+    return ",".join(filters) + f"[layer{layer_index}]"
+
+
+def _output_filter_parts(edl: VideoDocument, source_label: str) -> list[str]:
+    output_filters = []
+    if edl.projection.horizontal_flip:
+        output_filters.append("hflip")
+    rotation = edl.projection.output_rotation
+    if rotation == "clockwise":
+        output_filters.append("transpose=clock")
+    elif rotation == "counterclockwise":
+        output_filters.append("transpose=cclock")
+    output_filters.append("format=yuv420p")
+    return [f"[{source_label}]" + ",".join(output_filters) + "[video]"]
+
+
+def _build_composition_filters(
+    composition: VideoComposition,
+    input_indices: dict[str, int],
+) -> list[str]:
+    duration = _decimal(composition.duration_seconds)
+    filters = [
+        f"[0:v]trim=duration={duration},setpts=PTS-STARTPTS,format=gbrp[base]"
+    ]
+    source_labels: dict[int, str] = {}
+    for asset_id, input_index in input_indices.items():
+        layer_indices = [
+            index
+            for index, layer in enumerate(composition.layers)
+            if layer.asset_id == asset_id
+        ]
+        if len(layer_indices) == 1:
+            source_labels[layer_indices[0]] = f"{input_index}:v"
+            continue
+        outputs = "".join(f"[source{index}]" for index in layer_indices)
+        filters.append(f"[{input_index}:v]split={len(layer_indices)}{outputs}")
+        for index in layer_indices:
+            source_labels[index] = f"source{index}"
+    filters.extend(
+        _layer_filter(layer, source_labels[index], index, composition)
+        for index, layer in enumerate(composition.layers)
+    )
+    prior = "base"
+    blend_options = {
+        "screen": "all_expr=A+B-A*B/255",
+        "add": "all_expr=A+B",
+        "lighten": "all_mode=lighten",
+    }
+    for index, layer in enumerate(composition.layers):
+        result = f"composite{index}"
+        layer_label = f"layer{index}"
+        enabled = (
+            "enable='between(t,"
+            f"{_decimal(layer.at_seconds)},{_decimal(layer.end_seconds)})'"
+        )
+        if layer.blend_mode == "normal":
+            filters.append(
+                f"[{prior}][{layer_label}]overlay=shortest=0:"
+                f"eof_action=pass:format=rgb:{enabled},format=gbrp[{result}]"
+            )
+        else:
+            filters.append(
+                f"[{prior}][{layer_label}]blend="
+                f"{blend_options[layer.blend_mode]}:"
+                f"all_opacity={_decimal(layer.opacity)}:shortest=1,"
+                f"format=gbrp[{result}]"
+            )
+        prior = result
+    filters.append(
+        f"[{prior}]trim=duration={duration},setpts=PTS-STARTPTS[sequence]"
+    )
+    filters.extend(_output_filter_parts(composition, "sequence"))
+    return filters
+
+
 def build_ffmpeg_command(
-    edl: VideoEdl,
+    edl: VideoDocument,
     assets: dict[str, Path],
     output_path: str | Path,
     *,
     ffmpeg_executable: str | Path = "ffmpeg",
+    filter_threads: int = 1,
 ) -> list[str]:
     """Return a shell-free FFmpeg argument vector for a complete EDL."""
 
-    referenced = {clip.asset_id for clip in edl.clips}
+    if (
+        isinstance(filter_threads, bool)
+        or not isinstance(filter_threads, int)
+        or not 1 <= filter_threads <= 16
+    ):
+        raise ValueError("FFmpeg filter threads must be an integer from 1 to 16")
+
+    referenced = set(referenced_asset_ids(edl))
     missing = referenced.difference(assets)
     if missing:
         raise ValueError(f"asset map is missing IDs: {sorted(missing)}")
@@ -86,37 +264,63 @@ def build_ffmpeg_command(
             raise ValueError(f"video asset does not exist: {asset_id}")
         resolved[asset_id] = path.resolve()
 
-    command = [str(ffmpeg_executable), "-nostdin", "-hide_banner", "-loglevel", "warning"]
-    for clip in edl.clips:
-        command.extend([
-            "-ss",
-            _decimal(clip.source_in_seconds),
-            "-t",
-            _decimal(clip.duration_seconds),
-            "-i",
-            str(resolved[clip.asset_id]),
-        ])
-
-    filter_parts = [
-        _clip_filter(clip, index, edl)
-        for index, clip in enumerate(edl.clips)
+    command = [
+        str(ffmpeg_executable),
+        "-nostdin",
+        "-hide_banner",
+        "-loglevel",
+        "warning",
+        "-filter_complex_threads",
+        str(filter_threads),
     ]
-    clip_inputs = "".join(f"[clip{index}]" for index in range(len(edl.clips)))
-    filter_parts.append(
-        f"{clip_inputs}concat=n={len(edl.clips)}:v=1:a=0[sequence]"
-    )
-    output_filters = []
-    if edl.projection.horizontal_flip:
-        output_filters.append("hflip")
-    rotation = edl.projection.output_rotation
-    if rotation == "clockwise":
-        output_filters.append("transpose=clock")
-    elif rotation == "counterclockwise":
-        output_filters.append("transpose=cclock")
-    output_filters.append("format=yuv420p")
-    filter_parts.append(
-        "[sequence]" + ",".join(output_filters) + "[video]"
-    )
+    if isinstance(edl, VideoComposition):
+        command.extend([
+            "-f",
+            "lavfi",
+            "-t",
+            _decimal(edl.duration_seconds),
+            "-i",
+            "color=c=black:"
+            f"s={edl.projection.canvas_width}x{edl.projection.canvas_height}:"
+            f"r={_decimal(edl.projection.frame_rate)}",
+        ])
+        input_indices: dict[str, int] = {}
+        for input_index, asset_id in enumerate(
+            referenced_asset_ids(edl), start=1
+        ):
+            input_indices[asset_id] = input_index
+            command.extend([
+                "-threads",
+                "1",
+                "-i",
+                str(resolved[asset_id]),
+            ])
+    else:
+        records = edl.clips
+        for clip in records:
+            command.extend([
+                "-ss",
+                _decimal(clip.source_in_seconds),
+                "-t",
+                _decimal(clip.duration_seconds),
+                "-i",
+                str(resolved[clip.asset_id]),
+            ])
+
+    if isinstance(edl, VideoComposition):
+        filter_parts = _build_composition_filters(edl, input_indices)
+    else:
+        filter_parts = [
+            _clip_filter(clip, index, edl)
+            for index, clip in enumerate(edl.clips)
+        ]
+        clip_inputs = "".join(
+            f"[clip{index}]" for index in range(len(edl.clips))
+        )
+        filter_parts.append(
+            f"{clip_inputs}concat=n={len(edl.clips)}:v=1:a=0[sequence]"
+        )
+        filter_parts.extend(_output_filter_parts(edl, "sequence"))
 
     frame_rate = _decimal(edl.projection.frame_rate)
     command.extend([
@@ -180,11 +384,12 @@ def _write_json_atomic(path: Path, value: dict) -> None:
 
 
 def render_video_edl(
-    edl: VideoEdl,
+    edl: VideoDocument,
     assets: dict[str, Path],
     output_directory: str | Path,
     *,
     ffmpeg_executable: str | Path = "ffmpeg",
+    filter_threads: int = 1,
     overwrite: bool = False,
     runner: Callable[..., subprocess.CompletedProcess] = subprocess.run,
 ) -> VideoRenderResult:
@@ -206,6 +411,7 @@ def render_video_edl(
         assets,
         temporary_video,
         ffmpeg_executable=ffmpeg_executable,
+        filter_threads=filter_threads,
     )
     try:
         completed = runner(
@@ -223,7 +429,7 @@ def render_video_edl(
         if not temporary_video.is_file() or temporary_video.stat().st_size == 0:
             raise RuntimeError("FFmpeg reported success without a rendered video")
 
-        referenced_ids = tuple(dict.fromkeys(clip.asset_id for clip in edl.clips))
+        referenced_ids = referenced_asset_ids(edl)
         source_records = []
         for asset_id in referenced_ids:
             source = Path(assets[asset_id]).expanduser().resolve()

@@ -10,7 +10,7 @@ from phreqed_dmx.projection import (
     load_stage_video_package,
 )
 from phreqed_dmx.video_edl import parse_video_edl
-from tests.test_video_edl import edl_document
+from tests.test_video_edl import composition_document, edl_document
 
 
 class FakeProjectionBackend:
@@ -60,6 +60,47 @@ def write_package(root: Path) -> Path:
 
 
 class ProjectionTests(unittest.TestCase):
+    def test_preflights_version_two_layered_package(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            video = root / "hybrid.mp4"
+            content = b"fake layered stage rendition"
+            video.write_bytes(content)
+            edl = parse_video_edl(composition_document())
+            manifest = {
+                "version": 1,
+                "package_id": "video-composition-test--portrait-test",
+                "edl_sha256": hashlib.sha256(
+                    edl.canonical_bytes()
+                ).hexdigest(),
+                "edl": edl.as_dict(),
+                "duration_seconds": 30.0,
+                "sources": [
+                    {
+                        "asset_id": asset_id,
+                        "size_bytes": 123,
+                        "sha256": "1" * 64,
+                    }
+                    for asset_id in ("asset-master", "asset-energy")
+                ],
+                "rendition": {
+                    "file": video.name,
+                    "size_bytes": len(content),
+                    "sha256": hashlib.sha256(content).hexdigest(),
+                    "width": 1280,
+                    "height": 720,
+                    "frame_rate": 30.0,
+                    "video_codec": "h264-high-4.1",
+                    "pixel_format": "yuv420p",
+                    "audio": False,
+                },
+            }
+            path = root / "hybrid.manifest.json"
+            path.write_text(json.dumps(manifest), encoding="utf-8")
+            package = load_stage_video_package(path)
+        self.assertEqual(package.duration_seconds, 30.0)
+        self.assertEqual((package.width, package.height), (1280, 720))
+
     def test_registry_preflights_and_resolves_only_local_package_ids(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

@@ -2,14 +2,51 @@
 
 Last updated: 2026-11-17
 
-## Next resume point -- Author the Travelling hybrid scene
+## Next resume point -- Review and publish the Travelling hybrid scene
 
-Begin `SHOW-005`: author the first synchronized hybrid
-Lighting/Video scene for **Travelling on a Floating Rock** from selected
-Infinity VFX source ranges. Produce a reviewed musical cue map, a new versioned
-Video EDL/package and sidecar publication, preserve existing song/setlist data,
-then run the full song for transition quality and cumulative drift. Detailed
-acceptance is in `docs/kanban.md`.
+Continue `SHOW-005` from the authored sparse hybrid baseline. Review the full
+180-second render against the song and Lighting cues, refine source ranges or
+focal points from rehearsal evidence, copy the hash-verified package to the Pi,
+and publish it as a new Video Show revision only after approval. Preserve the
+current full-length Travelling package, `video-show.json`, songs, setlists, and
+tuning profiles until the new revision passes Start/Stop/Blackout, drift, and
+Video-disabled acceptance. Detailed acceptance is in
+`docs/travelling-hybrid-video.md` and `docs/kanban.md`.
+
+## Current checkpoint -- Sparse hybrid Video composition
+
+Version 2 of the Video EDL is implemented without changing version 1 packages.
+It adds an explicit song duration and black canvas, absolute layer placement,
+opacity, fades, and normal/screen/add/lighten composition. FFmpeg decodes each
+unique source once, splits repeated uses in the filter graph, and compiles the
+result offline into the same audio-free H.264 Stage package contract; the Pi
+still performs no live compositing. Stage preflight accepts both EDL versions
+and continues to verify canonical EDL and source/output hashes.
+
+`travelling-on-a-floating-rock-hybrid-v1.edl.json` is the first authored map.
+It aligns seven visual phrases to the current 180-second Lighting timeline,
+shows picture for 69 seconds, leaves 111 seconds deliberately black, and limits
+every master-video fragment to ten seconds or less. Selected Infinity sources
+are Chaotic Energy, Duality, Energy Disperse, Ember Patterns, Fluid Smoke,
+Electric Ribbons, Energy Ring Shockwave, and Hologram Shockwave. A generated
+local selector board links one still and a four-second preview for each source;
+licensed media, previews, source paths, and rendered packages remain ignored.
+
+The real-source filter probe confirms true-black idle frames, correct portrait
+crop, transparent normal-layer padding, and screen-blended VFX. The committed
+cue map and local asset-map template document repeatable rendering. The current
+Pi sidecar has not been replaced or modified. Windows Python 3.12 passes all
+308 tests; focused EDL/render/preflight tests, Python compilation, and diff
+checks pass. The full 180-second visual review and Pi publication remain open.
+
+The Relate decision was revisited against its current 1.0.1 documentation.
+Relate remains a strong candidate for Studio-side relationships, evidence, and
+agent memory, but not for Stage sequencing: it holds a graph in memory for one
+application on one machine and rejects a second writer. Studio may compile
+graph-backed authoring into deterministic EDL, cue-sheet, Video Show, and
+package snapshots. The Pi advances those snapshots without graph, MCP, cloud,
+or AI calls. A future Pi copy is optional read-only diagnostics/adjustment
+provenance supplied between publishes, never a runtime cue resolver.
 
 ## Current checkpoint -- Video EDL and Stage rendition baseline
 
@@ -156,9 +193,9 @@ seconds, emitting responsive HTML and a SHA-256 manifest without constructing
 Art-Net, white, or projector output. Chromium checks passed at 1280 x 800 and
 390 x 844 after removing phone-width overflow.
 
-Windows Python 3.12 passes all 301 tests; JavaScript syntax, Python compilation,
-and diff checks also pass. The next planning review is the baseline video sprint;
-the operator will provide representative music-video and VFX source material.
+At that checkpoint Windows Python 3.12 passed all 301 tests; JavaScript syntax,
+Python compilation, and diff checks also passed. The baseline video sprint then
+began with representative music-video and VFX source material from the operator.
 
 ## Planning checkpoint -- Hosted Phreqed Studio and projection
 

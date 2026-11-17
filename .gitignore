@@ -57,6 +57,8 @@ cover/
 output/playwright/
 output/effect-gallery/
 output/video-render/
+output/travelling-hybrid-review/
+output/*.local.json
 .venv-wsl/
 
 # Translations

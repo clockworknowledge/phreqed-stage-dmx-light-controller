@@ -1,6 +1,6 @@
 # Relate AI memory feasibility spike
 
-Last updated: 2026-11-13
+Last updated: 2026-11-17
 
 ## Decision
 
@@ -28,6 +28,30 @@ Sources:
 
 - [Where Relate fits](https://relatedb.ai/docs/concepts/where-relate-fits/)
 - [Model agent memory](https://relatedb.ai/docs/guides/agents/model-agent-memory/)
+- [Relate limitations](https://relatedb.ai/docs/reference/limitations/)
+- [Privacy and telemetry](https://relatedb.ai/docs/reference/privacy-and-telemetry/)
+
+## Studio and Pi sequencing boundary
+
+Relate can improve how Studio *understands and authors* a show: it can connect a
+song section to analysis evidence, candidate assets, prior approvals, Video
+Scenes, Lighting looks, published package revisions, and adjustments returned
+from Stage. It must not execute the live timeline.
+
+Studio compiles reviewed graph-backed decisions into the deterministic EDL,
+`video-show.json`, Lighting cue sheets, and immutable package manifests already
+understood by the Pi. The Pi continues to advance ordered cue arrays from the
+shared monotonic song clock without making a graph query at a cue boundary.
+Blackout, stop, no-autostart, package preflight, and lease-loss behavior remain
+available with Relate absent, locked, corrupt, or removed.
+
+An optional Pi copy may later provide read-only diagnostics, local search, or a
+queue of provenance-rich adjustment change sets. It receives a versioned export
+or snapshot only between publish operations; it is not replication and cannot
+become the sync protocol. It must not own media playback, resolve a scene at
+runtime, select the next cue, gate controller readiness, or share a writable
+store with Studio. This follows Relate's current one-process/one-machine,
+RAM-resident, single-writer design.
 
 ## Proposed graph
 
@@ -41,12 +65,18 @@ Sources:
 | `Evidence` | Source/tool result, content hash, recorded time, provenance |
 | `Review` | Operator approval/rejection, note, reviewer, timestamp |
 | `Fact` | Agent memory slot with valid/recorded time and optional embedding |
+| `VideoAsset` | Stable asset ID, rights/entitlement metadata, content hash; never media bytes |
+| `VideoScene` | Versioned authored scene and its referenced clip/layer decisions |
+| `TrackRevision` | Lighting or Video track revision and publish/review status |
+| `StagePackage` | Immutable package ID, manifest hash, target capabilities, publication status |
+| `AdjustmentChangeSet` | Local Stage changes returned for explicit Studio review and reconciliation |
 
 Relationships include `ANALYZES`, `HAS_SECTION`, `MEASURED`, `PROPOSES`,
-`SUPPORTED_BY`, `REVIEWS`, `ABOUT`, `FROM`, and `SUPERSEDES`. Corrections close
-old facts and proposals rather than deleting evidence. A proposal has no route
-to playback until an application-layer review action converts it into a draft
-cue sheet; a second existing publish action is still required.
+`SUPPORTED_BY`, `REVIEWS`, `USES_ASSET`, `COMPILES_TO`, `PUBLISHED_AS`,
+`ADJUSTS`, `ABOUT`, `FROM`, and `SUPERSEDES`. Corrections close old facts and
+proposals rather than deleting evidence. A proposal has no route to playback
+until an application-layer review action converts it into a draft cue sheet;
+a second existing publish action is still required.
 
 ## Process and storage boundary
 
@@ -58,7 +88,7 @@ cue sheet; a second existing publish action is still required.
   `Wants`, startup condition, health gate, or control lease.
 - Set a conservative logical graph size limit and a systemd memory ceiling.
   Stop accepting analysis writes before the graph threatens controller memory.
-- Disable telemetry, external model calls, and network listeners by default.
+- Disable CLI telemetry, external model calls, and network listeners by default.
   If embeddings are used, record the model identifier and dimensions with every
   index migration.
 - Back up only while the writer is stopped or through a documented consistent
@@ -72,9 +102,10 @@ cue sheet; a second existing publish action is still required.
 The spike remains in Validation until it produces a dated report with all of
 the following:
 
-1. Install the published ARM64 artifact on the target Raspberry Pi OS baseline;
-   record binary/package hashes, version, installed size, and whether an
-   offline installation can be reproduced.
+1. Install the published artifact on the selected Studio host; record
+   binary/package hashes, version, installed size, and whether an offline
+   installation can be reproduced. If a Pi copy still has a justified read-only
+   use, repeat the installation and measurements on ARM64 Raspberry Pi OS.
 2. Import a synthetic catalog of at least 100 songs, 1,000 sections, 10,000
    features/facts, and 2,000 cue proposals. Record store size, checkpoint time,
    cold-start time, peak RSS, steady RSS, query latency, and write latency.

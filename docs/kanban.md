@@ -187,6 +187,20 @@ remain suitable for the later Studio Video Scene/timeline editor.
 Dependencies: physical acceptance of `PROJ-004`, reviewed VFX source selection,
 and the existing `SHOW-002` shared transport.
 
+Implementation checkpoint (2026-11-17): version 2 of the non-destructive Video
+EDL now supports an absolute song clock, a persistent black canvas, overlapping
+layers, opacity/fades, and normal/screen/add/lighten blends while version 1
+packages remain backward compatible. The first 180-second Travelling hybrid map
+uses seven sparse phrases (69 visible seconds total) aligned to the current
+Lighting cue boundaries, with long intentional black intervals. It selects
+Chaotic Energy, Duality, Energy Disperse, Ember Patterns, Fluid Smoke, Electric
+Ribbons, and two shockwave sources from the existing Infinity VFX library and
+combines them with master-video fragments no longer than ten seconds. A local
+source-review board and four-second previews support source review without
+committing licensed media. Remaining acceptance is the full local render,
+audio/Lighting review, Pi package preflight, measured drift check, and publishing
+as a new Video Show revision without replacing the current baseline sidecar.
+
 ## Validation
 
 ### DISPLAY-001 — Adaptive local stage touchscreen umbrella (`P1`, operations)
@@ -325,6 +339,18 @@ memory, durability/recovery, read-only MCP, migration, and removable JSON
 export. If an on-Pi sidecar is still pursued, also complete ARM64 installation
 and 25 FPS coexistence. A host-specific failure is a no-go for that deployment
 target and does not block show control or ordinary Studio publishing.
+
+Design checkpoint (2026-11-17): current Relate 1.0.1 documentation reinforces
+the boundary. The graph is held in memory, belongs to one application on one
+machine, and permits only one writer; `relate serve` exposes that one open store
+rather than providing replication. Studio may use it to relate analysis,
+sections, assets, authored Lighting/Video revisions, evidence, reviews,
+packages, and returned Stage adjustments. Studio must compile those decisions
+into the existing deterministic EDL, cue-sheet, Video Show, and package
+contracts. The Pi never queries the graph to select or advance a live cue. Any
+Pi copy is optional/read-only diagnostics or adjustment provenance, supplied by
+a versioned snapshot between publishes and removable without affecting show
+operation.
 
 ### OPS-005 — Prevent Pi suspend during managed shows (`P0`, reliability)
 
@@ -771,6 +797,11 @@ generated cues remain drafts requiring ordinary review and publish; JSON export
 and rebuild are tested; graph loss never blocks ordinary package publishing;
 media bytes, credentials, leases, and mutable Stage runtime state never enter
 the graph.
+
+Sequencing boundary: graph-backed authoring may propose or explain a timeline,
+but publishing compiles stable ordered cues and package hashes. Stage playback
+uses only that compiled snapshot and the monotonic song clock; no graph lookup,
+MCP call, Studio connection, or AI decision occurs in the live cue path.
 
 Dependencies: `STUDIO-001` and the relevant `AI-DATA-001` feasibility gates.
 Planned Sprint 9; linked to `ANALYSIS-001`, `AI-SONG-001`, and

@@ -4,6 +4,7 @@ import unittest
 from pathlib import Path
 
 from phreqed_dmx.video_edl import (
+    VideoComposition,
     load_asset_map,
     load_video_edl,
     parse_asset_map,
@@ -44,7 +45,61 @@ def edl_document(
     return document
 
 
+def composition_document() -> dict:
+    return {
+        "version": 2,
+        "edl_id": "video-composition-test",
+        "title": "Sparse hybrid projection",
+        "projection": {
+            "profile_id": "portrait-test",
+            "canvas_width": 720,
+            "canvas_height": 1280,
+            "output_rotation": "clockwise",
+            "frame_rate": 30.0,
+            "horizontal_flip": True,
+        },
+        "duration_seconds": 30.0,
+        "layers": [
+            {
+                "layer_id": "master-fragment",
+                "asset_id": "asset-master",
+                "at_seconds": 4.0,
+                "source_in_seconds": 2.0,
+                "source_out_seconds": 9.0,
+                "fit_mode": "cover",
+                "focal_x": 0.4,
+                "focal_y": 0.6,
+                "opacity": 1.0,
+                "blend_mode": "normal",
+                "fade_in_seconds": 0.5,
+                "fade_out_seconds": 0.5,
+            },
+            {
+                "layer_id": "energy-overlay",
+                "asset_id": "asset-energy",
+                "at_seconds": 6.0,
+                "source_in_seconds": 0.0,
+                "source_out_seconds": 4.0,
+                "fit_mode": "cover",
+                "focal_x": 0.5,
+                "focal_y": 0.5,
+                "opacity": 0.7,
+                "blend_mode": "screen",
+                "fade_in_seconds": 0.25,
+                "fade_out_seconds": 0.75,
+            },
+        ],
+    }
+
+
 class VideoEdlTests(unittest.TestCase):
+    def test_round_trips_sparse_layered_composition(self) -> None:
+        composition = parse_video_edl(composition_document())
+        self.assertIsInstance(composition, VideoComposition)
+        self.assertEqual(composition.as_dict(), composition_document())
+        self.assertEqual(composition.duration_seconds, 30.0)
+        self.assertEqual(composition.layers[0].end_seconds, 11.0)
+
     def test_stage_layout_profiles_keep_layout_and_projection_side_separate(self):
         examples = Path(__file__).parents[1] / "examples" / "video"
         portrait = load_video_edl(
@@ -67,6 +122,31 @@ class VideoEdlTests(unittest.TestCase):
         self.assertFalse(landscape.projection.horizontal_flip)
         self.assertEqual(portrait.clips[0].fit_mode, "cover")
         self.assertEqual(landscape.clips[0].fit_mode, "cover")
+
+    def test_travelling_hybrid_is_sparse_and_song_length(self) -> None:
+        examples = Path(__file__).parents[1] / "examples" / "video"
+        composition = load_video_edl(
+            examples / "travelling-on-a-floating-rock-hybrid-v1.edl.json"
+        )
+        self.assertIsInstance(composition, VideoComposition)
+        self.assertEqual(composition.duration_seconds, 180.0)
+        self.assertEqual(composition.projection.output_dimensions, (1280, 720))
+        intervals = sorted(
+            (layer.at_seconds, layer.end_seconds) for layer in composition.layers
+        )
+        merged: list[list[float]] = []
+        for start, end in intervals:
+            if not merged or start > merged[-1][1]:
+                merged.append([start, end])
+            else:
+                merged[-1][1] = max(merged[-1][1], end)
+        visible_seconds = sum(end - start for start, end in merged)
+        self.assertGreaterEqual(visible_seconds, 60.0)
+        self.assertLessEqual(visible_seconds, 75.0)
+        self.assertTrue(any(
+            right[0] - left[1] >= 15.0
+            for left, right in zip(merged, merged[1:])
+        ))
 
     def test_round_trips_versioned_non_destructive_edl(self) -> None:
         edl = parse_video_edl(edl_document())
@@ -129,6 +209,20 @@ class VideoEdlTests(unittest.TestCase):
                 "version": 1,
                 "assets": {"asset-master": "https://example.com/video.mp4"},
             })
+
+    def test_rejects_invalid_layer_timing_and_blend(self) -> None:
+        invalid = composition_document()
+        invalid["layers"][0]["at_seconds"] = 28.0
+        with self.assertRaisesRegex(ValueError, "exceeds its duration"):
+            parse_video_edl(invalid)
+        invalid = composition_document()
+        invalid["layers"][0]["blend_mode"] = "multiply"
+        with self.assertRaisesRegex(ValueError, "blend mode"):
+            parse_video_edl(invalid)
+        invalid = composition_document()
+        invalid["layers"][0]["opacity"] = 1.5
+        with self.assertRaisesRegex(ValueError, "layer opacity"):
+            parse_video_edl(invalid)
 
 
 if __name__ == "__main__":

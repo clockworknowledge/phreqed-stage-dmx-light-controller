@@ -21,6 +21,14 @@ def main() -> int:
         "--output", type=Path, default=Path("output/video-render")
     )
     parser.add_argument("--ffmpeg", default="ffmpeg")
+    parser.add_argument(
+        "--filter-threads",
+        type=int,
+        choices=range(1, 17),
+        default=1,
+        metavar="1-16",
+        help="FFmpeg complex-filter workers (default: conservative single worker)",
+    )
     parser.add_argument("--overwrite", action="store_true")
     args = parser.parse_args()
     result = render_video_edl(
@@ -28,6 +36,7 @@ def main() -> int:
         load_asset_map(args.assets),
         args.output,
         ffmpeg_executable=args.ffmpeg,
+        filter_threads=args.filter_threads,
         overwrite=args.overwrite,
     )
     print(f"Rendered Stage video: {result.video_path.resolve()}")

@@ -11,7 +11,7 @@ from pathlib import Path
 import re
 from typing import Protocol
 
-from .video_edl import parse_video_edl
+from .video_edl import parse_video_edl, referenced_asset_ids
 
 
 MAX_PROJECTION_MANIFEST_BYTES = 5_000_000
@@ -163,7 +163,7 @@ def load_stage_video_package(path: str | Path) -> StageVideoPackage:
     sources = data["sources"]
     if not isinstance(sources, list):
         raise ValueError("projection sources are invalid")
-    referenced_ids = {clip.asset_id for clip in edl.clips}
+    referenced_ids = set(referenced_asset_ids(edl))
     source_ids: set[str] = set()
     for source in sources:
         if not isinstance(source, dict) or set(source) != {

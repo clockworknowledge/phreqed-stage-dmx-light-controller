@@ -6,10 +6,79 @@ from pathlib import Path
 
 from phreqed_dmx.video_edl import parse_video_edl
 from phreqed_dmx.video_render import build_ffmpeg_command, render_video_edl
-from tests.test_video_edl import edl_document
+from tests.test_video_edl import composition_document, edl_document
 
 
 class VideoRenderTests(unittest.TestCase):
+    def test_builds_sparse_layered_composition_over_black(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            master = root / "master.mov"
+            energy = root / "energy.mp4"
+            master.write_bytes(b"master")
+            energy.write_bytes(b"energy")
+            command = build_ffmpeg_command(
+                parse_video_edl(composition_document()),
+                {"asset-master": master, "asset-energy": energy},
+                root / "stage.mp4",
+                ffmpeg_executable="fixed-ffmpeg",
+            )
+        self.assertIn("lavfi", command)
+        self.assertEqual(
+            command[command.index("-filter_complex_threads") + 1], "1"
+        )
+        self.assertIn("color=c=black:s=720x1280:r=30", command)
+        filters = command[command.index("-filter_complex") + 1]
+        self.assertIn("start_duration=4", filters)
+        self.assertIn("color=black@0", filters)
+        self.assertIn("overlay=shortest=0:eof_action=pass", filters)
+        self.assertIn("enable='between(t,4,11)'", filters)
+        self.assertIn(
+            "blend=all_expr=A+B-A*B/255:all_opacity=0.7", filters
+        )
+        self.assertIn("hflip,transpose=clock", filters)
+        self.assertNotIn("concat=", filters)
+
+    def test_layered_composition_decodes_each_asset_once(self) -> None:
+        document = composition_document()
+        document["layers"][1]["asset_id"] = "asset-master"
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            master = root / "master.mov"
+            master.write_bytes(b"master")
+            command = build_ffmpeg_command(
+                parse_video_edl(document),
+                {"asset-master": master},
+                root / "stage.mp4",
+            )
+        self.assertEqual(command.count(str(master.resolve())), 1)
+        filters = command[command.index("-filter_complex") + 1]
+        self.assertIn("split=2[source0][source1]", filters)
+        self.assertIn("[source0]trim=start=2:end=9", filters)
+        self.assertIn("[source1]trim=start=0:end=4", filters)
+
+    def test_filter_worker_limit_is_explicit_and_bounded(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            source = root / "source.mov"
+            source.write_bytes(b"source")
+            command = build_ffmpeg_command(
+                parse_video_edl(edl_document()),
+                {"asset-master": source},
+                root / "stage.mp4",
+                filter_threads=4,
+            )
+            self.assertEqual(
+                command[command.index("-filter_complex_threads") + 1], "4"
+            )
+            with self.assertRaisesRegex(ValueError, "filter threads"):
+                build_ffmpeg_command(
+                    parse_video_edl(edl_document()),
+                    {"asset-master": source},
+                    root / "stage.mp4",
+                    filter_threads=0,
+                )
+
     def test_builds_shell_free_portrait_ffmpeg_plan(self) -> None:
         with tempfile.TemporaryDirectory() as directory:
             root = Path(directory)

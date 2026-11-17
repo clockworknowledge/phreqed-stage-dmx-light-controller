@@ -10,9 +10,11 @@ import re
 
 
 EDL_VERSION = 1
+COMPOSITION_VERSION = 2
 MAX_EDL_BYTES = 5_000_000
 MAX_VIDEO_SECONDS = 4 * 60 * 60
 FIT_MODES = ("cover", "contain")
+BLEND_MODES = ("normal", "screen", "add", "lighten")
 OUTPUT_ROTATIONS = ("none", "clockwise", "counterclockwise")
 _ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9-]{0,95}")
 
@@ -212,14 +214,144 @@ class VideoEdl:
         ).encode("utf-8")
 
 
-def parse_video_edl(value: object) -> VideoEdl:
-    data = _fields(
-        value,
-        {"version", "edl_id", "title", "projection", "clips"},
-        "video EDL",
-    )
-    if type(data["version"]) is not int or data["version"] != EDL_VERSION:
-        raise ValueError("unsupported video EDL version; expected 1")
+@dataclass(frozen=True, slots=True)
+class VideoLayer:
+    """A non-destructive source range placed on an absolute show timeline."""
+
+    layer_id: str
+    asset_id: str
+    at_seconds: float
+    source_in_seconds: float
+    source_out_seconds: float
+    fit_mode: str
+    focal_x: float
+    focal_y: float
+    opacity: float
+    blend_mode: str
+    fade_in_seconds: float
+    fade_out_seconds: float
+
+    def __post_init__(self) -> None:
+        _identifier(self.layer_id, "layer ID")
+        _identifier(self.asset_id, "asset ID")
+        _number(self.at_seconds, "layer start", 0.0, MAX_VIDEO_SECONDS)
+        start = _number(
+            self.source_in_seconds,
+            "source in",
+            0.0,
+            MAX_VIDEO_SECONDS,
+        )
+        end = _number(
+            self.source_out_seconds,
+            "source out",
+            0.0,
+            MAX_VIDEO_SECONDS,
+        )
+        if end <= start:
+            raise ValueError("source out must be after source in")
+        if self.fit_mode not in FIT_MODES:
+            raise ValueError("fit mode must be cover or contain")
+        _number(self.focal_x, "horizontal focal point", 0.0, 1.0)
+        _number(self.focal_y, "vertical focal point", 0.0, 1.0)
+        _number(self.opacity, "layer opacity", 0.0, 1.0)
+        if self.blend_mode not in BLEND_MODES:
+            raise ValueError(
+                "blend mode must be normal, screen, add, or lighten"
+            )
+        fade_in = _number(self.fade_in_seconds, "fade in", 0.0, 30.0)
+        fade_out = _number(self.fade_out_seconds, "fade out", 0.0, 30.0)
+        if fade_in + fade_out > self.duration_seconds:
+            raise ValueError("layer fades cannot exceed the layer duration")
+
+    @property
+    def duration_seconds(self) -> float:
+        return self.source_out_seconds - self.source_in_seconds
+
+    @property
+    def end_seconds(self) -> float:
+        return self.at_seconds + self.duration_seconds
+
+    def as_dict(self) -> dict:
+        return {
+            "layer_id": self.layer_id,
+            "asset_id": self.asset_id,
+            "at_seconds": self.at_seconds,
+            "source_in_seconds": self.source_in_seconds,
+            "source_out_seconds": self.source_out_seconds,
+            "fit_mode": self.fit_mode,
+            "focal_x": self.focal_x,
+            "focal_y": self.focal_y,
+            "opacity": self.opacity,
+            "blend_mode": self.blend_mode,
+            "fade_in_seconds": self.fade_in_seconds,
+            "fade_out_seconds": self.fade_out_seconds,
+        }
+
+
+@dataclass(frozen=True, slots=True)
+class VideoComposition:
+    """Sparse layered video authored against an absolute song clock."""
+
+    edl_id: str
+    title: str
+    projection: ProjectionProfile
+    duration_seconds: float
+    layers: tuple[VideoLayer, ...]
+
+    def __post_init__(self) -> None:
+        _identifier(self.edl_id, "EDL ID")
+        _text(self.title, "EDL title", 200)
+        if not isinstance(self.projection, ProjectionProfile):
+            raise ValueError("EDL projection profile is invalid")
+        duration = _number(
+            self.duration_seconds,
+            "composition duration",
+            0.01,
+            MAX_VIDEO_SECONDS,
+        )
+        if not isinstance(self.layers, tuple) or not 1 <= len(self.layers) <= 1000:
+            raise ValueError("composition must contain 1-1000 layers")
+        if any(not isinstance(layer, VideoLayer) for layer in self.layers):
+            raise ValueError("composition contains an invalid layer")
+        layer_ids = [layer.layer_id for layer in self.layers]
+        if len(set(layer_ids)) != len(layer_ids):
+            raise ValueError("composition layer IDs must be unique")
+        if any(layer.end_seconds > duration + 1e-6 for layer in self.layers):
+            raise ValueError("composition layer exceeds its duration")
+
+    def as_dict(self) -> dict:
+        return {
+            "version": COMPOSITION_VERSION,
+            "edl_id": self.edl_id,
+            "title": self.title,
+            "projection": self.projection.as_dict(),
+            "duration_seconds": self.duration_seconds,
+            "layers": [layer.as_dict() for layer in self.layers],
+        }
+
+    def canonical_bytes(self) -> bytes:
+        return (
+            json.dumps(
+                self.as_dict(),
+                sort_keys=True,
+                separators=(",", ":"),
+                allow_nan=False,
+            )
+            + "\n"
+        ).encode("utf-8")
+
+
+VideoDocument = VideoEdl | VideoComposition
+
+
+def referenced_asset_ids(edl: VideoDocument) -> tuple[str, ...]:
+    """Return source IDs in their first-authored order."""
+
+    records = edl.clips if isinstance(edl, VideoEdl) else edl.layers
+    return tuple(dict.fromkeys(record.asset_id for record in records))
+
+
+def _parse_projection(value: object) -> ProjectionProfile:
     projection_required = {
         "profile_id",
         "canvas_width",
@@ -227,12 +359,9 @@ def parse_video_edl(value: object) -> VideoEdl:
         "output_rotation",
         "frame_rate",
     }
-    projection_value = data["projection"]
-    projection_fields = (
-        set(projection_value) if isinstance(projection_value, dict) else set()
-    )
+    projection_fields = set(value) if isinstance(value, dict) else set()
     if (
-        not isinstance(projection_value, dict)
+        not isinstance(value, dict)
         or not projection_required <= projection_fields
         or not projection_fields <= projection_required | {"horizontal_flip"}
     ):
@@ -241,12 +370,69 @@ def parse_video_edl(value: object) -> VideoEdl:
             + ", ".join(sorted(projection_required))
             + "; optional: horizontal_flip"
         )
-    projection_data = dict(projection_value)
+    projection_data = dict(value)
     projection_data.setdefault("horizontal_flip", False)
+    return ProjectionProfile(**projection_data)
+
+
+def parse_video_edl(value: object) -> VideoDocument:
+    if not isinstance(value, dict) or type(value.get("version")) is not int:
+        raise ValueError("video EDL requires an integer version")
+    version = value["version"]
+    if version == COMPOSITION_VERSION:
+        data = _fields(
+            value,
+            {
+                "version",
+                "edl_id",
+                "title",
+                "projection",
+                "duration_seconds",
+                "layers",
+            },
+            "video composition",
+        )
+        layers_data = data["layers"]
+        if not isinstance(layers_data, list):
+            raise ValueError("video composition layers must be a list")
+        layers = tuple(
+            VideoLayer(**_fields(
+                layer,
+                {
+                    "layer_id",
+                    "asset_id",
+                    "at_seconds",
+                    "source_in_seconds",
+                    "source_out_seconds",
+                    "fit_mode",
+                    "focal_x",
+                    "focal_y",
+                    "opacity",
+                    "blend_mode",
+                    "fade_in_seconds",
+                    "fade_out_seconds",
+                },
+                "video layer",
+            ))
+            for layer in layers_data
+        )
+        return VideoComposition(
+            edl_id=data["edl_id"],
+            title=data["title"],
+            projection=_parse_projection(data["projection"]),
+            duration_seconds=data["duration_seconds"],
+            layers=layers,
+        )
+    if version != EDL_VERSION:
+        raise ValueError("unsupported video EDL version; expected 1 or 2")
+    data = _fields(
+        value,
+        {"version", "edl_id", "title", "projection", "clips"},
+        "video EDL",
+    )
     clips_data = data["clips"]
     if not isinstance(clips_data, list):
         raise ValueError("video EDL clips must be a list")
-    projection = ProjectionProfile(**projection_data)
     clips = tuple(
         VideoClip(**_fields(
             clip,
@@ -268,12 +454,12 @@ def parse_video_edl(value: object) -> VideoEdl:
     return VideoEdl(
         edl_id=data["edl_id"],
         title=data["title"],
-        projection=projection,
+        projection=_parse_projection(data["projection"]),
         clips=clips,
     )
 
 
-def load_video_edl(path: str | Path) -> VideoEdl:
+def load_video_edl(path: str | Path) -> VideoDocument:
     source = Path(path)
     if source.stat().st_size > MAX_EDL_BYTES:
         raise ValueError("video EDL exceeds 5 MB")
