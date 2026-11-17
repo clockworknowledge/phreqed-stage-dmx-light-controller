@@ -246,12 +246,31 @@ Video output remains disabled unless explicitly enabled in
 PHREQED_VIDEO_OUTPUT=1
 PHREQED_VIDEO_PACKAGES=/home/mmorley/.local/share/phreqed-dmx/video-packages
 PHREQED_VIDEO_LIBRARY=/home/mmorley/.local/share/phreqed-dmx/video-show.json
-PHREQED_VIDEO_SCREEN=1
+PHREQED_VIDEO_OUTPUT_NAME=HDMI-A-2
 PHREQED_VIDEO_SURFACE=portrait-character
 ```
 
+The commissioned Pi uses one 2560×800 extended Labwc desktop, so VLC's numeric
+Qt screen selector is not a reliable output boundary. Install and validate the
+named-output window rule before enabling managed Video:
+
+```bash
+.venv/bin/python scripts/configure-labwc-projection.py --output HDMI-A-2
+env LABWC_PID="$(pgrep -xo labwc)" labwc --reconfigure
+.venv/bin/python scripts/configure-labwc-projection.py \
+  --output HDMI-A-2 --check
+```
+
+The helper preserves the existing Goodix-to-`DSI-1` mapping and unrelated
+Labwc settings, replaces only the VLC routing/fullscreen actions, removes the
+temporary Phreqed error-capture hook if present, writes atomically, and creates
+a timestamped backup only when a change is needed. The commissioned Labwc
+0.20.2 build requires `ToggleFullscreen`; it rejects `SetFullscreen`.
+
 Restarting the controller then preflights every package before the web service
-starts. Setlist Start launches the active Video Scene from the Lighting song
+starts. The managed player deliberately unsets Wayland selection and launches
+an undecorated XCB window; Labwc moves that `vlc` window to the named projector
+and makes it fullscreen. Setlist Start launches the active Video Scene from the Lighting song
 clock; Stop, selection, completion, blackout, and Manual mode stop Video. A
 Video launch failure is reported but cannot stop Lighting. This is still a
 commissioning-stage adapter: the projector compositor background must be black,

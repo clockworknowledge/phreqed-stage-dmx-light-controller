@@ -59,16 +59,19 @@ class VlcVideoTrackOutputTests(unittest.TestCase):
             self.registry,
             surface_id="portrait-character",
             vlc_executable="/usr/bin/vlc",
-            screen_number=1,
-            environment={"WAYLAND_DISPLAY": "wayland-1"},
+            output_name="HDMI-A-2",
+            environment={"DISPLAY": ":0"},
             process_factory=launch,
         )
         output.activate(self.scene, 1.5, 100.0)
+        self.assertIn("--vout=xcb_x11", launches[0][0])
+        self.assertNotIn("--fullscreen", launches[0][0])
         self.assertIn("--start-time=1.500000", launches[0][0])
         self.assertEqual(launches[0][0][-1], str(self.registry.resolve(
             "video-edl-test--portrait-test"
         ).video_path))
         self.assertTrue(output.status()["running"])
+        self.assertEqual(output.status()["output_name"], "HDMI-A-2")
         output.black()
         self.assertTrue(process.terminated)
         self.assertFalse(output.status()["running"])
@@ -78,7 +81,7 @@ class VlcVideoTrackOutputTests(unittest.TestCase):
             self.registry,
             surface_id="portrait-character",
             vlc_executable="vlc",
-            screen_number=1,
+            output_name="HDMI-A-2",
             environment={},
             process_factory=lambda _command, _environment: FakeProcess(),
         )
@@ -107,7 +110,7 @@ class VlcVideoTrackOutputTests(unittest.TestCase):
             self.registry,
             surface_id="portrait-character",
             vlc_executable="vlc",
-            screen_number=1,
+            output_name="HDMI-A-2",
             environment={},
             process_factory=lambda _command, _environment: process,
         )

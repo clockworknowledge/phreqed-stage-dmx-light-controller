@@ -266,13 +266,16 @@ class ConfigurationTests(unittest.TestCase):
                 self.assertEqual(main([
                     "live", "--web", "--video-output",
                     "--vlc-executable", str(executable),
-                    "--video-screen", "1",
+                    "--video-output-name", "HDMI-A-2",
                 ]), 0)
         self.assertIs(
             serve.call_args.kwargs["video_output"], output_type.return_value
         )
         self.assertEqual(
             output_type.call_args.kwargs["surface_id"], "portrait-character"
+        )
+        self.assertEqual(
+            output_type.call_args.kwargs["output_name"], "HDMI-A-2"
         )
 
         with tempfile.TemporaryDirectory() as directory:

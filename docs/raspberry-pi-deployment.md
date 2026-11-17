@@ -320,8 +320,22 @@ it does not select it or start fixture output.
 Stage Video is disabled by default and is not required for QLC+, the browser,
 or fixture output. Follow the package publication procedure in
 [`video-edl-baseline.md`](video-edl-baseline.md#publish-the-first-song-bound-video-lane),
-then add the commissioned package directory, screen, and surface values to
+then add the commissioned package directory, output, and surface values to
 `/etc/default/phreqed-dmx`. Deployment updates preserve that existing file.
+
+For the commissioned `DSI-1` plus `HDMI-A-2` extended desktop, configure the
+named projector rule before enabling Video:
+
+```bash
+.venv/bin/python scripts/configure-labwc-projection.py --output HDMI-A-2
+env LABWC_PID="$(pgrep -xo labwc)" labwc --reconfigure
+.venv/bin/python scripts/configure-labwc-projection.py --output HDMI-A-2 --check
+```
+
+Set `PHREQED_VIDEO_OUTPUT_NAME=HDMI-A-2`; the older numeric
+`PHREQED_VIDEO_SCREEN` setting is not used by the managed player. VLC runs
+through XWayland/XCB so Labwc can route its named window without covering the
+`DSI-1` touchscreen.
 
 Enable `PHREQED_VIDEO_OUTPUT=1` only after the package and `video-show.json`
 sidecar are present. An invalid package/player configuration disables Video,

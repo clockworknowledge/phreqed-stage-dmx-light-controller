@@ -11,7 +11,7 @@ from typing import Callable, Mapping, Protocol, Sequence
 
 from .projection import ProjectionPackageRegistry
 from .video_show import VideoScene
-from .vlc_player import build_vlc_command
+from .vlc_player import build_vlc_x11_command
 
 
 class ManagedProcess(Protocol):
@@ -48,13 +48,15 @@ class VlcVideoTrackOutput:
         *,
         surface_id: str,
         vlc_executable: str | Path,
-        screen_number: int,
+        output_name: str,
         environment: Mapping[str, str] | None = None,
         process_factory: ProcessFactory = _start_process,
         stop_timeout_seconds: float = 3.0,
     ) -> None:
         if not isinstance(surface_id, str) or not surface_id.strip():
             raise ValueError("Video output surface ID must be nonempty text")
+        if not isinstance(output_name, str) or not output_name.strip():
+            raise ValueError("Video output name must be nonempty text")
         if (
             isinstance(stop_timeout_seconds, bool)
             or not isinstance(stop_timeout_seconds, (int, float))
@@ -65,7 +67,7 @@ class VlcVideoTrackOutput:
         self.registry = registry
         self.surface_id = surface_id.strip()
         self.vlc_executable = str(vlc_executable)
-        self.screen_number = screen_number
+        self.output_name = output_name.strip()
         self.environment = dict(os.environ if environment is None else environment)
         self.process_factory = process_factory
         self.stop_timeout_seconds = float(stop_timeout_seconds)
@@ -101,10 +103,9 @@ class VlcVideoTrackOutput:
         if scene.loop:
             raise ValueError("looping Video Scenes are not commissioned for VLC output")
         package = self.registry.resolve(scene.package_id)
-        command = build_vlc_command(
+        command = build_vlc_x11_command(
             package,
             vlc_executable=self.vlc_executable,
-            screen_number=self.screen_number,
             start_seconds=position_seconds,
         )
         with self._lock:
@@ -154,6 +155,7 @@ class VlcVideoTrackOutput:
             running = self._process is not None and self._process.poll() is None
             return {
                 "surface_id": self.surface_id,
+                "output_name": self.output_name,
                 "running": running,
                 "package_id": self.package_id if running else None,
                 "position_seconds": self.position_seconds if running else 0.0,

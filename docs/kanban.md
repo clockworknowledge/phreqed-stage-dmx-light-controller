@@ -102,6 +102,16 @@ does not yet satisfy the final fail-black contract: stopping VLC currently
 reveals the commissioned compositor/desktop background rather than an
 independently supervised black surface.
 
+Physical routing checkpoint (2026-11-16): the Pi exposes `DSI-1` at desktop
+position `0,0` and `HDMI-A-2` at `1280,0`. VLC's Qt numeric screen selector was
+rejected because both screen values opened on the touchscreen. A direct
+XWayland/XCB VLC window plus a Labwc `identifier="vlc"` rule using
+`MoveToOutput output="HDMI-A-2"` and `ToggleFullscreen` passed physical review:
+projection appeared on HDMI while the Stage touchscreen remained visible.
+Labwc reported no configuration errors. The managed adapter and idempotent
+Labwc configuration helper now encode that route; managed-service redeployment
+and repeat Start/Stop validation remain open.
+
 Acceptance remaining: compare or instrument a backend with queryable frame
 telemetry, run actual-DMX coexistence, then fault-test and complete managed
 pre-load/pause/seek/output-black behavior.
@@ -139,8 +149,8 @@ locally preflighted package, then creates only `video-show.json`. It is
 idempotent for the same publication and refuses to replace a different existing
 sidecar; it never rewrites song, cue-sheet, setlist, or tuning data.
 
-Acceptance remaining: publish the reference sidecar to the Pi, verify real
-Start/Stop, audio/song alignment and drift with fixtures, add shared
+Acceptance remaining: verify real Start/Stop on the newly integrated named-
+output route, audio/song alignment and drift with fixtures, add shared
 pause/resume/seek, expose a Video lane in Song Builder, and wire Ampero
 show-level transport only after projection black is fault-tested.
 

@@ -84,6 +84,20 @@ availability. Pi publication and real song/audio alignment are next;
 independently supervised output black, pause/resume/seek, and Song Builder UI
 remain open.
 
+Initial managed transport testing confirmed that the foot switch starts and
+stops the Travelling Video lane, and a Video-disabled run confirmed that the
+same song and Lighting transport remain usable without switching screens. The
+Qt numeric screen selector nevertheless opened Video on `DSI-1`. Physical
+diagnosis established that Labwc presents `DSI-1` and `HDMI-A-2` as one extended
+desktop. A direct undecorated VLC XCB window, with Wayland selection removed,
+was correctly moved to `HDMI-A-2` and fullscreened by Labwc using
+`MoveToOutput` plus `ToggleFullscreen`; the touchscreen stayed on Stage control
+and Labwc reported no configuration errors. `SetFullscreen` is invalid on this
+Labwc 0.20.2 build. The managed player now uses this commissioned XWayland/XCB
+route and an idempotent configuration helper preserves the touch mapping while
+repairing the VLC rule. A managed-service redeploy and repeat foot-switch test
+are the next acceptance step.
+
 The planned performance rig is two Betopper cubes flanking the stage plus a
 vertical rear screen for large character visuals. `PROJ-003` adds an optional
 second Standard Landscape screen for the December 18 show. The target topology
@@ -112,7 +126,7 @@ seconds, emitting responsive HTML and a SHA-256 manifest without constructing
 Art-Net, white, or projector output. Chromium checks passed at 1280 x 800 and
 390 x 844 after removing phone-width overflow.
 
-Windows Python 3.12 passes all 296 tests; JavaScript syntax, Python compilation,
+Windows Python 3.12 passes all 299 tests; JavaScript syntax, Python compilation,
 and diff checks also pass. The next planning review is the baseline video sprint;
 the operator will provide representative music-video and VFX source material.
 

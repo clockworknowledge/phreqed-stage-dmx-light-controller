@@ -369,12 +369,9 @@ def build_parser() -> argparse.ArgumentParser:
         help="published Video Show sidecar; existing songs.json remains authoritative",
     )
     parser.add_argument(
-        "--video-screen",
-        type=int,
-        choices=range(0, 8),
-        default=1,
-        metavar="0-7",
-        help="commissioned VLC Qt projector screen number (default 1)",
+        "--video-output-name",
+        default="HDMI-A-2",
+        help="Labwc output name commissioned for VLC projection (default HDMI-A-2)",
     )
     parser.add_argument(
         "--video-surface",
@@ -588,7 +585,7 @@ def main(argv: list[str] | None = None) -> int:
                 from .projection import ProjectionPackageRegistry
                 from .vlc_player import (
                     active_user_id,
-                    build_display_environment,
+                    build_x11_display_environment,
                 )
                 from .vlc_video_output import VlcVideoTrackOutput
 
@@ -608,7 +605,7 @@ def main(argv: list[str] | None = None) -> int:
                         raise RuntimeError(
                             "no preflighted Video packages are available"
                         )
-                    environment = build_display_environment(
+                    environment = build_x11_display_environment(
                         os.environ,
                         user_id=active_user_id(),
                     )
@@ -616,12 +613,12 @@ def main(argv: list[str] | None = None) -> int:
                         registry,
                         surface_id=args.video_surface,
                         vlc_executable=executable,
-                        screen_number=args.video_screen,
+                        output_name=args.video_output_name,
                         environment=environment,
                     )
                     print(
-                        f"VIDEO OUTPUT: {args.video_surface} -> VLC screen "
-                        f"{args.video_screen}; {len(packages)} package(s) verified",
+                        f"VIDEO OUTPUT: {args.video_surface} -> Labwc output "
+                        f"{args.video_output_name}; {len(packages)} package(s) verified",
                         file=sys.stderr,
                     )
                 except (OSError, ValueError, RuntimeError) as exc:

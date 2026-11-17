@@ -37,6 +37,44 @@ def build_display_environment(
     return environment
 
 
+def build_x11_display_environment(
+    base: dict[str, str],
+    *,
+    user_id: int,
+    runtime_directory: str | Path | None = None,
+    display: str = ":0",
+) -> dict[str, str]:
+    """Force VLC through XWayland so Labwc can route its named window."""
+
+    if not isinstance(display, str) or not display.strip():
+        raise ValueError("X11 display must be nonempty text")
+    environment = dict(base)
+    runtime = Path(
+        environment.get("XDG_RUNTIME_DIR")
+        or runtime_directory
+        or Path("/run/user") / str(user_id)
+    )
+    environment["XDG_RUNTIME_DIR"] = str(runtime)
+    environment.pop("WAYLAND_DISPLAY", None)
+    environment.pop("WAYLAND_SOCKET", None)
+    environment["DISPLAY"] = display.strip()
+    environment["QT_QPA_PLATFORM"] = "xcb"
+    environment["XDG_SESSION_TYPE"] = "x11"
+    return environment
+
+
+def _validate_start_seconds(
+    package: StageVideoPackage, start_seconds: float
+) -> None:
+    if (
+        isinstance(start_seconds, bool)
+        or not isinstance(start_seconds, (int, float))
+        or not math.isfinite(start_seconds)
+        or not 0 <= start_seconds < package.duration_seconds
+    ):
+        raise ValueError("VLC start time is outside the package")
+
+
 def build_vlc_command(
     package: StageVideoPackage,
     *,
@@ -48,13 +86,7 @@ def build_vlc_command(
 
     if isinstance(screen_number, bool) or not 0 <= screen_number <= 7:
         raise ValueError("VLC screen number must be between 0 and 7")
-    if (
-        isinstance(start_seconds, bool)
-        or not isinstance(start_seconds, (int, float))
-        or not math.isfinite(start_seconds)
-        or not 0 <= start_seconds < package.duration_seconds
-    ):
-        raise ValueError("VLC start time is outside the package")
+    _validate_start_seconds(package, start_seconds)
     command = [
         str(vlc_executable),
         "--intf",
@@ -66,6 +98,35 @@ def build_vlc_command(
         "--no-qt-fs-controller",
         f"--qt-fullscreen-screennumber={screen_number}",
         "--fullscreen",
+        "--no-video-title-show",
+        "--no-osd",
+        "--no-audio",
+        "--play-and-exit",
+    ]
+    if start_seconds > 0:
+        command.append(f"--start-time={float(start_seconds):.6f}")
+    command.append(str(package.video_path))
+    return command
+
+
+def build_vlc_x11_command(
+    package: StageVideoPackage,
+    *,
+    vlc_executable: str | Path,
+    start_seconds: float = 0.0,
+) -> list[str]:
+    """Build the commissioned XWayland command routed by a Labwc rule."""
+
+    _validate_start_seconds(package, start_seconds)
+    command = [
+        str(vlc_executable),
+        "--intf",
+        "dummy",
+        "--no-one-instance",
+        "--no-media-library",
+        "--no-embedded-video",
+        "--vout=xcb_x11",
+        "--no-video-deco",
         "--no-video-title-show",
         "--no-osd",
         "--no-audio",

@@ -159,10 +159,14 @@ To expose loopback-only display/network operations after installing the helper u
 Then restart the controller service. Remote clients remain denied.
 
 Stage Video remains disabled by default. After publishing video-show.json and
-preflighting the local package directory, set:
+preflighting the local package directory, configure the named projector rule:
+  .venv/bin/python scripts/configure-labwc-projection.py --output HDMI-A-2
+  env LABWC_PID="\$(pgrep -xo labwc)" labwc --reconfigure
+  .venv/bin/python scripts/configure-labwc-projection.py --output HDMI-A-2 --check
+Then set:
   PHREQED_VIDEO_OUTPUT=1
   PHREQED_VIDEO_PACKAGES=/home/mmorley/.local/share/phreqed-dmx/video-packages
-  PHREQED_VIDEO_SCREEN=1
+  PHREQED_VIDEO_OUTPUT_NAME=HDMI-A-2
   PHREQED_VIDEO_SURFACE=portrait-character
 Then restart the controller service. Missing Video configuration disables Video
 only: the reason is reported while Lighting and the browser remain
