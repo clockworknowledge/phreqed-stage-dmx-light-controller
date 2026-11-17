@@ -315,6 +315,23 @@ Set `PHREQED_RGB_CEILING=1.0` and
 `sudo systemctl restart phreqed-dmx.service`. This makes Show power available;
 it does not select it or start fixture output.
 
+### Optional song-bound projector output
+
+Stage Video is disabled by default and is not required for QLC+, the browser,
+or fixture output. Follow the package publication procedure in
+[`video-edl-baseline.md`](video-edl-baseline.md#publish-the-first-song-bound-video-lane),
+then add the commissioned package directory, screen, and surface values to
+`/etc/default/phreqed-dmx`. Deployment updates preserve that existing file.
+
+Enable `PHREQED_VIDEO_OUTPUT=1` only after the package and `video-show.json`
+sidecar are present. An invalid package/player configuration disables Video,
+reports the reason, and leaves the browser and Lighting available rather than
+silently selecting media or preventing show control from starting. Video
+launch or later player failure is also contained from Lighting, but the
+commissioning-stage stop path currently reveals the configured black projector
+background; the independently supervised output-black surface remains an open
+acceptance item.
+
 ### Prevent suspend during managed shows
 
 The managed controller requires `phreqed-show-inhibit.service`. While

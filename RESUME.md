@@ -74,9 +74,15 @@ from the existing Lighting timeline, skips stale Video cues to the correct
 current scene offset, blacks on selection/stop/completion, preserves no-
 autostart, and contains simulated player failure without stopping Lighting.
 Travelling on a Floating Rock is the first reference song, with a full-length
-Stage Portrait scene at time zero. Local package resolution, real managed VLC
-control, pause/resume/seek, Song Builder UI, and Pi song/audio alignment remain
-the next slice.
+Stage Portrait scene at time zero. A bounded registry now resolves and
+hash-verifies local packages, a managed VLC output starts at the current cue
+offset, and the existing Setlist Start/Stop path owns the optional Video runner
+behind explicit `live --web --video-output` enablement. The reference installer
+resolves the exact existing title to its real song ID and creates only the
+atomic `video-show.json` sidecar after confirming setlist membership and package
+availability. Pi publication and real song/audio alignment are next;
+independently supervised output black, pause/resume/seek, and Song Builder UI
+remain open.
 
 The planned performance rig is two Betopper cubes flanking the stage plus a
 vertical rear screen for large character visuals. `PROJ-003` adds an optional
@@ -106,7 +112,7 @@ seconds, emitting responsive HTML and a SHA-256 manifest without constructing
 Art-Net, white, or projector output. Chromium checks passed at 1280 x 800 and
 390 x 844 after removing phone-width overflow.
 
-Windows Python 3.12 passes all 286 tests; JavaScript syntax, Python compilation,
+Windows Python 3.12 passes all 296 tests; JavaScript syntax, Python compilation,
 and diff checks also pass. The next planning review is the baseline video sprint;
 the operator will provide representative music-video and VFX source material.
 

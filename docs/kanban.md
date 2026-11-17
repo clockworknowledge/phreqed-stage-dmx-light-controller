@@ -40,7 +40,7 @@ polish, timeline editing, venue-profile shortcuts, prepared-white adjustment,
 the Pac-Man ghost/power-pellet cycle, and the Burning Dynamite animation are
 implemented. The White Output v2 drive/power contract and the base touchscreen
 iteration are accepted in deployed Pi use; the complete controller is covered
-by the 286-test Windows Python 3.12 suite. Remaining touchscreen work is
+by the Windows Python 3.12 suite. Remaining touchscreen work is
 ongoing performance acceptance under `DISPLAY-003`, the `OPS-007` local-action
 checks, and the controlled shutdown/power-cycle evidence under `OPS-005`. Pi
 thermal telemetry is optional follow-up work and is not a show-control
@@ -93,9 +93,18 @@ the vertical projector; the operator confirmed the larger fill presentation
 looked correct. Standard Landscape remains logically/preflight validated but
 awaits a physically horizontal screen.
 
+The next adapter slice is now implemented behind explicit `live --web` and
+`--video-output` opt-ins. A bounded local registry preflights and hash-verifies
+every direct-child package manifest before output starts. The managed VLC
+process launches only a resolved package ID, can begin at the current cue
+offset with VLC `--start-time`, and is terminated on Video black/stop. This
+does not yet satisfy the final fail-black contract: stopping VLC currently
+reveals the commissioned compositor/desktop background rather than an
+independently supervised black surface.
+
 Acceptance remaining: compare or instrument a backend with queryable frame
-telemetry, run actual-DMX coexistence, then implement and fault-test the managed
-pre-load/play/pause/seek/stop/black adapter.
+telemetry, run actual-DMX coexistence, then fault-test and complete managed
+pre-load/pause/seek/output-black behavior.
 Missing media, player crash, and display loss must fail black without disturbing
 lighting, audio, MIDI, browser control, or shutdown. See
 `docs/projector-output.md`.
@@ -106,7 +115,7 @@ Extend each song revision with separate Lighting and Video tracks aligned to one
 transport-independent clock. Track cue boundaries may differ; Video cues select
 versioned Video Scenes and may include intentional black gaps.
 
-Implementation checkpoint (2026-11-16): the first hardware-free transport slice
+Implementation checkpoint (2026-11-16): the first Stage-bound transport slice
 is implemented. A separate atomic Video Show sidecar stores versioned Video
 Scenes, published song Video tracks, active-track assignments, logical surface
 IDs, and package IDs without media paths. Existing `songs.json`, cue sheets, and
@@ -117,12 +126,22 @@ no-autostart, and contains Video output failure without stopping Lighting.
 Published tracks and their referenced scenes are immutable. The first reference
 track is **Travelling on a Floating Rock** targeting `portrait-character` with
 the full-length Stage Portrait package. That 146-second 1280×720/30 FPS
-portrait-fill package now renders and passes Stage preflight.
+portrait-fill package now renders and passes Stage preflight. The existing
+Setlist Start/Stop path can now own this optional Video runner without changing
+the Lighting timeline: Start launches the active Video Scene from the same
+clock, while stop, song selection, completion, blackout, or Manual mode stop
+the player. Video state is reported under the performance state, and player
+failure remains contained from Lighting.
 
-Acceptance remaining: resolve the sidecar's package ID through the local
-preflight registry, implement the managed player from `PROJ-001`, add shared
-pause/resume/seek, expose a Video lane in Song Builder, publish the reference
-track to the Pi, verify real audio/song alignment and drift, and wire Ampero
+The reference publisher resolves the exact existing title **Travelling on a
+Floating Rock** to its real `songs.json` ID, confirms setlist membership and a
+locally preflighted package, then creates only `video-show.json`. It is
+idempotent for the same publication and refuses to replace a different existing
+sidecar; it never rewrites song, cue-sheet, setlist, or tuning data.
+
+Acceptance remaining: publish the reference sidecar to the Pi, verify real
+Start/Stop, audio/song alignment and drift with fixtures, add shared
+pause/resume/seek, expose a Video lane in Song Builder, and wire Ampero
 show-level transport only after projection black is fault-tested.
 
 ## Ready

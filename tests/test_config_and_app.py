@@ -1,7 +1,8 @@
 import subprocess
+import tempfile
 import unittest
 from pathlib import Path
-from unittest.mock import patch
+from unittest.mock import Mock, patch
 
 import phreqed_dmx.app as app
 from phreqed_dmx.app import Controller, build_parser, main
@@ -239,6 +240,62 @@ class ConfigurationTests(unittest.TestCase):
         operations = serve.call_args.kwargs["local_operations"]
         self.assertIs(operations.run_network_action, app._request_local_network_action)
         self.assertIs(operations.set_display_brightness, app._request_display_brightness)
+
+    def test_video_output_is_explicit_browser_live_only(self) -> None:
+        for arguments in (
+            ["simulate", "--video-output"],
+            ["web", "--video-output"],
+            ["live", "--video-output"],
+        ):
+            with self.subTest(arguments=arguments), self.assertRaises(SystemExit):
+                main(arguments)
+
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / "vlc"
+            executable.touch()
+            with (
+                patch("phreqed_dmx.web_control.serve") as serve,
+                patch(
+                    "phreqed_dmx.projection.ProjectionPackageRegistry"
+                ) as registry_type,
+                patch(
+                    "phreqed_dmx.vlc_video_output.VlcVideoTrackOutput"
+                ) as output_type,
+            ):
+                registry_type.return_value.refresh.return_value = {"package": Mock()}
+                self.assertEqual(main([
+                    "live", "--web", "--video-output",
+                    "--vlc-executable", str(executable),
+                    "--video-screen", "1",
+                ]), 0)
+        self.assertIs(
+            serve.call_args.kwargs["video_output"], output_type.return_value
+        )
+        self.assertEqual(
+            output_type.call_args.kwargs["surface_id"], "portrait-character"
+        )
+
+        with tempfile.TemporaryDirectory() as directory:
+            executable = Path(directory) / "vlc"
+            executable.touch()
+            with (
+                patch("phreqed_dmx.web_control.serve") as degraded_serve,
+                patch(
+                    "phreqed_dmx.projection.ProjectionPackageRegistry"
+                ) as broken_registry,
+            ):
+                broken_registry.return_value.refresh.side_effect = ValueError(
+                    "package hash mismatch"
+                )
+                self.assertEqual(main([
+                    "live", "--web", "--video-output",
+                    "--vlc-executable", str(executable),
+                ]), 0)
+        self.assertIsNone(degraded_serve.call_args.kwargs["video_output"])
+        self.assertEqual(
+            degraded_serve.call_args.kwargs["video_startup_error"],
+            "package hash mismatch",
+        )
 
     def test_local_operations_start_only_fixed_systemd_units(self) -> None:
         with patch("phreqed_dmx.app._start_systemd_helper") as start:

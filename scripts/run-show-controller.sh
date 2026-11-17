@@ -62,5 +62,13 @@ fi
 if is_true "${PHREQED_ALLOW_LOCAL_OPERATIONS:-0}"; then
     arguments+=(--allow-local-operations)
 fi
+if is_true "${PHREQED_VIDEO_OUTPUT:-0}"; then
+    arguments+=(--video-output)
+    arguments+=(--video-packages "${PHREQED_VIDEO_PACKAGES:-${HOME}/.local/share/phreqed-dmx/video-packages}")
+    arguments+=(--video-library "${PHREQED_VIDEO_LIBRARY:-${HOME}/.local/share/phreqed-dmx/video-show.json}")
+    arguments+=(--video-screen "${PHREQED_VIDEO_SCREEN:-1}")
+    arguments+=(--video-surface "${PHREQED_VIDEO_SURFACE:-portrait-character}")
+    arguments+=(--vlc-executable "${PHREQED_VLC_EXECUTABLE:-vlc}")
+fi
 
 exec "${CONTROLLER}" "${arguments[@]}"

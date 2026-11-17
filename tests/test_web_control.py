@@ -201,6 +201,88 @@ class BrowserControlTests(unittest.TestCase):
         self.assertEqual(performance['state'], 'armed')
         self.assertFalse(performance['running'])
 
+    def test_optional_video_lane_follows_existing_setlist_start_and_stop(self):
+        self.control.command(dict(action='save_preset', preset=self.preset()))
+        self.control.command(dict(
+            action='save_song_library', song_library=self.song_document()
+        ))
+        video_path = self.path.with_name('video-show.json')
+        video_path.write_text(json.dumps({
+            'version': 1,
+            'scenes': [{
+                'scene_id': 'vscene-test',
+                'name': 'Test portrait',
+                'package_id': 'video-test--portrait-test',
+                'surface_id': 'portrait-character',
+                'loop': False,
+            }],
+            'tracks': [{
+                'track_id': 'vtrack-test-v1',
+                'song_id': 'song-test',
+                'revision': 1,
+                'published': True,
+                'cues': [{'at_seconds': 0.0, 'scene_id': 'vscene-test'}],
+            }],
+            'active_tracks': [{
+                'song_id': 'song-test', 'track_id': 'vtrack-test-v1',
+            }],
+        }), encoding='utf-8')
+
+        class Output:
+            def __init__(self):
+                self.calls = []
+
+            def activate(self, scene, position_seconds, scheduled_at):
+                self.calls.append((
+                    'activate', scene.scene_id, position_seconds, scheduled_at
+                ))
+
+            def black(self):
+                self.calls.append(('black',))
+
+        output = Output()
+        control = BrowserControl(
+            Controller(load_config()),
+            self.path,
+            video_show_path=video_path,
+            video_output=output,
+        )
+        self.addCleanup(control.close)
+        control.command(dict(action='start_song'))
+        self.assertEqual(output.calls[-1][0:3], ('activate', 'vscene-test', 0.0))
+        self.assertEqual(control.state()['performance']['video']['state'], 'running')
+        control.command(dict(action='stop_song'))
+        self.assertEqual(output.calls[-1], ('black',))
+        self.assertEqual(control.state()['performance']['video']['state'], 'black')
+
+    def test_missing_video_sidecar_does_not_prevent_browser_or_lighting(self):
+        class Output:
+            def __init__(self):
+                self.blacked = False
+
+            def activate(self, scene, position_seconds, scheduled_at):
+                raise AssertionError('missing sidecar must never activate Video')
+
+            def black(self):
+                self.blacked = True
+
+        output = Output()
+        control = BrowserControl(
+            Controller(load_config()),
+            self.path,
+            video_show_path=self.path.with_name('missing-video-show.json'),
+            video_output=output,
+        )
+        self.addCleanup(control.close)
+        state = control.state()
+        self.assertTrue(output.blacked)
+        self.assertEqual(state['performance']['video']['state'], 'error')
+        self.assertIn(
+            'unavailable', state['performance']['video']['last_error']
+        )
+        self.assertEqual(state['performance']['mode'], 'setlist')
+        self.assertIsNone(control.sender)
+
     def test_song_library_rejects_unknown_presets_and_protects_references(self):
         self.control.command(dict(action='save_preset', preset=self.preset()))
         document = self.song_document()

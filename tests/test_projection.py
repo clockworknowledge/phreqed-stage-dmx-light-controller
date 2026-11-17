@@ -5,6 +5,7 @@ import unittest
 from pathlib import Path
 
 from phreqed_dmx.projection import (
+    ProjectionPackageRegistry,
     ProjectionController,
     load_stage_video_package,
 )
@@ -59,6 +60,25 @@ def write_package(root: Path) -> Path:
 
 
 class ProjectionTests(unittest.TestCase):
+    def test_registry_preflights_and_resolves_only_local_package_ids(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            manifest = write_package(root)
+            registry = ProjectionPackageRegistry(root)
+            packages = registry.refresh()
+            self.assertEqual(list(packages), ["video-edl-test--portrait-test"])
+            self.assertEqual(
+                registry.resolve("video-edl-test--portrait-test").manifest_path,
+                manifest.resolve(),
+            )
+            with self.assertRaisesRegex(ValueError, "unavailable"):
+                registry.resolve("missing--portrait")
+
+            duplicate = root / "duplicate.manifest.json"
+            duplicate.write_bytes(manifest.read_bytes())
+            with self.assertRaisesRegex(ValueError, "duplicate projection package"):
+                registry.refresh()
+
     def test_projection_is_disabled_and_black_without_a_backend(self) -> None:
         controller = ProjectionController()
         self.assertEqual(controller.status(), {

@@ -34,6 +34,12 @@ from .tuning_profiles import (
     parse_tuning_profile,
 )
 from .thermal import cpu_temperature_band, read_cpu_temperature_c
+from .video_show import (
+    ParallelSongTransport,
+    SongVideoRunner,
+    VideoShowLibrary,
+    VideoTrackOutput,
+)
 from .white_output import (
     DEFAULT_WHITE_OUTPUT_LEVEL,
     MAX_WHITE_FLASH_HZ,
@@ -102,6 +108,9 @@ class BrowserControl:
         *,
         song_library_path: Path | None = None,
         tuning_profile_path: Path | None = None,
+        video_show_path: Path | None = None,
+        video_output: VideoTrackOutput | None = None,
+        video_startup_error: str | None = None,
         allow_live: bool = False,
         white_output_ceiling: float = WHITE_OUTPUT_CEILING,
         system_shutdown: Callable[[], None] | None = None,
@@ -139,7 +148,36 @@ class BrowserControl:
             clock=self.elapsed,
             blackout_active=lambda: self.engine.blackout_enabled,
         )
-        self.performance = PerformanceController(self.song_timeline)
+        self.video_show: VideoShowLibrary | None = None
+        self.video_runner: SongVideoRunner | None = None
+        self.video_startup_error = video_startup_error
+        if video_output is None:
+            performance_timeline = self.song_timeline
+        else:
+            selected_video_show_path = (
+                video_show_path or library_path.with_name('video-show.json')
+            )
+            try:
+                if not selected_video_show_path.is_file():
+                    raise ValueError(
+                        f'Video Show library is unavailable: {selected_video_show_path}'
+                    )
+                self.video_show = VideoShowLibrary(
+                    selected_video_show_path,
+                    self.song_library,
+                )
+                self.video_runner = SongVideoRunner(self.video_show, video_output)
+                performance_timeline = ParallelSongTransport(
+                    self.song_timeline, self.video_runner
+                )
+            except (OSError, ValueError, RuntimeError) as exc:
+                self.video_startup_error = str(exc) or type(exc).__name__
+                try:
+                    video_output.black()
+                except Exception:
+                    pass
+                performance_timeline = self.song_timeline
+        self.performance = PerformanceController(performance_timeline)
         self.performance.set_mode(PerformanceMode.SETLIST)
         first_setlist_id = next(iter(self.song_library.setlists), None)
         if first_setlist_id is not None:
@@ -375,6 +413,13 @@ class BrowserControl:
             next_song_title=next_song.title if next_song is not None else None,
             playable=playable,
             running=timeline.state is TimelineState.RUNNING,
+            video=(self.video_runner.status() if self.video_runner else {
+                'state': 'error' if self.video_startup_error else 'disabled',
+                'song_id': None,
+                'track_id': None,
+                'next_cue_index': 0,
+                'last_error': self.video_startup_error,
+            }),
         )
 
     def _apply_song_style(self, song_id: object, replace: object) -> None:
@@ -1382,6 +1427,9 @@ def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1'
           allow_network: str = '192.168.1.0/24', allow_live: bool = False,
           foot_midi_device: Path | None = None, foot_midi_channel: int = 1,
           white_output_ceiling: float = WHITE_OUTPUT_CEILING,
+          video_show_path: Path | None = None,
+          video_output: VideoTrackOutput | None = None,
+          video_startup_error: str | None = None,
           system_shutdown: Callable[[], None] | None = None,
           local_operations: LocalOperations | None = None) -> None:
     if not 1 <= port <= 65535:
@@ -1393,6 +1441,9 @@ def serve(controller: Controller, library_path: Path, *, host: str = '127.0.0.1'
         library_path,
         allow_live=allow_live,
         white_output_ceiling=white_output_ceiling,
+        video_show_path=video_show_path,
+        video_output=video_output,
+        video_startup_error=video_startup_error,
         system_shutdown=system_shutdown,
         local_operations=local_operations,
     )

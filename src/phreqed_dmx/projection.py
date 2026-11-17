@@ -15,6 +15,7 @@ from .video_edl import parse_video_edl
 
 
 MAX_PROJECTION_MANIFEST_BYTES = 5_000_000
+MAX_PROJECTION_PACKAGES = 256
 _ID_PATTERN = re.compile(r"[a-z0-9][a-z0-9-]{0,95}(?:--[a-z0-9][a-z0-9-]{0,95})?")
 
 
@@ -50,6 +51,66 @@ class StageVideoPackage:
     height: int
     frame_rate: float
     sha256: str
+
+
+class ProjectionPackageRegistry:
+    """Resolve only hash-verified packages from one explicit local directory."""
+
+    def __init__(
+        self,
+        directory: str | Path,
+        *,
+        maximum_packages: int = MAX_PROJECTION_PACKAGES,
+    ) -> None:
+        if (
+            isinstance(maximum_packages, bool)
+            or not isinstance(maximum_packages, int)
+            or not 1 <= maximum_packages <= MAX_PROJECTION_PACKAGES
+        ):
+            raise ValueError(
+                f"projection package limit must be between 1 and {MAX_PROJECTION_PACKAGES}"
+            )
+        self.directory = Path(directory).expanduser().resolve()
+        self.maximum_packages = maximum_packages
+        self.packages: dict[str, StageVideoPackage] = {}
+
+    def refresh(self) -> dict[str, StageVideoPackage]:
+        """Preflight every direct child manifest and replace the registry atomically."""
+
+        if not self.directory.is_dir():
+            raise ValueError(
+                f"projection package directory is unavailable: {self.directory}"
+            )
+        manifests = sorted(
+            path
+            for path in self.directory.iterdir()
+            if path.is_file() and path.name.endswith(".manifest.json")
+        )
+        if len(manifests) > self.maximum_packages:
+            raise ValueError(
+                f"projection package directory exceeds {self.maximum_packages} manifests"
+            )
+        packages: dict[str, StageVideoPackage] = {}
+        for manifest in manifests:
+            resolved_manifest = manifest.resolve()
+            if resolved_manifest.parent != self.directory:
+                raise ValueError("projection package manifest escapes its directory")
+            package = load_stage_video_package(resolved_manifest)
+            if package.package_id in packages:
+                raise ValueError(
+                    f"duplicate projection package ID: {package.package_id}"
+                )
+            packages[package.package_id] = package
+        self.packages = packages
+        return dict(packages)
+
+    def resolve(self, package_id: str) -> StageVideoPackage:
+        if not isinstance(package_id, str) or not _ID_PATTERN.fullmatch(package_id):
+            raise ValueError("projection package ID is invalid")
+        try:
+            return self.packages[package_id]
+        except KeyError as exc:
+            raise ValueError(f"projection package is unavailable: {package_id}") from exc
 
 
 def _sha256(path: Path) -> str:

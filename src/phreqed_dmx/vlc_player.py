@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import os
+import math
 from pathlib import Path
 
 from .projection import StageVideoPackage
@@ -41,12 +42,20 @@ def build_vlc_command(
     *,
     vlc_executable: str | Path,
     screen_number: int,
+    start_seconds: float = 0.0,
 ) -> list[str]:
     """Build the fixed, audio-free, one-package VLC argument vector."""
 
     if isinstance(screen_number, bool) or not 0 <= screen_number <= 7:
         raise ValueError("VLC screen number must be between 0 and 7")
-    return [
+    if (
+        isinstance(start_seconds, bool)
+        or not isinstance(start_seconds, (int, float))
+        or not math.isfinite(start_seconds)
+        or not 0 <= start_seconds < package.duration_seconds
+    ):
+        raise ValueError("VLC start time is outside the package")
+    command = [
         str(vlc_executable),
         "--intf",
         "qt",
@@ -61,8 +70,11 @@ def build_vlc_command(
         "--no-osd",
         "--no-audio",
         "--play-and-exit",
-        str(package.video_path),
     ]
+    if start_seconds > 0:
+        command.append(f"--start-time={float(start_seconds):.6f}")
+    command.append(str(package.video_path))
+    return command
 
 
 def active_user_id() -> int:

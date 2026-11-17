@@ -158,6 +158,16 @@ To expose loopback-only display/network operations after installing the helper u
   PHREQED_WIFI_CONNECTION=<saved NetworkManager profile>
 Then restart the controller service. Remote clients remain denied.
 
+Stage Video remains disabled by default. After publishing video-show.json and
+preflighting the local package directory, set:
+  PHREQED_VIDEO_OUTPUT=1
+  PHREQED_VIDEO_PACKAGES=/home/mmorley/.local/share/phreqed-dmx/video-packages
+  PHREQED_VIDEO_SCREEN=1
+  PHREQED_VIDEO_SURFACE=portrait-character
+Then restart the controller service. Missing Video configuration disables Video
+only: the reason is reported while Lighting and the browser remain
+available, and saved song, setlist, tuning, and fixture data is unchanged.
+
 Check the boot sequence:
   systemctl status qlcplus.service phreqed-show-inhibit.service phreqed-dmx.service phreqed-kiosk.service --no-pager
   systemd-inhibit --list --what=sleep --no-pager

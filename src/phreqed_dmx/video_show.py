@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import copy
 from dataclasses import dataclass
 from enum import Enum
 import json
@@ -302,6 +303,55 @@ class VideoShowLibrary:
         return None if track_id is None else self.tracks.get(track_id)
 
 
+def resolve_song_id_by_title(songs: SongLibrary, title: str) -> str:
+    """Resolve one existing title without inventing or rewriting a song ID."""
+
+    if not isinstance(title, str) or not title.strip():
+        raise ValueError("song title must be nonempty text")
+    normalized = title.strip().casefold()
+    matches = [
+        song.song_id
+        for song in songs.songs.values()
+        if song.title.strip().casefold() == normalized
+    ]
+    if not matches:
+        raise ValueError(f"song title is not present in the library: {title.strip()}")
+    if len(matches) != 1:
+        raise ValueError(f"song title is ambiguous in the library: {title.strip()}")
+    return matches[0]
+
+
+def bind_single_song_video_document(
+    value: object,
+    songs: SongLibrary,
+    title: str,
+) -> dict:
+    """Bind a one-song Video Show template to the library's actual song ID."""
+
+    if not isinstance(value, dict):
+        raise ValueError("Video Show template must be an object")
+    document = copy.deepcopy(value)
+    tracks = document.get("tracks")
+    assignments = document.get("active_tracks")
+    if not isinstance(tracks, list) or not tracks:
+        raise ValueError("Video Show template must contain at least one track")
+    if not isinstance(assignments, list) or not assignments:
+        raise ValueError("Video Show template must contain an active track")
+    template_song_ids = {
+        item.get("song_id")
+        for item in (*tracks, *assignments)
+        if isinstance(item, dict)
+    }
+    if len(template_song_ids) != 1 or None in template_song_ids:
+        raise ValueError("Video Show template must reference exactly one song ID")
+    song_id = resolve_song_id_by_title(songs, title)
+    for item in (*tracks, *assignments):
+        if not isinstance(item, dict) or "song_id" not in item:
+            raise ValueError("Video Show template song references are invalid")
+        item["song_id"] = song_id
+    return document
+
+
 class VideoTrackOutput(Protocol):
     def activate(
         self,
@@ -367,6 +417,13 @@ class SongVideoRunner:
             except Exception as exc:
                 self._fail(exc)
             return
+        check = getattr(self.output, "check", None)
+        if callable(check):
+            try:
+                check()
+            except Exception as exc:
+                self._fail(exc)
+                return
         last_due_index: int | None = None
         while (
             self.next_cue_index < len(track.cues)
@@ -417,6 +474,26 @@ class ParallelSongTransport:
     def __init__(self, lighting: SongTimelineRunner, video: SongVideoRunner) -> None:
         self.lighting = lighting
         self.video = video
+
+    @property
+    def state(self) -> TimelineState:
+        return self.lighting.state
+
+    @property
+    def setlist_id(self) -> str | None:
+        return self.lighting.setlist_id
+
+    @property
+    def song_index(self) -> int | None:
+        return self.lighting.song_index
+
+    @property
+    def library(self) -> SongLibrary:
+        return self.lighting.library
+
+    def deactivate(self) -> None:
+        self.video.stop()
+        self.lighting.deactivate()
 
     def load(self, setlist_id: str) -> None:
         self.video.stop()

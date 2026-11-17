@@ -210,3 +210,50 @@ preflight as
 `travelling-floating-rock-stage-portrait--stage-portrait-hdmi720-clockwise-rear`.
 Generated media is bundled outside Git as
 `output/video-render/phreqed-travelling-reference-package.tar.gz`.
+
+## Publish the first song-bound Video lane
+
+The publication helper reads the Pi's existing `songs.json`, resolves the
+exact title **Travelling on a Floating Rock** to its stored song ID, and
+requires that song to be present in at least one saved setlist. It preflights
+the rendered package directory before atomically creating the separate
+`video-show.json` sidecar. It never modifies `songs.json` and refuses to replace
+a different existing Video Show sidecar.
+
+If the accepted package is still in the commissioned probe directory:
+
+```bash
+cd "$HOME/phreqed-stage-dmx-light-controller"
+.venv/bin/python scripts/install-travelling-video-track.py \
+  --packages "$HOME/.local/share/phreqed-dmx/video-probes"
+```
+
+For normal service use, keep packages in the dedicated directory and publish
+against that location instead:
+
+```bash
+video_packages="$HOME/.local/share/phreqed-dmx/video-packages"
+mkdir -p "$video_packages"
+# Extract the transferred reference package into "$video_packages" first.
+.venv/bin/python scripts/install-travelling-video-track.py \
+  --packages "$video_packages"
+```
+
+Video output remains disabled unless explicitly enabled in
+`/etc/default/phreqed-dmx`:
+
+```ini
+PHREQED_VIDEO_OUTPUT=1
+PHREQED_VIDEO_PACKAGES=/home/mmorley/.local/share/phreqed-dmx/video-packages
+PHREQED_VIDEO_LIBRARY=/home/mmorley/.local/share/phreqed-dmx/video-show.json
+PHREQED_VIDEO_SCREEN=1
+PHREQED_VIDEO_SURFACE=portrait-character
+```
+
+Restarting the controller then preflights every package before the web service
+starts. Setlist Start launches the active Video Scene from the Lighting song
+clock; Stop, selection, completion, blackout, and Manual mode stop Video. A
+Video launch failure is reported but cannot stop Lighting. This is still a
+commissioning-stage adapter: the projector compositor background must be black,
+and the independently supervised output-black surface, pause/seek, drift, and
+actual-DMX coexistence acceptance remain open.

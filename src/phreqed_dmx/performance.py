@@ -2,8 +2,24 @@
 from __future__ import annotations
 
 from enum import Enum
+from typing import Protocol
 
-from .song_timeline import SongTimelineRunner, TimelineState
+from .song_timeline import TimelineState
+
+
+class PerformanceTimeline(Protocol):
+    state: TimelineState
+    setlist_id: str | None
+    song_index: int | None
+    library: object
+
+    def deactivate(self) -> None: ...
+    def load(self, setlist_id: str) -> None: ...
+    def select(self, index: int) -> None: ...
+    def move(self, direction: int) -> None: ...
+    def start(self) -> None: ...
+    def stop(self) -> None: ...
+    def update(self) -> None: ...
 
 
 class PerformanceMode(str, Enum):
@@ -14,7 +30,7 @@ class PerformanceMode(str, Enum):
 class PerformanceController:
     """Coordinate explicit setlist transport without knowing about HTTP or DMX."""
 
-    def __init__(self, timeline: SongTimelineRunner) -> None:
+    def __init__(self, timeline: PerformanceTimeline) -> None:
         self.timeline = timeline
         self.mode = PerformanceMode.MANUAL
 

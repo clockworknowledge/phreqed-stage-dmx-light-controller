@@ -13,6 +13,8 @@ from phreqed_dmx.video_show import (
     SongVideoRunner,
     VideoRunnerState,
     VideoShowLibrary,
+    bind_single_song_video_document,
+    resolve_song_id_by_title,
 )
 
 
@@ -25,9 +27,10 @@ class FakeClock:
 
 
 class FakeVideoOutput:
-    def __init__(self, *, fail_activate: bool = False) -> None:
+    def __init__(self, *, fail_activate: bool = False, fail_check: bool = False) -> None:
         self.calls = []
         self.fail_activate = fail_activate
+        self.fail_check = fail_check
 
     def activate(self, scene, position_seconds, scheduled_at):
         if self.fail_activate:
@@ -38,6 +41,10 @@ class FakeVideoOutput:
 
     def black(self):
         self.calls.append(("black",))
+
+    def check(self):
+        if self.fail_check:
+            raise RuntimeError("player exited")
 
 
 class VideoShowTests(unittest.TestCase):
@@ -181,6 +188,25 @@ class VideoShowTests(unittest.TestCase):
             "portrait-character",
         )
 
+    def test_reference_binds_exact_title_to_existing_song_id(self):
+        document = self.document()
+        document["tracks"][0]["song_id"] = "song-template-placeholder"
+        document["active_tracks"][0]["song_id"] = "song-template-placeholder"
+        bound = bind_single_song_video_document(
+            document, self.songs, "  TRAVELLING ON A FLOATING ROCK  "
+        )
+        self.assertEqual(
+            bound["tracks"][0]["song_id"],
+            "song-travelling-on-a-floating-rock",
+        )
+        self.assertEqual(document["tracks"][0]["song_id"], "song-template-placeholder")
+        self.assertEqual(
+            resolve_song_id_by_title(self.songs, "Travelling on a Floating Rock"),
+            "song-travelling-on-a-floating-rock",
+        )
+        with self.assertRaisesRegex(ValueError, "not present"):
+            resolve_song_id_by_title(self.songs, "Missing")
+
     def test_rejects_bad_references_and_preserves_published_revisions(self):
         document = self.document()
         self.video.save(document)
@@ -245,6 +271,25 @@ class VideoShowTests(unittest.TestCase):
         clock.now = 61.0
         transport.update()
         self.assertEqual(lighting.state, TimelineState.RUNNING)
+
+    def test_unexpected_player_exit_blacks_video_without_stopping_lighting(self):
+        self.video.save(self.document())
+        clock = FakeClock()
+        lighting = SongTimelineRunner(
+            self.songs, lambda _cue, _scheduled: None, clock=clock
+        )
+        output = FakeVideoOutput()
+        video = SongVideoRunner(self.video, output)
+        transport = ParallelSongTransport(lighting, video)
+        transport.load("setlist-show")
+        transport.start()
+        output.fail_check = True
+        clock.now = 1.0
+        transport.update()
+        self.assertEqual(video.state, VideoRunnerState.ERROR)
+        self.assertEqual(video.last_error, "player exited")
+        self.assertEqual(lighting.state, TimelineState.RUNNING)
+        self.assertEqual(output.calls[-1], ("black",))
 
     def test_storage_and_parallel_timing_never_open_a_socket(self):
         with patch("socket.socket", side_effect=AssertionError("no socket")):

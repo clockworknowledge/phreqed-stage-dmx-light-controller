@@ -50,6 +50,20 @@ class VlcProjectorProbeTests(unittest.TestCase):
         self.assertIn("--no-audio", command)
         self.assertIn("--play-and-exit", command)
         self.assertEqual(command[-1], "video.mp4")
+        resumed = build_vlc_command(
+            package,
+            vlc_executable="/usr/bin/vlc",
+            screen_number=1,
+            start_seconds=1.25,
+        )
+        self.assertIn("--start-time=1.250000", resumed)
+        with self.assertRaisesRegex(ValueError, "outside the package"):
+            build_vlc_command(
+                package,
+                vlc_executable="vlc",
+                screen_number=1,
+                start_seconds=5.0,
+            )
         with self.assertRaisesRegex(ValueError, "between 0 and 7"):
             build_vlc_command(
                 package, vlc_executable="vlc", screen_number=8

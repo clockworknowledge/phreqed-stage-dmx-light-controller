@@ -4,6 +4,8 @@ from __future__ import annotations
 
 import argparse
 import math
+import os
+import shutil
 import subprocess
 import sys
 import time
@@ -349,6 +351,42 @@ def build_parser() -> argparse.ArgumentParser:
             "explicit live browser mode"
         ),
     )
+    parser.add_argument(
+        "--video-output",
+        action="store_true",
+        help="enable the optional published Video song lane in explicit live --web mode",
+    )
+    parser.add_argument(
+        "--video-packages",
+        type=Path,
+        default=Path.home() / ".local/share/phreqed-dmx/video-packages",
+        help="local directory containing hash-verified Stage video packages",
+    )
+    parser.add_argument(
+        "--video-library",
+        type=Path,
+        default=Path.home() / ".local/share/phreqed-dmx/video-show.json",
+        help="published Video Show sidecar; existing songs.json remains authoritative",
+    )
+    parser.add_argument(
+        "--video-screen",
+        type=int,
+        choices=range(0, 8),
+        default=1,
+        metavar="0-7",
+        help="commissioned VLC Qt projector screen number (default 1)",
+    )
+    parser.add_argument(
+        "--video-surface",
+        choices=("portrait-character", "landscape-main"),
+        default="portrait-character",
+        help="Video Scene surface owned by this player",
+    )
+    parser.add_argument(
+        "--vlc-executable",
+        default="vlc",
+        help="VLC executable name or absolute path",
+    )
     parser.add_argument("--host", default="127.0.0.1", help="browser listen address")
     parser.add_argument("--port", type=int, default=8080, help="browser port (default 8080)")
     parser.add_argument(
@@ -464,6 +502,8 @@ def main(argv: list[str] | None = None) -> int:
         parser.error("--allow-system-shutdown requires explicit live --web mode")
     if args.allow_local_operations and not (args.command == "live" and args.web):
         parser.error("--allow-local-operations requires explicit live --web mode")
+    if args.video_output and not (args.command == "live" and args.web):
+        parser.error("--video-output requires explicit live --web mode")
     if (args.command == "web" or args.web) and args.duration is not None:
         parser.error("--duration is not supported by browser control")
     if args.command == "simulate" and args.duration is not None:
@@ -542,11 +582,64 @@ def main(argv: list[str] | None = None) -> int:
         if browser_requested:
             from .web_control import LocalOperations, serve
 
+            video_output = None
+            video_startup_error = None
+            if args.video_output:
+                from .projection import ProjectionPackageRegistry
+                from .vlc_player import (
+                    active_user_id,
+                    build_display_environment,
+                )
+                from .vlc_video_output import VlcVideoTrackOutput
+
+                try:
+                    executable = (
+                        shutil.which(args.vlc_executable)
+                        if Path(args.vlc_executable).name == args.vlc_executable
+                        else args.vlc_executable
+                    )
+                    if not executable or not Path(executable).is_file():
+                        raise RuntimeError(
+                            f"VLC executable is unavailable: {args.vlc_executable}"
+                        )
+                    registry = ProjectionPackageRegistry(args.video_packages)
+                    packages = registry.refresh()
+                    if not packages:
+                        raise RuntimeError(
+                            "no preflighted Video packages are available"
+                        )
+                    environment = build_display_environment(
+                        os.environ,
+                        user_id=active_user_id(),
+                    )
+                    video_output = VlcVideoTrackOutput(
+                        registry,
+                        surface_id=args.video_surface,
+                        vlc_executable=executable,
+                        screen_number=args.video_screen,
+                        environment=environment,
+                    )
+                    print(
+                        f"VIDEO OUTPUT: {args.video_surface} -> VLC screen "
+                        f"{args.video_screen}; {len(packages)} package(s) verified",
+                        file=sys.stderr,
+                    )
+                except (OSError, ValueError, RuntimeError) as exc:
+                    video_startup_error = str(exc) or type(exc).__name__
+                    print(
+                        f"VIDEO OUTPUT DISABLED: {video_startup_error}; "
+                        "Lighting remains available",
+                        file=sys.stderr,
+                    )
+
             serve(controller, args.library, host=args.host, port=args.port,
                   allow_network=args.allow_network, allow_live=args.command == "live",
                   foot_midi_device=args.foot_midi_device,
                   foot_midi_channel=args.foot_midi_channel,
                   white_output_ceiling=args.white_ceiling,
+                  video_show_path=args.video_library,
+                  video_output=video_output,
+                  video_startup_error=video_startup_error,
                   system_shutdown=(
                       _request_system_poweroff
                       if args.allow_system_shutdown
