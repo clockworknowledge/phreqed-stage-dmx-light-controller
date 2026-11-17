@@ -1,18 +1,22 @@
 # Codex Resume: Live Show Baseline and Song/Setlist Roadmap
 
-Last updated: 2026-11-16
+Last updated: 2026-11-17
 
-## Next resume point -- Persistent black projection underlay
+## Next resume point -- Validate black underlay, then author hybrid scene
 
-Resume with `PROJ-004`: design and implement a continuously present fullscreen
-black underlay on named output `HDMI-A-2`, beneath VLC and independent of media
-playback. It must prevent the Pi desktop, wallpaper, panels, notifications, and
-cursor from appearing while Video is idle, stopped, blacked out, between cues,
-complete, unavailable, or failed. It must never cover the `DSI-1` Stage
-touchscreen or become a dependency of Lighting, QLC+, audio, MIDI, browser
-control, or headless startup. Add hardware-free tests, then repeat the Pi
-lights-plus-video Start/Stop and Blackout checks and run a full-song drift/soak
-observation. Detailed acceptance is on the Ready card in `docs/kanban.md`.
+Deploy and physically validate `PROJ-004`. The optional
+`phreqed-projection-black.service` now binds a supervised solid-black `swaybg`
+surface only to `HDMI-A-2`, independently of VLC and the Lighting controller.
+Confirm black at boot/idle and after Stop, Blackout, completion, player failure,
+controller restart, and projector reconnect; Video must appear above it and
+`DSI-1` must remain usable.
+
+After that gate, begin `SHOW-005`: author the first synchronized hybrid
+Lighting/Video scene for **Travelling on a Floating Rock** from selected
+Infinity VFX source ranges. Produce a reviewed musical cue map, a new versioned
+Video EDL/package and sidecar publication, preserve existing song/setlist data,
+then run the full song for transition quality and cumulative drift. Detailed
+acceptance is in `docs/kanban.md`.
 
 ## Current checkpoint -- Video EDL and Stage rendition baseline
 
@@ -118,6 +122,15 @@ alignment and drift observation remains open. Stop and blackout reveal the Pi
 desktop after VLC exits, so the next cycle begins with the persistent black
 projection underlay tracked as `PROJ-004`.
 
+The desktop implementation of `PROJ-004` is now complete and in Validation.
+Raspberry Pi OS already provides `swaybg`, whose per-output Wayland binding is a
+safer fit than a movable X11 window: the black surface is scoped to
+`HDMI-A-2`, remains beneath VLC, follows connector reconnects, and cannot move
+onto `DSI-1`. The independently enabled systemd unit retries after the graphical
+session starts and is not wanted or required by the DMX controller or kiosk.
+The installer and updater preserve optional/headless behavior. Pi physical
+acceptance remains the immediate next action.
+
 The planned performance rig is two Betopper cubes flanking the stage plus a
 vertical rear screen for large character visuals. `PROJ-003` adds an optional
 second Standard Landscape screen for the December 18 show. The target topology
@@ -146,7 +159,7 @@ seconds, emitting responsive HTML and a SHA-256 manifest without constructing
 Art-Net, white, or projector output. Chromium checks passed at 1280 x 800 and
 390 x 844 after removing phone-width overflow.
 
-Windows Python 3.12 passes all 299 tests; JavaScript syntax, Python compilation,
+Windows Python 3.12 passes all 300 tests; JavaScript syntax, Python compilation,
 and diff checks also pass. The next planning review is the baseline video sprint;
 the operator will provide representative music-video and VFX source material.
 

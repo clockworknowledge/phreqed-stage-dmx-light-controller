@@ -13,6 +13,7 @@ SCRIPT = runpy.run_path(
 assess_state = SCRIPT["assess_state"]
 active_dependency_check = SCRIPT["active_dependency_check"]
 stage_lan_check = SCRIPT["stage_lan_check"]
+parse_args = SCRIPT["parse_args"]
 
 
 def safe_state() -> dict[str, object]:
@@ -34,6 +35,12 @@ def safe_state() -> dict[str, object]:
 
 
 class ShowReadinessTests(unittest.TestCase):
+    def test_projection_black_readiness_is_explicit(self) -> None:
+        optional = parse_args([])
+        required = parse_args(["--require-projection-black"])
+        self.assertFalse(optional.require_projection_black)
+        self.assertTrue(required.require_projection_black)
+
     def test_required_sleep_inhibitor_must_be_active(self) -> None:
         for returncode, expected in ((0, "PASS"), (3, "FAIL")):
             completed = type("Completed", (), {

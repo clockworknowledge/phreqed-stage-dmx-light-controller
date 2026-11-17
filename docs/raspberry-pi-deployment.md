@@ -337,14 +337,37 @@ Set `PHREQED_VIDEO_OUTPUT_NAME=HDMI-A-2`; the older numeric
 through XWayland/XCB so Labwc can route its named window without covering the
 `DSI-1` touchscreen.
 
+Install and enable the independent black projector underlay with the service
+assets. It uses Raspberry Pi OS's existing `swaybg` to bind solid black only to
+the named Wayland output; it has no dependency on VLC, the controller, or the
+touchscreen kiosk:
+
+```bash
+bash scripts/pi-install-show-service.sh \
+  --enable-kiosk \
+  --enable-projection-black \
+  --start
+systemctl status phreqed-projection-black.service --no-pager
+.venv/bin/python scripts/show-readiness.py \
+  --startup-defaults \
+  --require-projection-black
+```
+
+The service stays alive when no media is playing and automatically owns the
+output again after an HDMI reconnect. A missing GUI or `swaybg` leaves this
+optional unit unavailable without delaying QLC+, Lighting, browser control, or
+headless startup. Keep the existing desktop wallpaper process running; the
+Phreqed surface is output-specific and is intended to sit above that background
+and below fullscreen VLC.
+
 Enable `PHREQED_VIDEO_OUTPUT=1` only after the package and `video-show.json`
 sidecar are present. An invalid package/player configuration disables Video,
 reports the reason, and leaves the browser and Lighting available rather than
 silently selecting media or preventing show control from starting. Video
 launch or later player failure is also contained from Lighting, but the
-commissioning-stage stop path currently reveals the configured black projector
-background; the independently supervised output-black surface remains an open
-acceptance item.
+underlay still requires Pi confirmation for boot, idle, Stop, Blackout, normal
+completion, player failure, and projector reconnect before fail-black is
+accepted.
 
 ### Prevent suspend during managed shows
 

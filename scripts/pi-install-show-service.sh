@@ -8,6 +8,7 @@ SERVICE_SOURCE="${REPO_ROOT}/config/systemd/phreqed-dmx.service"
 INHIBIT_SOURCE="${REPO_ROOT}/config/systemd/phreqed-show-inhibit.service"
 POWEROFF_SOURCE="${REPO_ROOT}/config/systemd/phreqed-poweroff.service"
 KIOSK_SOURCE="${REPO_ROOT}/config/systemd/phreqed-kiosk.service"
+PROJECTION_BLACK_SOURCE="${REPO_ROOT}/config/systemd/phreqed-projection-black.service"
 NETWORK_UNIT_SOURCE="${REPO_ROOT}/config/systemd/phreqed-network@.service"
 BACKLIGHT_UNIT_SOURCE="${REPO_ROOT}/config/systemd/phreqed-backlight@.service"
 ENV_SOURCE="${REPO_ROOT}/config/systemd/phreqed-dmx.env.example"
@@ -15,6 +16,7 @@ SERVICE_TARGET="/etc/systemd/system/phreqed-dmx.service"
 INHIBIT_TARGET="/etc/systemd/system/phreqed-show-inhibit.service"
 POWEROFF_TARGET="/etc/systemd/system/phreqed-poweroff.service"
 KIOSK_TARGET="/etc/systemd/system/phreqed-kiosk.service"
+PROJECTION_BLACK_TARGET="/etc/systemd/system/phreqed-projection-black.service"
 NETWORK_UNIT_TARGET="/etc/systemd/system/phreqed-network@.service"
 BACKLIGHT_UNIT_TARGET="/etc/systemd/system/phreqed-backlight@.service"
 ENV_TARGET="/etc/default/phreqed-dmx"
@@ -34,13 +36,15 @@ BACKLIGHT_HELPER_TARGET="/usr/local/libexec/phreqed-set-backlight"
 MIDI_LINK="/dev/snd/phreqed-ampero-midi"
 START_NOW=0
 ENABLE_KIOSK=0
+ENABLE_PROJECTION_BLACK=0
 
 for argument in "$@"; do
     case "${argument}" in
         --start) START_NOW=1 ;;
         --enable-kiosk) ENABLE_KIOSK=1 ;;
+        --enable-projection-black) ENABLE_PROJECTION_BLACK=1 ;;
         *)
-            echo "Usage: bash scripts/pi-install-show-service.sh [--start] [--enable-kiosk]" >&2
+            echo "Usage: bash scripts/pi-install-show-service.sh [--start] [--enable-kiosk] [--enable-projection-black]" >&2
             exit 2
             ;;
     esac
@@ -64,6 +68,10 @@ if [[ ! -x "/usr/bin/qlcplus" ]]; then
     echo "ERROR: /usr/bin/qlcplus is not installed." >&2
     exit 1
 fi
+if (( ENABLE_PROJECTION_BLACK )) && [[ ! -x "/usr/bin/swaybg" ]]; then
+    echo "ERROR: /usr/bin/swaybg is required for the projector black underlay." >&2
+    exit 1
+fi
 if [[ ! -f "/home/mmorley/.qlcplus/autostart.qxw" ]]; then
     echo "ERROR: The commissioned QLC+ runtime workspace is missing." >&2
     echo "Expected /home/mmorley/.qlcplus/autostart.qxw" >&2
@@ -78,7 +86,8 @@ sudo install -m 0755 "${BACKLIGHT_HELPER_SOURCE}" "${BACKLIGHT_HELPER_TARGET}"
 echo "Validating systemd units"
 systemd-analyze verify \
     "${QLC_SOURCE}" "${SERVICE_SOURCE}" "${INHIBIT_SOURCE}" "${POWEROFF_SOURCE}" \
-    "${KIOSK_SOURCE}" "${NETWORK_UNIT_SOURCE}" "${BACKLIGHT_UNIT_SOURCE}"
+    "${KIOSK_SOURCE}" "${PROJECTION_BLACK_SOURCE}" \
+    "${NETWORK_UNIT_SOURCE}" "${BACKLIGHT_UNIT_SOURCE}"
 
 if sudo test -f "${QLC_TARGET}" \
         && ! sudo test -f "${QLC_BACKUP}" \
@@ -97,6 +106,8 @@ echo "Installing ${POWEROFF_TARGET}"
 sudo install -m 0644 "${POWEROFF_SOURCE}" "${POWEROFF_TARGET}"
 echo "Installing ${KIOSK_TARGET}"
 sudo install -m 0644 "${KIOSK_SOURCE}" "${KIOSK_TARGET}"
+echo "Installing ${PROJECTION_BLACK_TARGET}"
+sudo install -m 0644 "${PROJECTION_BLACK_SOURCE}" "${PROJECTION_BLACK_TARGET}"
 echo "Installing local operation helper units"
 sudo install -m 0644 "${NETWORK_UNIT_SOURCE}" "${NETWORK_UNIT_TARGET}"
 sudo install -m 0644 "${BACKLIGHT_UNIT_SOURCE}" "${BACKLIGHT_UNIT_TARGET}"
@@ -135,11 +146,19 @@ if (( ENABLE_KIOSK )); then
 else
     echo "Touchscreen kiosk installed but left disabled; use --enable-kiosk after local validation."
 fi
+if (( ENABLE_PROJECTION_BLACK )); then
+    sudo systemctl enable phreqed-projection-black.service
+else
+    echo "Projector black underlay installed but left disabled; use --enable-projection-black after local validation."
+fi
 
 if (( START_NOW )); then
     echo "Starting the headless show sequence"
     sudo systemctl restart qlcplus.service
     sudo systemctl restart phreqed-dmx.service
+    if (( ENABLE_PROJECTION_BLACK )); then
+        sudo systemctl restart phreqed-projection-black.service
+    fi
 else
     echo "Services enabled for the next boot; they were not started now."
 fi
@@ -172,8 +191,12 @@ Then restart the controller service. Missing Video configuration disables Video
 only: the reason is reported while Lighting and the browser remain
 available, and saved song, setlist, tuning, and fixture data is unchanged.
 
+The optional black underlay is independently supervised by
+phreqed-projection-black.service. Enable it with --enable-projection-black; it
+targets only HDMI-A-2 and does not depend on the controller or kiosk.
+
 Check the boot sequence:
-  systemctl status qlcplus.service phreqed-show-inhibit.service phreqed-dmx.service phreqed-kiosk.service --no-pager
+  systemctl status qlcplus.service phreqed-show-inhibit.service phreqed-dmx.service phreqed-kiosk.service phreqed-projection-black.service --no-pager
   systemd-inhibit --list --what=sleep --no-pager
   journalctl -u qlcplus.service -u phreqed-show-inhibit.service -u phreqed-dmx.service -b --no-pager -n 100
   curl -I http://127.0.0.1:9999

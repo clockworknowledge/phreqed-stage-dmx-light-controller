@@ -125,6 +125,7 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument("--require-stage-lan", action="store_true")
     parser.add_argument("--require-audio", action="store_true")
     parser.add_argument("--require-foot-event", action="store_true")
+    parser.add_argument("--require-projection-black", action="store_true")
     parser.add_argument("--startup-defaults", action="store_true")
     return parser.parse_args(argv)
 
@@ -136,6 +137,8 @@ def main(argv: list[str] | None = None) -> int:
         active_dependency_check("phreqed-show-inhibit.service"),
         service_check("phreqed-dmx.service"),
     ]
+    if args.require_projection_black:
+        results.append(service_check("phreqed-projection-black.service"))
     try:
         state = get_json(f"{args.controller_url.rstrip('/')}/api/state")
     except (OSError, URLError, ValueError, json.JSONDecodeError) as exc:

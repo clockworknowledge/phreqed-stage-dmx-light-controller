@@ -62,3 +62,16 @@ if systemctl cat phreqed-kiosk.service >/dev/null 2>&1 \
         exit 1
     fi
 fi
+
+# Keep the optional projector fail-black surface on the updated managed unit.
+# Do not start it on installations where it was deliberately left inactive.
+if systemctl cat phreqed-projection-black.service >/dev/null 2>&1 \
+        && sudo systemctl is-active --quiet phreqed-projection-black.service; then
+    echo "Restarting the active projector black underlay"
+    sudo systemctl restart phreqed-projection-black.service
+    if ! sudo systemctl is-active --quiet phreqed-projection-black.service; then
+        echo "ERROR: phreqed-projection-black.service did not become active after update." >&2
+        sudo systemctl status phreqed-projection-black.service --no-pager >&2 || true
+        exit 1
+    fi
+fi

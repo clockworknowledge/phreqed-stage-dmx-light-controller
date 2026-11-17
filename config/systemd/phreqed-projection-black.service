@@ -1,0 +1,26 @@
+[Unit]
+Description=Phreqed persistent black projector underlay
+After=display-manager.service graphical.target
+ConditionPathExists=/usr/bin/swaybg
+StartLimitIntervalSec=60
+StartLimitBurst=12
+
+[Service]
+Type=simple
+User=mmorley
+Environment=HOME=/home/mmorley
+Environment=XDG_RUNTIME_DIR=/run/user/1000
+Environment=WAYLAND_DISPLAY=wayland-0
+# Let the Labwc session finish mapping its normal desktop background first.
+ExecStartPre=/bin/sleep 5
+ExecStart=/usr/bin/swaybg --output HDMI-A-2 --color 000000 --mode solid_color
+Restart=always
+RestartSec=2
+TimeoutStopSec=5
+NoNewPrivileges=true
+ProtectSystem=full
+ProtectHome=read-only
+RestrictAddressFamilies=AF_UNIX
+
+[Install]
+WantedBy=graphical.target

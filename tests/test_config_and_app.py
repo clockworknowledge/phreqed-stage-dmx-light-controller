@@ -325,6 +325,12 @@ class ConfigurationTests(unittest.TestCase):
         kiosk = (root / "config/systemd/phreqed-kiosk.service").read_text(
             encoding="utf-8"
         )
+        projection_black = (
+            root / "config/systemd/phreqed-projection-black.service"
+        ).read_text(encoding="utf-8")
+        controller = (root / "config/systemd/phreqed-dmx.service").read_text(
+            encoding="utf-8"
+        )
         policy = (root / "config/polkit/49-phreqed-local-operations.rules").read_text(
             encoding="utf-8"
         )
@@ -334,6 +340,15 @@ class ConfigurationTests(unittest.TestCase):
         self.assertIn("After=graphical.target phreqed-dmx.service", kiosk)
         self.assertNotIn("Requires=phreqed-kiosk.service", kiosk)
         self.assertIn("--enable-kiosk", installer)
+        self.assertIn("--enable-projection-black", installer)
+        self.assertIn("/usr/bin/swaybg", projection_black)
+        self.assertIn("--output HDMI-A-2", projection_black)
+        self.assertIn("--color 000000", projection_black)
+        self.assertIn(
+            "After=display-manager.service graphical.target", projection_black
+        )
+        self.assertNotIn("phreqed-dmx.service", projection_black)
+        self.assertNotIn("phreqed-projection-black.service", controller)
         self.assertLess(
             installer.index('sudo install -m 0755 "${NETWORK_HELPER_SOURCE}"'),
             installer.index("systemd-analyze verify"),

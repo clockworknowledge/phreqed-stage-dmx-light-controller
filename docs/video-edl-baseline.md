@@ -267,12 +267,30 @@ temporary Phreqed error-capture hook if present, writes atomically, and creates
 a timestamped backup only when a change is needed. The commissioned Labwc
 0.20.2 build requires `ToggleFullscreen`; it rejects `SetFullscreen`.
 
+The independent projector underlay is installed and enabled separately:
+
+```bash
+bash scripts/pi-install-show-service.sh \
+  --enable-kiosk \
+  --enable-projection-black \
+  --start
+systemctl status phreqed-projection-black.service --no-pager
+.venv/bin/python scripts/show-readiness.py \
+  --startup-defaults \
+  --require-projection-black
+```
+
+This optional service runs `swaybg` with a solid-black configuration scoped to
+`HDMI-A-2`. Because the Wayland surface is bound by connector name, it cannot
+migrate onto `DSI-1`; it remains independent of VLC and the Lighting service,
+and it can reacquire the projector after reconnect. Missing GUI support does
+not change headless or lighting operation.
+
 Restarting the controller then preflights every package before the web service
 starts. The managed player deliberately unsets Wayland selection and launches
 an undecorated XCB window; Labwc moves that `vlc` window to the named projector
 and makes it fullscreen. Setlist Start launches the active Video Scene from the Lighting song
 clock; Stop, selection, completion, blackout, and Manual mode stop Video. A
 Video launch failure is reported but cannot stop Lighting. This is still a
-commissioning-stage adapter: the projector compositor background must be black,
-and the independently supervised output-black surface, pause/seek, drift, and
-actual-DMX coexistence acceptance remain open.
+commissioning-stage adapter: physical underlay/failure validation, pause/seek,
+drift, and extended actual-DMX coexistence acceptance remain open.

@@ -164,6 +164,31 @@ show-level transport only after projection black is fault-tested.
 
 ## Ready
 
+### SHOW-005 — Travelling synchronized Lighting/Video scene (`P1`, show authoring)
+
+Build the first intentionally authored hybrid scene for **Travelling on a
+Floating Rock**. As a performer, I want selected VFX segments and the song's
+Lighting scenes to change on one reviewed musical timeline so the projection
+and Betopper cubes feel like one designed show rather than two parallel loops.
+
+Use non-destructive source ranges from the existing Infinity VFX library,
+retain immutable source hashes, and create a new versioned Video EDL/package.
+Map Video Scene boundaries, fades, and intentional black intervals to reviewed
+Lighting cue boundaries without rewriting the authoritative song, setlist, or
+existing published baseline. Publish through the separate Video Show sidecar.
+
+Acceptance: a cue map documents the musical section, Lighting scene, Video
+segment, transition, and expected start time; package preflight passes; Start,
+Stop, Blackout, and no-autostart semantics remain intact; the full song has no
+obvious transition discontinuity or cumulative drift; and failure of the Video
+lane leaves Lighting and stage control available. The resulting structure must
+remain suitable for the later Studio Video Scene/timeline editor.
+
+Dependencies: physical acceptance of `PROJ-004`, reviewed VFX source selection,
+and the existing `SHOW-002` shared transport.
+
+## Validation
+
 ### PROJ-004 — Persistent black projection underlay (`P1`, visual output)
 
 Keep a dedicated fullscreen black surface continuously present on the named
@@ -171,23 +196,23 @@ Keep a dedicated fullscreen black surface continuously present on the named
 the Pi desktop, wallpaper, panels, notifications, or cursor when Video is idle,
 stopped, blacked out, between cues, unavailable, or has failed.
 
-Next-cycle scope: select the smallest locally supervised implementation, bind
-it to the named Labwc output without covering `DSI-1`, start it independently
-of VLC media playback, keep it black-only, and integrate its health with the
-optional Video supervisor. It must not delay or become a dependency of QLC+,
-Lighting, audio, MIDI, browser control, or headless operation.
+Implementation checkpoint (2026-11-17): an optional independently supervised
+`phreqed-projection-black.service` uses the Raspberry Pi OS-provided `swaybg`
+client to bind solid black only to the named `HDMI-A-2` Wayland output. It has
+no dependency from the DMX controller or kiosk, retries around graphical-session
+startup, remains present independently of VLC, follows connector reconnects,
+and cannot migrate onto `DSI-1`. The installer exposes an explicit
+`--enable-projection-black` switch; normal updates restart it only when already
+active. Hardware-free unit, shell-syntax, and service-isolation tests pass.
 
-Acceptance: boot and idle show black on the projector; Video appears above the
-underlay; Stop, Blackout, cue gaps, normal completion, VLC crash, invalid media,
-controller restart, and display reconnect all return to black without exposing
-the desktop. The Stage touchscreen remains usable throughout. Add hardware-free
-configuration/process tests and repeat the Pi lights-plus-video Start/Stop and
-Blackout checks. Then run a full-song drift/soak observation.
+Acceptance remaining: boot and idle show black on the projector; Video appears
+above the underlay; Stop, Blackout, cue gaps, normal completion, VLC crash,
+invalid media, controller restart, and display reconnect all return to black
+without exposing the desktop. Confirm the Stage touchscreen stays usable, then
+run a full-song drift/soak observation.
 
 Dependencies: `PROJ-001` named-output routing. This card closes the initial
 managed fail-black gap but does not replace later dual-surface supervision.
-
-## Validation
 
 ### DISPLAY-001 — Adaptive local stage touchscreen umbrella (`P1`, operations)
 

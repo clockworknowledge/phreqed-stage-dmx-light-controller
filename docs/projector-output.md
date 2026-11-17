@@ -121,6 +121,29 @@ compiler, an audio-free H.264 Stage rendition, package hashes, fail-closed
 preflight, and a disabled-by-default player boundary. A real player is not yet
 selected or enabled. See `docs/video-edl-baseline.md`.
 
+## Persistent black underlay
+
+`phreqed-projection-black.service` is the first independently supervised
+fail-black surface. It runs the Raspberry Pi OS-provided `swaybg` client with a
+solid-black background scoped only to `HDMI-A-2`. This uses Wayland's named
+output binding rather than a desktop coordinate or movable X11 window, so HDMI
+disconnect/reconnect cannot relocate the underlay onto the `DSI-1` touchscreen.
+VLC remains a separate fullscreen XWayland window above it.
+
+The unit is installed but disabled by default. It is enabled explicitly with
+`scripts/pi-install-show-service.sh --enable-projection-black`, starts only as
+part of the graphical target, retries if the compositor is not ready, and has
+no `Wants`, `Requires`, or ordering dependency from the DMX controller. Missing
+GUI support therefore cannot delay QLC+, Lighting, audio, MIDI, browser control,
+or headless operation. The updater restarts the underlay only when it was
+already active.
+
+This closes the implementation side of the desktop-exposure gap. Pi acceptance
+must still confirm black at boot and idle and after Stop, Blackout, cue gaps,
+normal completion, VLC failure, invalid media, controller restart, and HDMI
+reconnect. It must also confirm that no existing desktop background is mapped
+above the new output-specific surface.
+
 The first measured-runtime slice uses `scripts/projection-soak.py`. It launches
 one hash-verified package through the same fixed, audio-free VLC command as the
 bounded probe, while independently rendering a safe preset at the configured
