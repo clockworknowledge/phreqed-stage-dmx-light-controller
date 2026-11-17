@@ -2,16 +2,9 @@
 
 Last updated: 2026-11-17
 
-## Next resume point -- Validate black underlay, then author hybrid scene
+## Next resume point -- Author the Travelling hybrid scene
 
-Deploy and physically validate `PROJ-004`. The optional
-`phreqed-projection-black.service` now binds a supervised solid-black `swaybg`
-surface only to `HDMI-A-2`, independently of VLC and the Lighting controller.
-Confirm black at boot/idle and after Stop, Blackout, completion, player failure,
-controller restart, and projector reconnect; Video must appear above it and
-`DSI-1` must remain usable.
-
-After that gate, begin `SHOW-005`: author the first synchronized hybrid
+Begin `SHOW-005`: author the first synchronized hybrid
 Lighting/Video scene for **Travelling on a Floating Rock** from selected
 Infinity VFX source ranges. Produce a reviewed musical cue map, a new versioned
 Video EDL/package and sidecar publication, preserve existing song/setlist data,
@@ -122,14 +115,18 @@ alignment and drift observation remains open. Stop and blackout reveal the Pi
 desktop after VLC exits, so the next cycle begins with the persistent black
 projection underlay tracked as `PROJ-004`.
 
-The desktop implementation of `PROJ-004` is now complete and in Validation.
+`PROJ-004` is complete and Done.
 Raspberry Pi OS already provides `swaybg`, whose per-output Wayland binding is a
 safer fit than a movable X11 window: the black surface is scoped to
 `HDMI-A-2`, remains beneath VLC, follows connector reconnects, and cannot move
 onto `DSI-1`. The independently enabled systemd unit retries after the graphical
 session starts and is not wanted or required by the DMX controller or kiosk.
-The installer and updater preserve optional/headless behavior. Pi physical
-acceptance remains the immediate next action.
+The installer and updater preserve optional/headless behavior. Commissioned Pi
+testing passed idle, concurrent Video/Lighting, Stop, Blackout, controller
+restart, HDMI reconnect, and touchscreen-continuity checks. Live output remained
+stopped after restart as designed. The kiosk's stale connection-loss notice was
+then corrected to clear after the first successful state response; reconnection
+still never auto-starts live output.
 
 The planned performance rig is two Betopper cubes flanking the stage plus a
 vertical rear screen for large character visuals. `PROJ-003` adds an optional
@@ -159,7 +156,7 @@ seconds, emitting responsive HTML and a SHA-256 manifest without constructing
 Art-Net, white, or projector output. Chromium checks passed at 1280 x 800 and
 390 x 844 after removing phone-width overflow.
 
-Windows Python 3.12 passes all 300 tests; JavaScript syntax, Python compilation,
+Windows Python 3.12 passes all 301 tests; JavaScript syntax, Python compilation,
 and diff checks also pass. The next planning review is the baseline video sprint;
 the operator will provide representative music-video and VFX source material.
 

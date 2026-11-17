@@ -13,6 +13,7 @@ let currentWorkspace = 'perform', pendingWorkspace = null, pendingBuildTab = 'lo
 let pendingSetlistPanel = 'songs', tuningProfileDirty = false;
 let pendingNetworkAction = null;
 let pendingTuningProfileId = null;
+let connectionNoticeActive = false;
 const TOUCH_PAGE_SIZE=5;
 const QUICK_LOOK_PAGE_SIZE=6;
 const MIN_CUE_DURATION=0.1;
@@ -417,7 +418,9 @@ function renderState(s) {
   const frames = Object.entries(s.frames); const whiteParts=white.part_levels||{};
   if (frames[0]) draw($('cube-a'),frames[0][1],whiteParts[frames[0][0]]||[]);
   if (frames[1]) draw($('cube-b'),frames[1][1],whiteParts[frames[1][0]]||[]);
-  if (s.error || s.notice) notify(s.error || s.notice, Boolean(s.error));
+  if(s.error||s.notice)notify(s.error||s.notice,Boolean(s.error));
+  else if(connectionNoticeActive)notify('');
+  connectionNoticeActive=false;
 }
 function newLayer() { return {effect_id:'plasma', fixtures:null, opacity:1, blend_mode:'alpha', parameters:{}}; }
 function openEditor(p = null) {
@@ -837,7 +840,7 @@ async function poll() {
     const s=await request('/api/state');renderState(s);
     if(Date.now()-lastBeat>1000){await request('/api/command',{method:'POST',headers:{'Content-Type':'application/json','X-Control-Token':token},body:JSON.stringify({action:'heartbeat',lease_id:leaseId,lease_kind:'remote'})});lastBeat=Date.now();}
     if(catalog&&Date.now()-(poll.lastCatalog||0)>4000){await loadCatalog();poll.lastCatalog=Date.now();}
-  }catch(error){connected=false;token='';$('connection').textContent='Disconnected';$('connection').className='badge live';for(const id of ['start-live','stage-start-live'])$(id).disabled=true;$('blackout-status').textContent=state?.shutdown_requested?'Pi shutdown in progress.':'Controller connection lost.';$('safety-detail').textContent=state?.shutdown_requested?'Wait for Pi activity to stop before removing power.':'Live output stops after 5 seconds without a trusted control lease.';notify(state?.shutdown_requested?'Pi is shutting down. This page will disconnect.':'Connection lost. Reconnecting… Live output will not restart automatically.',!state?.shutdown_requested);}
+  }catch(error){connected=false;connectionNoticeActive=true;token='';$('connection').textContent='Disconnected';$('connection').className='badge live';for(const id of ['start-live','stage-start-live'])$(id).disabled=true;$('blackout-status').textContent=state?.shutdown_requested?'Pi shutdown in progress.':'Controller connection lost.';$('safety-detail').textContent=state?.shutdown_requested?'Wait for Pi activity to stop before removing power.':'Live output stops after 5 seconds without a trusted control lease.';notify(state?.shutdown_requested?'Pi is shutting down. This page will disconnect.':'Connection lost. Reconnecting… Live output will not restart automatically.',!state?.shutdown_requested);}
   setTimeout(poll,250);
 }
 $('surface-label').textContent = surface === 'kiosk' ? 'LOCAL TOUCHSCREEN' : 'REMOTE CONTROL';

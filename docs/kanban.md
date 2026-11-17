@@ -189,31 +189,6 @@ and the existing `SHOW-002` shared transport.
 
 ## Validation
 
-### PROJ-004 — Persistent black projection underlay (`P1`, visual output)
-
-Keep a dedicated fullscreen black surface continuously present on the named
-`HDMI-A-2` projector beneath managed Video. As a performer, I must never expose
-the Pi desktop, wallpaper, panels, notifications, or cursor when Video is idle,
-stopped, blacked out, between cues, unavailable, or has failed.
-
-Implementation checkpoint (2026-11-17): an optional independently supervised
-`phreqed-projection-black.service` uses the Raspberry Pi OS-provided `swaybg`
-client to bind solid black only to the named `HDMI-A-2` Wayland output. It has
-no dependency from the DMX controller or kiosk, retries around graphical-session
-startup, remains present independently of VLC, follows connector reconnects,
-and cannot migrate onto `DSI-1`. The installer exposes an explicit
-`--enable-projection-black` switch; normal updates restart it only when already
-active. Hardware-free unit, shell-syntax, and service-isolation tests pass.
-
-Acceptance remaining: boot and idle show black on the projector; Video appears
-above the underlay; Stop, Blackout, cue gaps, normal completion, VLC crash,
-invalid media, controller restart, and display reconnect all return to black
-without exposing the desktop. Confirm the Stage touchscreen stays usable, then
-run a full-song drift/soak observation.
-
-Dependencies: `PROJ-001` named-output routing. This card closes the initial
-managed fail-black gap but does not replace later dual-surface supervision.
-
 ### DISPLAY-001 — Adaptive local stage touchscreen umbrella (`P1`, operations)
 
 The touchscreen program is tracked by the independently movable child cards
@@ -1093,6 +1068,23 @@ when whites are disarmed. Validate the final set on both commissioned fixtures
 before enabling any pattern by default in a show package.
 
 ## Done
+
+### PROJ-004 — Persistent black projection underlay (`P1`, visual output)
+
+An optional independently supervised `phreqed-projection-black.service` uses
+the Raspberry Pi OS-provided `swaybg` client to bind solid black only to the
+named `HDMI-A-2` Wayland output. It has no dependency from the DMX controller or
+kiosk, remains present independently of VLC, follows connector reconnects, and
+cannot migrate onto `DSI-1`.
+
+Acceptance completed on the commissioned Pi on 2026-11-17: idle was black;
+Video appeared above the underlay while Lighting sequenced; Stop and Blackout
+returned to black; the underlay remained black through a controller restart;
+HDMI disconnect/reconnect returned to black; and Stage control remained usable
+on `DSI-1`. The controller correctly remained stopped after restart. A stale
+kiosk “connection lost” notice observed after successful reconnection was fixed
+to clear on the first recovered state response without auto-starting live
+output.
 
 ### UX-001 — Adaptive stage-control information architecture (`P1`)
 

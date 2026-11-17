@@ -72,6 +72,15 @@ class BrowserControlTests(unittest.TestCase):
         self.assertIn("white.part_levels", script)
         self.assertIn("white.pattern_name", script)
 
+    def test_browser_clears_transient_connection_notice_after_recovery(self):
+        script = files('phreqed_dmx').joinpath('web/app.js').read_text(
+            encoding='utf-8'
+        )
+        self.assertIn('let connectionNoticeActive = false;', script)
+        self.assertIn('connectionNoticeActive=true', script)
+        self.assertIn("else if(connectionNoticeActive)notify('');", script)
+        self.assertIn('connectionNoticeActive=false;', script)
+
     def test_browser_reports_disabled_and_active_audio_analysis(self):
         disabled = self.control.state()['audio']
         self.assertFalse(disabled['enabled'])
