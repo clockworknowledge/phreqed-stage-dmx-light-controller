@@ -52,6 +52,14 @@ output after V4L2 H.264 decode was unavailable. Raw evidence is preserved in
 queryable drop telemetry, actual-DMX coexistence, and managed fail-black player
 controls remain open.
 
+Operator review found playback visually clean. It also showed that the soak's
+`contain` treatment preserved the landscape frame but made it too small on the
+vertical screen. The baseline now distinguishes Stage Portrait (9:16 `cover`,
+large character/performer framing) from Standard Landscape (16:9 `cover`).
+Front/rear mirroring remains an independent output choice. Character-focused
+portrait scenes will later add reviewed focal paths or isolated layers rather
+than relying only on a fixed center crop.
+
 ## Current checkpoint -- Operations telemetry and visual review tooling
 
 `OPS-008`, `SIM-004`, and `EFFECT-020` are implemented and moved to Validation.
@@ -70,7 +78,7 @@ seconds, emitting responsive HTML and a SHA-256 manifest without constructing
 Art-Net, white, or projector output. Chromium checks passed at 1280 x 800 and
 390 x 844 after removing phone-width overflow.
 
-Windows Python 3.12 passes all 279 tests; JavaScript syntax, Python compilation,
+Windows Python 3.12 passes all 280 tests; JavaScript syntax, Python compilation,
 and diff checks also pass. The next planning review is the baseline video sprint;
 the operator will provide representative music-video and VFX source material.
 

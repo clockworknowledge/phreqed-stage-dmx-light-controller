@@ -453,6 +453,11 @@ Acceptance:
   track while both remain aligned to one deterministic song clock.
 - As a designer, I can preview crop, fit, loop, opacity, fades, and overlays
   without requiring the Stage projector.
+- As a designer, I can target Stage Portrait (9:16) or Standard Landscape
+  (16:9), preview the correct safe frame, and place characters at stage-sized
+  scale with reviewed focal framing.
+- As an operator, I can select front or rear projection independently from the
+  authored layout, without editing or duplicating the source media.
 - As an operator, missing or failed video fails black without interrupting the
   lighting cue.
 
@@ -473,6 +478,10 @@ Acceptance:
 - Export projection presets and media references through the show manifest.
 - Preview and Stage use an explicitly versioned interpretation of crop/fit,
   timing, looping, transitions, intensity, and black fallback.
+- Layout profile and projection side are separate versioned fields. Portrait
+  defaults to full-height `cover` with a reviewed focal point; Landscape
+  defaults to 16:9 `cover`; rear projection adds a horizontal output mirror.
+  `contain` remains available as an explicit editorial choice.
 - Song start, stop, pause, seek, next-song selection, and no-autostart semantics
   address both track runners. Video may pre-roll for decode readiness but cannot
   present before explicit song start.

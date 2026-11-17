@@ -45,6 +45,29 @@ def edl_document(
 
 
 class VideoEdlTests(unittest.TestCase):
+    def test_stage_layout_profiles_keep_layout_and_projection_side_separate(self):
+        examples = Path(__file__).parents[1] / "examples" / "video"
+        portrait = load_video_edl(
+            examples / "travelling-fifteen-second-stage-portrait-rear.edl.json"
+        )
+        landscape = load_video_edl(
+            examples / "travelling-fifteen-second-stage-landscape-front.edl.json"
+        )
+        self.assertEqual(portrait.projection.output_dimensions, (1280, 720))
+        self.assertEqual(landscape.projection.output_dimensions, (1280, 720))
+        self.assertEqual(
+            (portrait.projection.canvas_width, portrait.projection.canvas_height),
+            (720, 1280),
+        )
+        self.assertEqual(
+            (landscape.projection.canvas_width, landscape.projection.canvas_height),
+            (1280, 720),
+        )
+        self.assertTrue(portrait.projection.horizontal_flip)
+        self.assertFalse(landscape.projection.horizontal_flip)
+        self.assertEqual(portrait.clips[0].fit_mode, "cover")
+        self.assertEqual(landscape.clips[0].fit_mode, "cover")
+
     def test_round_trips_versioned_non_destructive_edl(self) -> None:
         edl = parse_video_edl(edl_document())
         self.assertEqual(edl.as_dict(), edl_document())

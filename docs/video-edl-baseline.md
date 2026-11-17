@@ -175,3 +175,30 @@ The full-length soak source is
 the 146-second Travelling master into the same commissioned 1280×720 profile.
 Generated media remains ignored; transfer
 `output/video-render/phreqed-projector-full-soak.tar.gz` separately to the Pi.
+
+## Stage layout modes
+
+Stage authoring exposes two named content layouts rather than making an operator
+reason about canvas dimensions during a show:
+
+- **Stage Portrait (9:16):** a logical 720×1280 canvas for a physically vertical
+  screen. Clips default to `cover` so performers, characters, and VFX occupy the
+  full-height stage surface. Per-clip focal points select which part of a wider
+  source survives the crop. The commissioned rear-screen output rotates this
+  canvas clockwise and mirrors it horizontally into a 1280×720 HDMI signal.
+- **Standard Landscape (16:9):** a 1280×720 canvas with no rotation for a normal
+  horizontal screen. Clips default to `cover`; `contain` remains an explicit
+  editorial choice when preserving every source edge matters more than size.
+
+Front/rear placement is independent from layout. Rear projection applies the
+horizontal mirror; front projection does not. Studio should therefore present
+**Layout** (Portrait/Landscape) and **Projection side** (Front/Rear) as separate
+controls, then derive the output transform from the paired Stage display
+profile. The initial probes are
+`travelling-fifteen-second-stage-portrait-rear.edl.json` and
+`travelling-fifteen-second-stage-landscape-front.edl.json`.
+
+`cover` is only the baseline crop. Character-focused scenes should eventually
+support a reviewed focal path or isolated alpha/green-screen character layer so
+dancers can be framed large beside the live performers without losing important
+motion at the portrait edges.

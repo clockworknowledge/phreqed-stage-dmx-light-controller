@@ -147,5 +147,13 @@ VLC exit 0, 3,662 independent render frames at 25.006 FPS, zero missed slots,
 zero over-budget frames, a 13.389 ms maximum render time, and a 41.35 C peak CPU
 temperature. Player RSS peaked at 145,808 KiB. VLC used I420 Wayland `wl_dmabuf`
 after its V4L2 H.264 decoder attempt failed. The complete raw report is retained
-at `docs/validation/projection-soak-2026-11-16.json`; visual smoothness and
-actual-DMX coexistence remain separate gates.
+at `docs/validation/projection-soak-2026-11-16.json`; actual-DMX coexistence
+remains a separate gate.
+
+Operator review reported clean playback with no visible stall or judder. The
+full-length validation rendition used `contain`, however, so its landscape
+source appeared small within the physical portrait surface. Authoring now
+distinguishes **Stage Portrait (9:16 fill)** from **Standard Landscape (16:9
+fill)**. Portrait uses `cover` plus a reviewed focal point to make characters
+stage-sized; Landscape uses the normal 1280×720 screen. Front/rear mirroring is
+an independent deployment choice, not a third content layout.

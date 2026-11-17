@@ -39,7 +39,7 @@ polish, timeline editing, venue-profile shortcuts, prepared-white adjustment,
 the Pac-Man ghost/power-pellet cycle, and the Burning Dynamite animation are
 implemented. The White Output v2 drive/power contract and the base touchscreen
 iteration are accepted in deployed Pi use; the complete controller is covered
-by the 279-test Windows Python 3.12 suite. Remaining touchscreen work is
+by the 280-test Windows Python 3.12 suite. Remaining touchscreen work is
 ongoing performance acceptance under `DISPLAY-003`, the `OPS-007` local-action
 checks, and the controlled shutdown/power-cycle evidence under `OPS-005`. Pi
 thermal telemetry is optional follow-up work and is not a show-control
@@ -75,14 +75,22 @@ and renderer CPU were 20.44% and 11.63% of one core; player RSS peaked at
 zero and final renderer blackout passed. Evidence is in
 `docs/validation/projection-soak-2026-11-16.json`.
 
-VLC again fell back from unavailable V4L2 H.264 decoding to I420 Wayland
-`wl_dmabuf` output. The SSH/Wayland `globalhotkeys` and `xset` warnings did not
-prevent playback or clean exit. VLC 3 dropped-frame telemetry remains explicitly
-unavailable rather than assumed to be zero.
+Operator review reported clean visual playback with no observed stall or
+judder, completing the initial smoothness observation. VLC again fell back from
+unavailable V4L2 H.264 decoding to I420 Wayland `wl_dmabuf` output. The
+SSH/Wayland `globalhotkeys` and `xset` warnings did not prevent playback or clean
+exit. VLC 3 dropped-frame telemetry remains explicitly unavailable rather than
+assumed to be zero.
 
-Acceptance remaining: record explicit visual smoothness, compare or instrument
-a backend with queryable frame telemetry, run actual-DMX coexistence, then
-implement and fault-test the managed pre-load/play/pause/seek/stop/black adapter.
+The test also confirmed a layout requirement: `contain` made the landscape
+source too small on the vertical screen. Stage media now has two explicit
+authoring layouts—Stage Portrait 9:16 fill and Standard Landscape 16:9 fill—with
+front/rear mirroring independent of layout. Portrait character scenes use
+`cover` and reviewed focal framing so dancers can appear stage-sized.
+
+Acceptance remaining: compare or instrument a backend with queryable frame
+telemetry, run actual-DMX coexistence, then implement and fault-test the managed
+pre-load/play/pause/seek/stop/black adapter.
 Missing media, player crash, and display loss must fail black without disturbing
 lighting, audio, MIDI, browser control, or shutdown. See
 `docs/projector-output.md`.
