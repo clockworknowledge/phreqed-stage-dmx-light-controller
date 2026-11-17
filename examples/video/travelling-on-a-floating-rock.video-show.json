@@ -1,0 +1,32 @@
+{
+  "version": 1,
+  "scenes": [
+    {
+      "scene_id": "vscene-travelling-main",
+      "name": "Travelling portrait characters",
+      "package_id": "travelling-floating-rock-stage-portrait--stage-portrait-hdmi720-clockwise-rear",
+      "surface_id": "portrait-character",
+      "loop": false
+    }
+  ],
+  "tracks": [
+    {
+      "track_id": "vtrack-travelling-v1",
+      "song_id": "song-travelling-on-a-floating-rock",
+      "revision": 1,
+      "published": true,
+      "cues": [
+        {
+          "at_seconds": 0.0,
+          "scene_id": "vscene-travelling-main"
+        }
+      ]
+    }
+  ],
+  "active_tracks": [
+    {
+      "song_id": "song-travelling-on-a-floating-rock",
+      "track_id": "vtrack-travelling-v1"
+    }
+  ]
+}

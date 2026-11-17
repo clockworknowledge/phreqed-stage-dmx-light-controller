@@ -34,12 +34,13 @@ browser-based Studio authoring application is sequenced in
 detailed user stories, package/sync rules, and sprint acceptance. The cards
 below remain independently movable and are the source of truth for status.
 
-Active checkpoint (updated 2026-11-16): `PROJ-001` is in progress. Perform touch
+Active checkpoint (updated 2026-11-16): `PROJ-001` and the first `SHOW-002`
+transport slice are in progress. Perform touch
 polish, timeline editing, venue-profile shortcuts, prepared-white adjustment,
 the Pac-Man ghost/power-pellet cycle, and the Burning Dynamite animation are
 implemented. The White Output v2 drive/power contract and the base touchscreen
 iteration are accepted in deployed Pi use; the complete controller is covered
-by the 280-test Windows Python 3.12 suite. Remaining touchscreen work is
+by the 286-test Windows Python 3.12 suite. Remaining touchscreen work is
 ongoing performance acceptance under `DISPLAY-003`, the `OPS-007` local-action
 checks, and the controlled shutdown/power-cycle evidence under `OPS-005`. Pi
 thermal telemetry is optional follow-up work and is not a show-control
@@ -98,6 +99,31 @@ pre-load/play/pause/seek/stop/black adapter.
 Missing media, player crash, and display loss must fail black without disturbing
 lighting, audio, MIDI, browser control, or shutdown. See
 `docs/projector-output.md`.
+
+### SHOW-002 — Parallel lighting and video song transport (`P1`, show control)
+
+Extend each song revision with separate Lighting and Video tracks aligned to one
+transport-independent clock. Track cue boundaries may differ; Video cues select
+versioned Video Scenes and may include intentional black gaps.
+
+Implementation checkpoint (2026-11-16): the first hardware-free transport slice
+is implemented. A separate atomic Video Show sidecar stores versioned Video
+Scenes, published song Video tracks, active-track assignments, logical surface
+IDs, and package IDs without media paths. Existing `songs.json`, cue sheets, and
+setlists remain unchanged. The parallel runner derives Video timing from the
+existing Lighting timeline start and position, jumps skipped updates directly
+to the current Video cue/offset, blacks on selection/stop/completion, preserves
+no-autostart, and contains Video output failure without stopping Lighting.
+Published tracks and their referenced scenes are immutable. The first reference
+track is **Travelling on a Floating Rock** targeting `portrait-character` with
+the full-length Stage Portrait package. That 146-second 1280×720/30 FPS
+portrait-fill package now renders and passes Stage preflight.
+
+Acceptance remaining: resolve the sidecar's package ID through the local
+preflight registry, implement the managed player from `PROJ-001`, add shared
+pause/resume/seek, expose a Video lane in Song Builder, publish the reference
+track to the Pi, verify real audio/song alignment and drift, and wire Ampero
+show-level transport only after projection black is fault-tested.
 
 ## Ready
 
@@ -935,22 +961,27 @@ display; overlays cannot stall DMX; audio response is bounded; and the target
 Pi sustains the selected projector frame rate alongside QLC+, browser control,
 microphone analysis, and MIDI input.
 
-### SHOW-002 — Parallel lighting and video song transport (`P1`, show control)
+### PROJ-003 — Dual-surface Stage projection (`P1`, visual output)
 
-Extend each song revision with separate Lighting and Video tracks aligned to one
-transport-independent clock. Track cue boundaries may differ; Video cues select
-versioned Video Scenes and may include intentional black gaps. Explicit song
-start, pause, resume, seek, stop, selection, and no-autostart events address both
-runners. The existing Ampero remains sufficient: previous/next operate show-
-level navigation, tap tempo is shared where supported, and the safety switch can
-blank projection after that path is separately tested.
+Add two named, independently supervised projection surfaces for the December 18
+show target: `portrait-character` on the commissioned vertical rear screen and
+`landscape-main` on a standard horizontal screen. Keep `DSI-1` dedicated to
+local touch control and keep both Betopper cubes on the independent 25 FPS DMX
+path. One song clock addresses both Video Scene variants and Lighting, but each
+projector has separate package preflight, process health, black, and recovery.
 
-Acceptance: both tracks start from the same explicit event and report drift;
-video pre-roll is invisible; bounded video resync never delays or rewinds
-lighting; projector failure cannot block lighting commands; lighting blackout
-and projector black remain independently testable; missing content fails black;
-and pedal mappings cannot start live DMX or projector output implicitly. Planned
-Sprints 6-7.
+Dependencies: the managed player and fault boundaries in `PROJ-001`; the second
+projector/screen and cable for physical acceptance; `SHOW-002` for unified song
+transport. Studio authoring in `STUDIO-004` uses logical surface IDs rather than
+Qt screen numbers or desktop coordinates.
+
+Acceptance: commission `HDMI-A-1`, `HDMI-A-2`, and `DSI-1` together; preserve
+touch mapping; resolve each projector by connector/EDID; run independent
+portrait and landscape 720p30 players beside QLC+, browser, audio, MIDI, and
+actual low-level DMX; record zero lighting deadline misses, temperature,
+CPU/RSS, video drift, and visual smoothness; independently crash/disconnect and
+recover each player; and prove one failed surface blacks without disturbing the
+other surface or lighting. Planned as the December 18 hardware milestone.
 
 ### VIDEO-001 — Video-to-grid sampler (`P2`, visuals)
 

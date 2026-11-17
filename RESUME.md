@@ -65,6 +65,29 @@ the commissioned vertical projector, and the operator confirmed that the larger
 presentation looked correct. Standard Landscape passes package preflight but
 still awaits a horizontal projector/screen setup.
 
+The first `SHOW-002` slice is implemented around a separate atomic Video Show
+sidecar, leaving existing `songs.json`, Lighting cue sheets, setlists, and Pi
+configuration unchanged. Versioned Video Scenes reference package and logical
+surface IDs only. Published song Video tracks are immutable and may include
+intentional black cues. `ParallelSongTransport` derives Video start/position
+from the existing Lighting timeline, skips stale Video cues to the correct
+current scene offset, blacks on selection/stop/completion, preserves no-
+autostart, and contains simulated player failure without stopping Lighting.
+Travelling on a Floating Rock is the first reference song, with a full-length
+Stage Portrait scene at time zero. Local package resolution, real managed VLC
+control, pause/resume/seek, Song Builder UI, and Pi song/audio alignment remain
+the next slice.
+
+The planned performance rig is two Betopper cubes flanking the stage plus a
+vertical rear screen for large character visuals. `PROJ-003` adds an optional
+second Standard Landscape screen for the December 18 show. The target topology
+keeps `DSI-1` for touch control, commissions both HDMI connectors as named
+projection surfaces, and keeps DMX independent. One song clock triggers
+per-surface Video Scene variants, while each projector retains separate package
+preflight, process health, black, and recovery. Dual-output physical topology,
+software-decode load, synchronization, actual-DMX coexistence, and independent
+failure tests remain open.
+
 ## Current checkpoint -- Operations telemetry and visual review tooling
 
 `OPS-008`, `SIM-004`, and `EFFECT-020` are implemented and moved to Validation.
@@ -83,7 +106,7 @@ seconds, emitting responsive HTML and a SHA-256 manifest without constructing
 Art-Net, white, or projector output. Chromium checks passed at 1280 x 800 and
 390 x 844 after removing phone-width overflow.
 
-Windows Python 3.12 passes all 280 tests; JavaScript syntax, Python compilation,
+Windows Python 3.12 passes all 286 tests; JavaScript syntax, Python compilation,
 and diff checks also pass. The next planning review is the baseline video sprint;
 the operator will provide representative music-video and VFX source material.
 

@@ -28,6 +28,59 @@ scene cues                   Video Scene cues
                              -> selected HDMI output
 ```
 
+## Commissioned stage topology
+
+The initial stage rig has three independent visual/control surfaces plus DMX:
+
+```text
+DSI-1 touchscreen       local Phreqed control only
+HDMI-A-2                Stage Portrait 9:16 rear-screen characters
+HDMI-A-1 (optional)     Standard Landscape 16:9 main/backdrop video
+Art-Net -> QLC+         Betopper cube left + Betopper cube right
+```
+
+Raspberry Pi 5 provides two HDMI outputs, so the December 18 target is two
+named projection surfaces alongside the existing DSI touchscreen and lighting
+controller. The display topology must still be commissioned with all three
+surfaces connected; Stage must not assume that a Qt numeric screen index remains
+stable across boot, cable, EDID, or projector changes.
+
+One show clock drives Lighting and Video, but Video Scenes contain per-surface
+variants. A cue may show a large isolated character on `portrait-character`, a
+wide VFX/background on `landscape-main`, both, or intentional black on either.
+Each HDMI surface owns a separate player process, package preflight, health
+state, and black command. Failure or disconnect of one surface blacks that
+surface without stopping the other projector or the 25 FPS lighting path.
+
+The Stage supervisor resolves surfaces from commissioned connector/EDID data,
+not desktop position alone. A topology mismatch starts projection black and
+reports recovery guidance while leaving touchscreen control and lighting
+available. Front/rear side, rotation, and layout remain explicit per surface.
+
+## Parallel song-track baseline
+
+`src/phreqed_dmx/video_show.py` provides the first transport-independent Video
+lane. It deliberately uses a separate atomic `video-show.json` sidecar so the
+existing Pi `songs.json`, Lighting cue sheets, and setlists are neither migrated
+nor overwritten. The sidecar contains metadata only: Video Scene IDs, validated
+package IDs, logical surface IDs, loop intent, published per-song Video cues,
+and active-track assignments. It never stores media bytes, filesystem paths,
+commands, or remote URLs.
+
+`ParallelSongTransport` retains the existing Lighting timeline as the shared
+clock authority. Video receives the same start time and current song position;
+if an update skips several Video cues, it selects only the latest due cue and
+passes the correct in-scene offset. Selection, stop, song completion, and the
+no-autostart transition to the next armed song black Video. A Video output
+exception is captured as Video error and black while Lighting continues.
+
+The reference track is **Travelling on a Floating Rock**. Its first published
+Video track starts the full-length `portrait-character` package at song time
+zero while its existing Lighting cue sheet remains untouched. This baseline is
+not yet wired to the browser or real VLC process: package resolution, managed
+player controls, pause/resume/seek, and Pi audio-alignment evidence are the next
+slice.
+
 The projection process owns video decoding, frame timing, scaling, overlays,
 and the HDMI surface. It communicates with show control through a small command
 boundary and never runs inside the DMX render thread. A player crash, missing
@@ -162,3 +215,25 @@ The 15-second Stage Portrait rear-screen fill probe passed physical review on
 the commissioned vertical projector. The operator confirmed that the larger
 presentation looked correct. The Standard Landscape probe passes package
 preflight but still awaits testing with the projector physically horizontal.
+
+## Dual-surface December 18 gate
+
+Before treating two projectors as show-ready:
+
+1. Connect the landscape screen to the unused HDMI port before boot and capture
+   `wlr-randr`, all relevant `kmsprint` DRM cards, EDIDs, connector names, modes,
+   desktop positions, and Qt screen mapping while preserving DSI touch mapping.
+2. Run the portrait and landscape 720p30 packages simultaneously under separate
+   player processes while recording per-player exit, RSS/CPU, Pi temperature,
+   and the independent 25 FPS render deadline.
+3. Repeat with QLC+, browser control, microphone analysis, MIDI, and actual
+   low-level Art-Net output active. Confirm zero missed DMX slots and reserved
+   channels.
+4. Kill and restart each player independently; disconnect each HDMI output; test
+   projection black, lighting continuity, touchscreen continuity, and recovery.
+5. Verify common start/pause/seek/stop timing and record drift between surfaces
+   over a complete song. Neither screen may auto-start the next song.
+
+The single-surface soak makes two 720p30 players plausible, but it is not proof:
+VLC currently falls back to software H.264 decoding, and dual-player CPU,
+memory, compositor, EDID, and synchronization behavior require measurement.

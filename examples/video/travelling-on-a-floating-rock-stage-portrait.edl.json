@@ -1,0 +1,26 @@
+{
+  "version": 1,
+  "edl_id": "travelling-floating-rock-stage-portrait",
+  "title": "Travelling on a Floating Rock stage portrait master",
+  "projection": {
+    "profile_id": "stage-portrait-hdmi720-clockwise-rear",
+    "canvas_width": 720,
+    "canvas_height": 1280,
+    "output_rotation": "clockwise",
+    "frame_rate": 30.0,
+    "horizontal_flip": true
+  },
+  "clips": [
+    {
+      "clip_id": "travelling-floating-rock-full",
+      "asset_id": "travelling-master",
+      "source_in_seconds": 0.0,
+      "source_out_seconds": 146.0,
+      "fit_mode": "cover",
+      "focal_x": 0.5,
+      "focal_y": 0.5,
+      "fade_in_seconds": 0.5,
+      "fade_out_seconds": 1.0
+    }
+  ]
+}

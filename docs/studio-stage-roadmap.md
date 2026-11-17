@@ -458,6 +458,10 @@ Acceptance:
   scale with reviewed focal framing.
 - As an operator, I can select front or rear projection independently from the
   authored layout, without editing or duplicating the source media.
+- As a show designer, I can target named Portrait Character and Landscape Main
+  surfaces from one Video Scene and preview them together on one song clock.
+- As an operator, failure of one Stage surface blacks only that surface while
+  lighting and every healthy surface continue.
 - As an operator, missing or failed video fails black without interrupting the
   lighting cue.
 
@@ -482,12 +486,23 @@ Acceptance:
   defaults to full-height `cover` with a reviewed focal point; Landscape
   defaults to 16:9 `cover`; rear projection adds a horizontal output mirror.
   `contain` remains available as an explicit editorial choice.
+- Published surface assignments use stable logical IDs and commissioned Stage
+  connector mappings rather than desktop screen numbers. Each surface carries
+  its own required rendition, fallback, health, and black state while receiving
+  the shared transport events.
 - Song start, stop, pause, seek, next-song selection, and no-autostart semantics
   address both track runners. Video may pre-roll for decode readiness but cannot
   present before explicit song start.
 - A band's multi-clip song completes end-to-end Studio publish and Pi playback
   while the DMX 25 FPS soak remains within its existing limits. Killing the
   player fails the Video track black while Lighting stays on time.
+
+Implementation seed (2026-11-16): the Stage-side `video-show.json` contract and
+parallel runner now exist without changing `songs.json`. Travelling on a
+Floating Rock is the first reference track, initially with one full-length
+Stage Portrait scene at time zero. Studio must evolve that seed into editable
+section cues and VFX layers rather than treating a monolithic video as the final
+authoring experience.
 
 ### AI-DATA-002 — Studio knowledge graph and agent-memory integration
 

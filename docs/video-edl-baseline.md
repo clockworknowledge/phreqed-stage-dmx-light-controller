@@ -202,3 +202,11 @@ profile. The initial probes are
 support a reviewed focal path or isolated alpha/green-screen character layer so
 dancers can be framed large beside the live performers without losing important
 motion at the portrait edges.
+
+The first synchronized-song reference is **Travelling on a Floating Rock**.
+`travelling-on-a-floating-rock-stage-portrait.edl.json` builds its full 146
+seconds with the accepted Stage Portrait fill. The rendered package passes Stage
+preflight as
+`travelling-floating-rock-stage-portrait--stage-portrait-hdmi720-clockwise-rear`.
+Generated media is bundled outside Git as
+`output/video-render/phreqed-travelling-reference-package.tar.gz`.
