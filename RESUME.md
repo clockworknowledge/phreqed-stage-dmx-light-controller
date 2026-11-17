@@ -60,6 +60,11 @@ Front/rear mirroring remains an independent output choice. Character-focused
 portrait scenes will later add reviewed focal paths or isolated layers rather
 than relying only on a fixed center crop.
 
+The 15-second Stage Portrait rear-screen fill probe passed physical review on
+the commissioned vertical projector, and the operator confirmed that the larger
+presentation looked correct. Standard Landscape passes package preflight but
+still awaits a horizontal projector/screen setup.
+
 ## Current checkpoint -- Operations telemetry and visual review tooling
 
 `OPS-008`, `SIM-004`, and `EFFECT-020` are implemented and moved to Validation.

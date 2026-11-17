@@ -157,3 +157,8 @@ distinguishes **Stage Portrait (9:16 fill)** from **Standard Landscape (16:9
 fill)**. Portrait uses `cover` plus a reviewed focal point to make characters
 stage-sized; Landscape uses the normal 1280×720 screen. Front/rear mirroring is
 an independent deployment choice, not a third content layout.
+
+The 15-second Stage Portrait rear-screen fill probe passed physical review on
+the commissioned vertical projector. The operator confirmed that the larger
+presentation looked correct. The Standard Landscape probe passes package
+preflight but still awaits testing with the projector physically horizontal.

@@ -87,6 +87,10 @@ source too small on the vertical screen. Stage media now has two explicit
 authoring layouts—Stage Portrait 9:16 fill and Standard Landscape 16:9 fill—with
 front/rear mirroring independent of layout. Portrait character scenes use
 `cover` and reviewed focal framing so dancers can appear stage-sized.
+The 15-second Stage Portrait rear-screen probe then passed physical review on
+the vertical projector; the operator confirmed the larger fill presentation
+looked correct. Standard Landscape remains logically/preflight validated but
+awaits a physically horizontal screen.
 
 Acceptance remaining: compare or instrument a backend with queryable frame
 telemetry, run actual-DMX coexistence, then implement and fault-test the managed
