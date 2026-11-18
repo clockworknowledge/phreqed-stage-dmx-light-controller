@@ -14,9 +14,10 @@ dependencies = []
 
 [project.scripts]
 phreqed-dmx = "phreqed_dmx.app:main"
+phreqed-studio = "phreqed_dmx.studio_app:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 
 [tool.setuptools.package-data]
-phreqed_dmx = ["web/*.html", "web/*.css", "web/*.js", "tuning_profiles.defaults.json"]
+phreqed_dmx = ["web/*.html", "web/*.css", "web/*.js", "studio_web/*.html", "studio_web/*.css", "studio_web/*.js", "tuning_profiles.defaults.json"]

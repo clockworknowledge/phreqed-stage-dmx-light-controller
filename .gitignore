@@ -59,6 +59,7 @@ output/effect-gallery/
 output/video-render/
 output/travelling-hybrid-review/
 output/vfx-concepts/
+output/studio-workspace/
 output/*.local.json
 .venv-wsl/
 

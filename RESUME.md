@@ -1,8 +1,35 @@
 # Codex Resume: Live Show Baseline and Song/Setlist Roadmap
 
-Last updated: 2026-11-17
+Last updated: 2026-11-18
 
-## Next resume point -- Integrated Lighting and Video VFX sprint
+## Next resume point -- Local Studio and Relate integration
+
+The first standalone Phreqed Studio slice is implemented under `STUDIO-006`.
+It runs loopback-only, has no Stage/live-output imports, and provides responsive
+Assets, Storylets, and Graph workspaces. Its authoritative local store uses
+atomic JSON plus SHA-256-addressed blobs; Storylets carry ordered semantic
+markers; append-only events and `graph-projection.json` provide a rebuildable
+relationship boundary. Setup and commands are in
+`docs/studio-local-foundation.md`.
+
+The ignored reference workspace under `output/studio-workspace/` contains the
+Fuse Bomb concept and the supplied Heart Zones artwork, plus 15-second and
+20-second Storylet contracts. It exports 15 nodes and 14 relationships. Source
+media remains outside Git. Resume by reviewing the browser shell, rehearsing a
+catalog/blob backup and restore, then implement the `MEDIA-004` Relate adapter:
+pin a Relate release, import the projection through idempotent parameterized
+Cypher, run the documented provenance/placement/rights queries, benchmark RAM
+and rebuild time on workstation and ARM64 Pi, and prove removal leaves Studio
+and Stage operational.
+
+The product story is intentionally precise: content-addressed storage and
+authoritative revision records are the digital-asset system of record; Relate
+is the embedded relationship, provenance, and agent-memory index that helps an
+onboard director find and propose compatible effects. Published Stage packages
+remain deterministic and self-contained, and the 25 FPS cue loop never queries
+the graph.
+
+## Following resume point -- Integrated Lighting and Video VFX sprint
 
 Pause checkpoint (2026-11-17): planning and concept work is committed through
 `73b1bee`. Resume by reviewing the simplified Fuse Bomb keyframe sheet at

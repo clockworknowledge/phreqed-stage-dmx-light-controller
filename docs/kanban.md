@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-11-17
+Last reviewed: 2026-11-18
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -66,6 +66,18 @@ not a Stage dependency. Resume details are in `RESUME.md`,
 [`integrated-vfx-sprint.md`](integrated-vfx-sprint.md),
 [`media-control-architecture.md`](media-control-architecture.md), and
 [`relate-media-dam-sprint.md`](relate-media-dam-sprint.md).
+
+Studio checkpoint (2026-11-18): `STUDIO-006` implements the first local-first,
+hardware-independent authoring slice and is in Validation. The standalone
+loopback application imports immutable content-addressed assets, authors timed
+Storylets and semantic markers, records append-only catalog events, and exports
+a rebuildable graph projection. The local reference workspace contains the
+Fuse Bomb and Heart Zones concepts without committing their bytes. Relate is
+not yet a runtime dependency: `MEDIA-004` remains the next graph ingestion,
+query, durability, ARM64, and removal benchmark. Stage has no import or query
+path to either Studio or the graph.
+The concise external narrative and measurable reference demonstration are in
+[`neo4j-relate-reference-story.md`](neo4j-relate-reference-story.md).
 
 ## In progress
 
@@ -307,6 +319,39 @@ the Stage proof may use the current local EDL workflow. Target the upcoming
 Christmas performances without making an untested pack show-critical.
 
 ## Validation
+
+### STUDIO-006 — Local-first Studio foundation (`P1`, authoring)
+
+Prove the Studio/Stage boundary with a usable hardware-independent application
+before hosted tenancy, transcoding, or publish delivery. The local Studio owns
+an atomic JSON catalog, content-addressed source bytes, immutable asset IDs,
+draft Storylets with ordered semantic markers, an append-only event stream, and
+a rebuildable relationship projection. It runs as a separate loopback-only
+browser process and cannot import Art-Net, projector, audio-capture, MIDI,
+fixture, or Stage-lease code.
+
+User outcome: a designer can register owned source media, classify it, create a
+reusable 10–30 second visual Storylet contract, and inspect the exact
+relationships intended for the future Relate index without touching the show
+controller.
+
+Implementation checkpoint (2026-11-18): the responsive Assets, Storylets, and
+Graph workspaces are implemented; the Fuse Bomb concept and supplied Heart
+Zones artwork have been imported into an ignored local reference workspace;
+their two marker sheets produce a 15-node/14-relationship graph projection.
+Loopback binding, same-origin commands, per-process tokens, fixed action enums,
+request bounds, atomic persistence, SHA-256 blob verification, reference
+validation, CSS delivery, and browser navigation are covered by automated and
+visual checks. No source media is committed.
+
+Acceptance remaining: user review on a normal workstation plus a recorded
+catalog backup/restore rehearsal. Relate ingestion is deliberately separate
+under `MEDIA-004`; hosted identity/tenant controls, processing, publishing, and
+Stage delivery remain on their existing cards.
+
+Dependencies: local slice of `STUDIO-001`, `STUDIO-002`, and `MEDIA-001`.
+It supplies the executable reference boundary for `MEDIA-004` but is not a
+Stage dependency.
 
 ### SHOW-005 — Travelling synchronized Lighting/Video scene (`P1`, show authoring)
 
@@ -688,7 +733,7 @@ separate adjustment journal for reviewed return sync.
 Children: `STUDIO-001`, `PUBLISH-001`, `SYNC-002`, `STUDIO-002`, `STUDIO-003`,
 `SAAS-001`, `SAAS-002`, `SAAS-003`, `CATALOG-001`, `MEDIA-001`, `MEDIA-002`,
 `STAGE-LINK-001`, `STUDIO-004`, `AI-DATA-002`, `AI-STUDIO-001`, `STAGE-001`,
-and `STUDIO-005`.
+`STUDIO-005`, and the local proof `STUDIO-006`.
 Existing `PROJ-001`, `PROJ-002`, `SHOW-002`, `VIDEO-001`, `AI-DATA-001`,
 `ANALYSIS-001`, and `AI-SONG-001` remain linked implementation or research
 cards rather than being duplicated. Detailed user stories and Sprints 0-11 are

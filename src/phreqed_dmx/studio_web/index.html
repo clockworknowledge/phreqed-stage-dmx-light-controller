@@ -1,0 +1,130 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="phreqed-studio-token" content="__STUDIO_TOKEN__">
+  <title>Phreqed Studio</title>
+  <link rel="stylesheet" href="/studio.css">
+</head>
+<body>
+  <header class="topbar">
+    <div>
+      <p class="eyebrow">PHREQED</p>
+      <h1>Studio</h1>
+    </div>
+    <div class="topbar-status">
+      <span class="status-dot" aria-hidden="true"></span>
+      <span id="workspace-name">Local workspace</span>
+    </div>
+  </header>
+
+  <main class="app-shell">
+    <nav class="rail" aria-label="Studio workspaces">
+      <button class="nav-button active" data-view="assets">Assets</button>
+      <button class="nav-button" data-view="storylets">Storylets</button>
+      <button class="nav-button" data-view="graph">Graph</button>
+    </nav>
+
+    <section class="workspace">
+      <div class="workspace-header">
+        <div>
+          <p class="eyebrow" id="view-kicker">MEDIA LIBRARY</p>
+          <h2 id="view-title">Assets</h2>
+        </div>
+        <div class="summary" aria-label="Catalog summary">
+          <div><strong id="asset-count">0</strong><span>Assets</span></div>
+          <div><strong id="storylet-count">0</strong><span>Storylets</span></div>
+          <div><strong id="relationship-count">0</strong><span>Links</span></div>
+        </div>
+      </div>
+
+      <p id="notice" class="notice" hidden></p>
+
+      <div id="assets-view" class="view-grid">
+        <section class="panel library-panel">
+          <div class="panel-heading">
+            <h3>Media library</h3>
+            <input id="asset-search" type="search" placeholder="Search assets" aria-label="Search assets">
+          </div>
+          <div id="asset-list" class="item-list" role="list"></div>
+          <p id="asset-empty" class="empty-state">Import a media file to begin the Studio catalog.</p>
+        </section>
+
+        <section class="panel detail-panel">
+          <div id="asset-detail" class="detail-empty">
+            <p class="eyebrow">SELECT AN ASSET</p>
+            <h3>Inspect its immutable source record</h3>
+            <p>Content hashes, family, type, and derived storylets stay connected without placing media bytes in the graph.</p>
+          </div>
+          <form id="import-form" class="editor-form">
+            <div class="form-heading">
+              <div>
+                <p class="eyebrow">LOCAL INGEST</p>
+                <h3>Import media</h3>
+              </div>
+              <span class="local-badge">Loopback only</span>
+            </div>
+            <label>File path<input id="import-path" required placeholder="D:\Media\clip.mov"></label>
+            <label>Title<input id="import-title" placeholder="Optional display title"></label>
+            <label>Asset family<select id="import-family"></select></label>
+            <button class="primary" type="submit">Hash and import</button>
+          </form>
+        </section>
+      </div>
+
+      <div id="storylets-view" class="view-grid" hidden>
+        <section class="panel library-panel">
+          <div class="panel-heading"><h3>Storylet revisions</h3></div>
+          <div id="storylet-list" class="item-list" role="list"></div>
+          <p id="storylet-empty" class="empty-state">Create a reusable timed storylet from an imported asset.</p>
+        </section>
+        <section class="panel detail-panel">
+          <form id="storylet-form" class="editor-form full">
+            <div class="form-heading">
+              <div><p class="eyebrow">SEMANTIC TIMING</p><h3>New storylet</h3></div>
+              <span class="local-badge">Draft</span>
+            </div>
+            <label>Source asset<select id="storylet-asset" required></select></label>
+            <div class="two-column">
+              <label>Storylet ID<input id="storylet-id" required placeholder="storylet-fuse-bomb-v1"></label>
+              <label>Title<input id="storylet-title" required placeholder="Fuse Bomb"></label>
+            </div>
+            <div class="two-column">
+              <label>Duration (seconds)<input id="storylet-duration" required type="number" min="0.1" max="3600" step="0.1" value="15"></label>
+              <label class="check-label"><input id="storylet-loop" type="checkbox"> Seamless loop</label>
+            </div>
+            <label>Markers<textarea id="storylet-markers" rows="7" spellcheck="false">reveal=0.5
+ignite=2.0
+impact=11.5
+decay=12.0
+black=15.0</textarea></label>
+            <p class="form-help">One <code>name=seconds</code> marker per line, ordered from start to finish.</p>
+            <button class="primary" type="submit">Create immutable draft</button>
+          </form>
+        </section>
+      </div>
+
+      <div id="graph-view" class="graph-view" hidden>
+        <section class="panel graph-hero">
+          <div>
+            <p class="eyebrow">RELATE PROJECTION</p>
+            <h3>Rebuildable relationship layer</h3>
+            <p>The catalog remains authoritative. This export contains stable nodes and relationships for Relate ingestion, provenance queries, and agent memory.</p>
+          </div>
+          <button id="export-graph" class="primary" type="button">Export graph projection</button>
+        </section>
+        <section class="graph-metrics">
+          <article><span>Nodes</span><strong id="node-count">0</strong></article>
+          <article><span>Relationships</span><strong id="graph-link-count">0</strong></article>
+          <article><span>Store policy</span><strong>Rebuildable</strong></article>
+          <article><span>Stage dependency</span><strong>None</strong></article>
+        </section>
+        <section class="panel graph-path"><p class="eyebrow">LAST EXPORT</p><code id="graph-path">Not exported yet</code></section>
+      </div>
+    </section>
+  </main>
+
+  <script src="/studio.js"></script>
+</body>
+</html>
