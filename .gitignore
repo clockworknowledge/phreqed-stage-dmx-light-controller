@@ -58,6 +58,7 @@ output/playwright/
 output/effect-gallery/
 output/video-render/
 output/travelling-hybrid-review/
+output/vfx-concepts/
 output/*.local.json
 .venv-wsl/
 

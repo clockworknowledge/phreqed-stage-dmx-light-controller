@@ -564,6 +564,14 @@ and variant-map storylets without copying them. The initial Fuse Bomb proof
 must be reusable at two song positions from one rendition, with its named
 impact marker aligning the bounded Lighting blast in both placements.
 
+`VFX-002` adds a separate lightweight scene-fill family for particles, smoke,
+energy, ribbons, colour fields, and impact accents. Studio must distinguish
+primary clips, narrative storylets, character interactions, transition
+bridges, impact accents, and scene-fill phrases. Fill placements inherit a
+reviewed palette/energy role from a Lighting scene but retain explicit start,
+end, intensity, purpose, rights/source identity, and black fallback. They never
+become unbounded wallpaper or a live dependency between Video and Lighting.
+
 ### AI-DATA-002 — Studio knowledge graph and agent-memory integration
 
 - As a designer, I can ask how a cue proposal relates to song sections,
@@ -757,7 +765,7 @@ the 25 FPS lighting loop.
 
 ### Sprint 7 — Video Scene manager and parallel song track
 
-Cards: `STUDIO-004`, `SHOW-002`, `VFX-001`.
+Cards: `STUDIO-004`, `SHOW-002`, `VFX-001`, `VFX-002`.
 
 Deliver reusable Video Scenes and the separate Video lane beside Lighting with
 a shared ruler, playhead, song transport, deterministic metadata templates,
@@ -768,6 +776,11 @@ video pre-roll remains invisible.
 Treat reusable 10–30 second storylets as first-class library objects with named
 event markers and companion Lighting recipes. Continuous video remains a valid
 scene type, not the assumed unit of every song layout.
+
+Expose scene-fill phrases as a separate searchable family so designers can
+augment existing Lighting scenes without pretending every abstract texture is
+a narrative clip. Preview must show focal load and the combined full-stage
+result, not only the projector frame.
 
 ### Sprint 8 — Projection composition and optional video-to-grid
 

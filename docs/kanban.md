@@ -195,6 +195,30 @@ Dependencies: `VIDEO-002`, `MEDIA-002/003` concepts, `SHOW-002`, and the
 accepted projection path. Detailed contract is in
 [`integrated-vfx-sprint.md`](integrated-vfx-sprint.md).
 
+### VFX-002 — Scene-fill and augmentation library (`P1`, media/show authoring)
+
+Catalog short abstract VFX as reusable scene-fill phrases distinct from
+narrative storylets and primary video. Fill phrases include particles, smoke,
+energy, colour fields, ribbons, edge flashes, and transition bursts that can
+augment an existing Lighting scene through reviewed palette, motion, crop,
+intensity, and duration variants during offline composition.
+
+User outcome: a designer can ask for a restrained cool fill behind Wave Rider,
+a warm ember bridge into Molten Motion, or an impact accent on a section change
+without authoring a new full video or turning the projector into continuous
+wallpaper.
+
+Acceptance: catalog family, rights/source hash, loop safety, background mode,
+motion direction, palette compatibility, focal load, suggested Lighting scenes,
+and black fallback; prove at least six phrases across three existing scenes;
+every placement has explicit start/end and purpose; repeated identical variants
+reuse cached media; fills never alter the Lighting clock, output ceilings,
+white arming, or fail-black behavior.
+
+Dependencies: `VFX-001` asset identity/marker contract and `MEDIA-002/003`
+preparation/render concepts. The initial proof can use existing Infinity VFX
+sources without committing licensed media.
+
 ### SHOW-006 — Cross-surface Lighting/Video choreography (`P1`, show authoring)
 
 Create a reusable stage language for short **Echo**, **Throw**, **Catch**,
@@ -217,17 +241,19 @@ publish beside the accepted hybrid revision with rollback. Extract the proven
 fields and preview needs into `STUDIO-004` rather than making Studio or AI a
 Stage runtime dependency.
 
-Dependencies: `VFX-001`, the accepted parts of `SHOW-002`, `PROJ-001`,
+Dependencies: `VFX-001`, `VFX-002`, the accepted parts of `SHOW-002`, `PROJ-001`,
 `PROJ-004`, and the deployed `SHOW-005` hybrid. Detailed slices and user stories
 are in [`integrated-vfx-sprint.md`](integrated-vfx-sprint.md).
 
 ### SHOW-007 — Christmas integrated VFX mini-pack (`P1`, seasonal show authoring)
 
 Author a small optional seasonal pack using the `SHOW-006` cross-surface
-language: **Neon Snow**, **Signal Garland**, and **Electric Ornament / Starburst**,
-with an optional darker **Krampus Signal** variant. Keep the visual direction
-consistent with the existing charcoal, acid-green, energetic stage identity
-rather than producing continuous novelty footage.
+language: **Santa Arrival**, **Neon Snow**, **Signal Garland**, and **Electric
+Ornament / Starburst**, with an optional darker **Krampus Signal** variant.
+Santa Arrival uses the Betopper cubes as converging theatrical landing lights
+before a bounded warm arrival wash. Keep the visual direction consistent with
+the existing charcoal, acid-green, energetic stage identity rather than
+producing continuous novelty footage.
 
 User outcome: upcoming Christmas shows can gain recognizable seasonal moments
 that interact with the cubes and projection while remaining suitable for a

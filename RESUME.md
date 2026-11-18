@@ -20,9 +20,18 @@ Catch, Ping-pong, Bridge, Unison, and Counterpoint phrases while preserving
 meaningful black/rest intervals.
 
 Develop `SHOW-007` in the same sprint as an optional Christmas mini-pack:
-Neon Snow, Signal Garland, and Electric Ornament / Starburst, with a darker
-Krampus Signal variant kept separate. Detailed stories, contracts, slices, and
-acceptance are in `docs/integrated-vfx-sprint.md` and `docs/kanban.md`.
+Santa Arrival with theatrical Betopper landing lights, Neon Snow, Signal
+Garland, and Electric Ornament / Starburst, with a darker Krampus Signal
+variant kept separate. Add an owned Evil Cyborg interaction in which the screen
+creates the lightning-bolt illusion and marker-aligned cube colour/white blasts
+provide the physical-stage response.
+
+Build `VFX-002` in parallel as a lightweight scene-fill library for particles,
+smoke, ribbons, energy, colour fields, and impact accents. These augment
+existing scenes with explicit start/end/purpose and black fallback; they do not
+replace storylets or become continuous wallpaper. Detailed stories, contracts,
+slices, and acceptance are in `docs/integrated-vfx-sprint.md` and
+`docs/kanban.md`.
 
 The current sparse hybrid package is deployed as a new immutable Video revision
 on the Pi. Initial bench operation is working well and the operator likes the

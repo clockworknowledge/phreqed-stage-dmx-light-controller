@@ -1,7 +1,7 @@
 # Integrated Lighting and Video VFX sprint
 
 Date: 2026-11-17  
-Cards: `VFX-001`, `SHOW-006`, `SHOW-007`
+Cards: `VFX-001`, `VFX-002`, `SHOW-006`, `SHOW-007`
 Reference song: **Travelling on a Floating Rock**
 
 ## Goal
@@ -71,6 +71,56 @@ cues around the placement.
 Storylets compile into the existing pre-rendered, hash-verified Stage package
 and Video Show contracts. Stage does not fetch remote media, interpret an AI
 proposal, or wait for a media callback before advancing Lighting.
+
+## Visual asset families
+
+The library should support related but distinct assets instead of forcing every
+idea into one clip type:
+
+| Family | Typical duration | Purpose | Example |
+| --- | ---: | --- | --- |
+| Narrative storylet | 10–30 seconds | Readable setup, action, impact, and payoff | Fuse Bomb or Santa Arrival |
+| Character interaction | 8–30 seconds | A character appears to affect the physical stage | Evil Cyborg lightning attack |
+| Transition bridge | 2–10 seconds | Carries motion or palette between primary clips | Energy throw or shockwave |
+| Impact accent | 0.5–4 seconds | One musical hit or section boundary | Screen burst plus cube blast |
+| Scene-fill phrase | 2–16 seconds, optionally loopable | Texture, particles, smoke, energy, or colour that augments a Lighting scene | Electric ribbons behind Wave Rider |
+| Primary clip | Variable | Band/character footage where the screen is intentionally the focus | Selected Travelling fragments |
+
+Scene-fill phrases are deliberately lighter-weight than storylets. They may be
+recoloured, cropped, intensity-scaled, shortened, or tiled during offline
+composition, and they inherit the current Lighting scene's palette and energy
+role. They must not silently become continuous wallpaper: every placement has
+a start, end, visual purpose, and black fallback. A fill can support a scene
+without requiring a narrative payoff or a fixture response.
+
+The asset catalog records family, loop safety, transparent/black background
+behavior, dominant motion, edge entry/exit, palette compatibility, focal load,
+and suggested Lighting scenes. This lets Studio later propose “low-motion cool
+fill for Wave Rider” separately from “play the Fuse Bomb storylet.”
+
+## Reference interaction concepts
+
+### Santa Arrival
+
+Santa or a sleigh approaches through the portrait screen while the Betopper
+cubes behave like theatrical aircraft landing lights. Alternating low-level
+approach pulses establish distance; the lights converge and brighten as Santa
+descends; a landing marker triggers a warm bounded arrival wash; snow/embers
+settle and the screen returns to black. The sequence must read as a stage gag,
+not simulate real navigation lighting or require sustained high-output whites.
+
+### Evil Cyborg Attack
+
+Use an owned band character/video asset. The cyborg charges on screen, aims an
+animated lightning bolt toward the audience viewpoint, and fires. The screen
+provides the direction and bolt illusion while the Betopper cubes answer the
+named `fire` and `impact` markers with palette-matched flashes, chases, or
+bounded white accents. No fixture is instructed to target or “zap” a person;
+the audience effect is created compositionally under the existing ceilings,
+arming, flash-rate, and blackout controls.
+
+These concepts should support low, medium, and high-energy recipes without
+changing their media or semantic markers.
 
 ## Choreography vocabulary
 
@@ -163,15 +213,18 @@ hash, render cost, projector playback, and end-of-song drift.
 
 ### Slice 3 — Christmas mini-pack
 
-Build three reusable visual motifs that fit the existing dark/acid stage
+Build four reusable visual motifs that fit the existing dark/acid stage
 identity and can be recoloured for different songs:
 
-1. **Neon Snow:** sparse cool-white/cyan particles fall on screen, land as
+1. **Santa Arrival:** Santa or the sleigh approaches while the cubes act as
+   converging theatrical landing lights; a named landing marker releases a
+   warm arrival wash before snow/embers decay to black.
+2. **Neon Snow:** sparse cool-white/cyan particles fall on screen, land as
    short cube ripples, and occasionally reverse upward on a musical lift.
-2. **Signal Garland:** red, green, gold, and acid-green pulses travel as a
+3. **Signal Garland:** red, green, gold, and acid-green pulses travel as a
    segmented garland from Cube A through the screen to Cube B; avoid constant
    red/green full-frame output.
-3. **Electric Ornament / Starburst:** one screen object charges from alternating
+4. **Electric Ornament / Starburst:** one screen object charges from alternating
    cube pulses and releases a bounded screen burst plus optional authored white
    impact on a major accent.
 
