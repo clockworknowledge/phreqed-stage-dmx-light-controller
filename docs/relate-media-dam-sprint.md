@@ -91,7 +91,8 @@ chosen Studio worker; unsupported or unstable surfaces are removed from scope.
 
 ## Work package B — Authoritative catalog event contract
 
-Define append-only or revisioned authoritative events outside Relate:
+Persist append-only or revisioned authoritative events through the one-writer
+Relate application service and expose the same records through canonical export:
 
 - source ingested/verified/quarantined/deleted;
 - asset/storylet/marker/rendition/EDL/placement revision created;
@@ -103,11 +104,11 @@ Define append-only or revisioned authoritative events outside Relate:
 
 Every event includes stable ID, revision, tenant, occurred/recorded time,
 content or manifest hash, actor/tool identity, schema version, and provenance.
-Replaying the event stream or scanning authoritative revision records must
-rebuild an empty graph deterministically.
+Restoring a backup or importing the canonical event/revision export must
+reconstruct an equivalent store deterministically.
 
-Exit gate: two independent rebuilds produce matching node/relationship counts,
-identity sets, and canonical exports.
+Exit gate: backup/restore and two independent canonical imports produce matching
+node/relationship counts, identity sets, revision lineage, and exports.
 
 ## Work package C — Media relationship schema and indexer
 

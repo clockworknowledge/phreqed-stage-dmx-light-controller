@@ -64,7 +64,10 @@ markers into a durable Relate 1.0.1 directory store through the Graph workspace
 or CLI. It cannot start Art-Net, acquire a Stage lease, or control
 fixtures/projectors. See
 [`docs/studio-local-foundation.md`](docs/studio-local-foundation.md) and the
-[`Studio + Relate reference story`](docs/neo4j-relate-reference-story.md).
+[`Studio + Relate reference story`](docs/neo4j-relate-reference-story.md). The
+Stage-derived feature-parity stories, Studio Basic UX, Relate/Aura repository
+model, and ordered delivery sprints are in the
+[`Studio Basic parity roadmap`](docs/studio-basic-parity-roadmap.md).
 
 ## Hardware configuration
 

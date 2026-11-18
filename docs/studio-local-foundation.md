@@ -20,10 +20,11 @@ MIDI, Stage leases, or fixture-control code.
 - loopback-only HTTP, fixed command enums, request-size bounds, same-origin
   checks, and a per-process command token.
 
-The JSON catalog and content-addressed blobs are authoritative. The graph
-projection is rebuildable and contains no media bytes. Relate ingestion and
-benchmarking remain `MEDIA-004`; the Studio already exposes the stable IDs and
-relationships that sprint will consume.
+In this alpha slice, the JSON catalog remains the transitional authoring source
+and content-addressed blobs remain the media source. `DATA-001` will migrate
+graph-native metadata authority into Relate only after backed-up import,
+reconciliation, close/reopen, export, and package-equivalence checks pass. Media
+bytes remain outside Relate throughout that migration.
 
 ## Install and start
 

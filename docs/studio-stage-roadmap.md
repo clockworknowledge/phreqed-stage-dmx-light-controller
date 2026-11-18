@@ -1,32 +1,36 @@
 # Phreqed Studio and Stage publishing roadmap
 
-Last updated: 2026-11-16
+Last updated: 2026-11-18
 
 ## Product boundary
 
 Phreqed will separate show design from show execution before the authoring
 surface grows into advanced lighting, video, and projection workflows.
 
-- **Phreqed Studio** is a hosted, browser-first SaaS design application for
-  songs, setlists, looks, scenes, lighting timelines, media, projection,
-  analysis, and reviewed AI proposals. It is multi-tenant and subscription
-  aware, with a curated shared catalog plus private customer libraries.
+- **Phreqed Studio Basic** is a complete local, browser-first design application
+  for songs, setlists, looks, scenes, lighting/video timelines, media,
+  projection, and deterministic publishing. Relate is its primary graph-native
+  metadata repository.
+- **Higher Studio tiers** preserve the same domain and package contracts on an
+  Aura-backed multi-tenant service, adding collaboration, larger libraries,
+  hosted processing, AI allowances, devices, and deeper history.
 - **Phreqed Stage** is the Raspberry Pi control appliance for choosing and
   running a published show, making bounded venue adjustments, monitoring
-  health, and recovering safely.
+  health, and recovering safely. Its separate Relate repository owns local
+  operational state and synchronization events, not frame rendering.
 
 The current Setlist and Build workspaces remain available until Studio reaches
 feature parity and the package round trip is proven. Removing authoring from
 Stage before that acceptance would strand existing workflows.
 
 ```text
-authoritative Studio library
+Studio Relate repository + content-addressed media
         |
         | validate and publish an immutable show package
         v
 Stage import area -> explicit activation -> active runtime snapshot
         |                                      |
-        | local adjustment journal             | lighting / projection cues
+        | Stage Relate change journal           | lighting / projection cues
         v                                      v
 reviewable change set ------------------> deterministic show processes
         |
@@ -35,9 +39,15 @@ reviewable change set ------------------> deterministic show processes
 new Studio library revision
 ```
 
-The graph sidecar may index Studio data, evidence, and agent memory. It is not
-the publishing or synchronization protocol and never becomes a Stage runtime
-dependency.
+Relate may be authoritative for Studio metadata and Stage operational state.
+Synchronization still uses explicit revisioned events/change sets rather than
+sharing one writable store. Published packages remain deterministic and
+self-contained; the Stage cue loop never resolves its next action through a
+graph query.
+
+The current Stage-derived parity stories and local-first Sprints 0–7 are in
+[`studio-basic-parity-roadmap.md`](studio-basic-parity-roadmap.md). This document
+retains the broader hosted platform and release roadmap.
 
 ## Hosted product model
 
@@ -51,7 +61,7 @@ Working tiers, names, prices, and exact quotas remain product configuration:
 
 | Tier | Initial capability envelope |
 | --- | --- |
-| Free | Curated public looks, scenes, VFX clips, and deterministic song templates; limited projects, storage, exports, and device registrations. |
+| Basic/local | Complete manual authoring with local Relate/media storage, deterministic preview/package export, bounded local history, and an initial Stage target. |
 | Artist (`$`) | Private uploads, non-destructive clip extraction, larger storage, complete manual show authoring, more published packages, and one or more paired Stage units. |
 | Pro (`$$$`) | Highest storage and processing quotas, AI analysis/authoring allowance, deeper revision history, multiple workspaces/devices, team roles, and priority export/processing. |
 
@@ -77,8 +87,8 @@ browser Studio
 authenticated tenant API
   |          |             |                 |
   v          v             v                 v
-metadata   object       job queue         derived graph
-revisions  storage      + workers         / AI memory
+Aura       object       job queue         graph-backed
+metadata  storage      + workers         AI memory
   |          |        probe/transcode/AI        |
   +----------+-------------+--------------------+
                          |
@@ -579,14 +589,16 @@ participation mode. Studio compiles the friendly mode to fixed per-lane
 state. Stage exposes pre-show lane availability, immediate mute, and explicit
 rejoin while Start/Stop/Previous/Next/Blackout and Ampero remain show-level.
 
-Media/DAM refinement: `MEDIA-004` treats Relate as a rebuildable relationship
-and provenance index over authoritative content-addressed assets, revisions,
-markers, renditions, EDLs, placements, reviews, rights, and packages. Media
-bytes and authoritative manifests remain outside the graph. Stage never queries
-Relate to resolve or advance a cue. See
+Media/DAM refinement (2026-11-18): `MEDIA-004` and `DATA-001` allow Relate to be
+the primary Studio repository for graph-native revisions, markers, renditions,
+EDLs, placements, reviews, rights, packages, provenance, and creative memory.
+Media bytes remain content-addressed outside the graph; immutable published
+manifests remain the Stage execution contract. A separate Stage Relate store
+owns bounded operational state and sync events, but Stage never queries it to
+resolve or advance a cue. See
 [`media-control-architecture.md`](media-control-architecture.md).
 
-The full `MEDIA-004` backlog sprint is specified in
+The active `MEDIA-004` sprint is specified in
 [`relate-media-dam-sprint.md`](relate-media-dam-sprint.md). It uses Travelling,
 Fuse Bomb, and the source-preserved Heart Zones pulse/electrical loop as three
 different lineage cases: imported multi-source composition, generated reusable
@@ -598,22 +610,25 @@ storylet, and owned brand artwork with non-destructive animation.
   evidence, past shows, and my approvals.
 - As a reviewer, I can distinguish measured facts, generated proposals,
   superseded knowledge, and approved published data.
-- As an operator, I can remove or rebuild the graph without affecting Studio
-  library data or any Stage show.
+- As an operator, I can back up, restore, migrate, or export the Studio graph
+  without affecting content-addressed media or any active Stage show.
 
 Acceptance:
 
 - Begin only after stable IDs and revisions from `STUDIO-001` exist and after
   the `AI-DATA-001` feasibility gates relevant to the chosen host pass.
-- One controlled writer indexes library revisions, analysis evidence, cue
+- One controlled writer owns/indexes library revisions, analysis evidence, cue
   proposals, reviews, assets, packages, and adjustment change sets.
 - Agent access is read-only where possible. A reviewed proposal still becomes
   only a draft and requires the normal explicit publish operation.
-- Export the graph to versioned JSON and rebuild it from authoritative Studio
-  data plus exported evidence. Graph loss or schema migration cannot block
-  package publishing from ordinary library data.
-- Do not store media bytes, credentials, live leases, or mutable Stage runtime
-  state in the graph.
+- Export the graph and schema through a versioned canonical contract, maintain
+  durable backups, and prove restore/migration before adopting it as primary.
+  Graph unavailability may pause Studio authoring but cannot affect an already
+  published or active Stage package.
+- Do not store media bytes, credentials, live leases, frame buffers, transient
+  blackout/arming state, or cue-loop timing in the graph. Durable Stage
+  package, setlist, adjustment, observation, and sync state belongs in the
+  separate Stage Relate repository defined by `DATA-001`.
 
 ### AI-STUDIO-001 — Reviewed AI show and video-layout proposals
 

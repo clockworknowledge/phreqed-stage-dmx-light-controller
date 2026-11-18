@@ -79,6 +79,17 @@ no import or query path to either Studio or the graph.
 The concise external narrative and measurable reference demonstration are in
 [`neo4j-relate-reference-story.md`](neo4j-relate-reference-story.md).
 
+Parity checkpoint (2026-11-18): `STUDIO-007` and `DATA-001` are Ready. Studio
+Basic is now defined as a complete local authoring product with Relate as its
+primary graph-native metadata repository. A separate bounded Relate store owns
+Stage operational state and future adjustment/sync events, while activated
+packages and ordered cue arrays remain the live execution contract. Higher
+tiers preserve the same domain/package model on an Aura-backed repository and
+add collaboration, scale, hosted processing, AI allowances, devices, and
+history. The Stage-derived parity matrix, detailed stories, UX principles,
+tier envelope, and Sprints 0–7 are in
+[`studio-basic-parity-roadmap.md`](studio-basic-parity-roadmap.md).
+
 ## In progress
 
 ### MEDIA-004 — Relate media DAM and provenance graph (`P1`, media/data)
@@ -92,9 +103,9 @@ packages remain hash-addressed outside the graph.
 
 User outcome: Studio can answer where a clip came from, every show/package that
 uses it, which rights and reviews apply, how a Storylet marker aligns to
-Lighting, and what must be rebuilt after an edit. A future bounded Relate store
-on Stage may record setlist changes and performance observations without being
-queried by the real-time cue loop.
+Lighting, and what must be rebuilt after an edit. A separate bounded Relate
+store on Stage will own package inventory, setlist state, adjustments,
+observations, and sync events without being queried by the real-time cue loop.
 
 Implementation checkpoint (2026-11-18): Relate Python 1.0.1 is pinned as the
 optional `studio-graph` dependency. Studio now writes its Workspace,
@@ -230,6 +241,54 @@ pause/resume/seek, expose a Video lane in Song Builder, and wire Ampero
 show-level transport only after projection black is fault-tested.
 
 ## Ready
+
+### STUDIO-007 — Studio Basic authoring parity umbrella (`P0`, authoring)
+
+Deliver a usable local Studio that replaces Stage's administrative authoring
+without copying its performance-first screen structure. Cover Shows, Lighting
+Looks/Scenes, Songs/cue sheets, Setlists, Profiles, media/Storylets, the unified
+Lighting/Video Composer, deterministic preview, validation, package publishing,
+and rollback. Keep Stage live transport, blackout, output power/white arming,
+display/network mutation, and shutdown outside Studio.
+
+User outcome: a band can create and manage a complete lighting/video show in a
+spacious browser environment, publish it to Stage, perform offline, and retain
+the current on-device tools until each replacement workflow is accepted.
+
+Acceptance: every current Stage authoring capability maps to an accepted Studio
+workflow or documented Stage-only operational exclusion; existing libraries
+migrate without loss; a complete dual-lane show authors/previews/validates/
+publishes/activates/rolls back; Studio cannot acquire live-output authority;
+and Basic workspaces retain stable IDs when migrated to an Aura-backed tier.
+
+Children: `DATA-001`, `STUDIO-002`, `STUDIO-003`, `MEDIA-001/002/003/004`,
+`STUDIO-004`, `PUBLISH-001`, `SYNC-002`, and `STAGE-001`. Detailed user stories,
+workspace structure, parity matrix, tier envelope, and Sprints 0–7 are in
+[`studio-basic-parity-roadmap.md`](studio-basic-parity-roadmap.md).
+
+### DATA-001 — Relate primary repositories and Aura portability (`P0`, data)
+
+Promote Relate from the current asset/Storylet projection into the primary
+graph-native metadata repository for Studio Basic and a separate bounded Stage
+operational repository. Define stable workspace-scoped identity, revisions,
+schema migration, canonical export, backup/restore, one-writer application
+services, and explicit Studio/Stage event envelopes. Keep content-addressed
+media and immutable published packages outside the graph.
+
+User outcome: local Studio and Stage retain connected, durable creative and
+operational state offline, while the same domain can move to Neo4j Aura for
+larger graphs, collaboration, deeper history, hosted processing, AI, and
+multiple devices without rebuilding shows.
+
+Acceptance: current JSON libraries migrate idempotently with itemized
+reconciliation; authoritative Relate close/reopen, backup/restore, migration,
+and export pass; Stage setlist/adjustment events sync idempotently and merge
+against base revisions; an active show needs no graph query; and a Basic
+workspace migrates to the Aura repository adapter with matching stable IDs,
+revision lineage, and deterministic package output.
+
+Dependencies: the active `MEDIA-004` durable-store foundation. This is Sprint 0
+of `STUDIO-007`; `SYNC-002` supplies the later device event semantics.
 
 ### VFX-001 — Reusable 10–30 second visual storylets (`P1`, media/show authoring)
 
@@ -569,13 +628,16 @@ transport remain `PROJ-002` and `SHOW-002` rather than expanding this baseline.
 The proposed song/analysis/section/feature/proposal/evidence/review graph,
 single-writer boundary, read-only MCP access, bounded directory store, export,
 backup, and schema-migration gates are documented in
-[`relate-ai-memory-spike.md`](relate-ai-memory-spike.md). Relate is not installed
-and the JSON libraries remain authoritative.
+[`relate-ai-memory-spike.md`](relate-ai-memory-spike.md). The workstation slice
+now pins Relate 1.0.1 and has passed its first durable close/reopen and bounded
+query checks. JSON libraries remain authoritative only during the guarded
+`DATA-001` migration and equivalence period.
 
-The Studio/Stage boundary makes the Studio host the preferred first adoption
-target. The graph may help Studio recall and reconcile relationships, but
-revisioned packages and reviewed change sets remain the sync protocol. An
-optional Pi sidecar is a separate optimization and never a Stage dependency.
+The Studio/Stage boundary keeps separate writable stores. Relate is the primary
+Studio Basic metadata repository after migration; Stage receives a bounded
+operational store later under `DATA-001`. Revisioned packages and reviewed
+change sets remain the delivery/sync protocols, and the real-time cue path
+never depends on a graph query.
 
 Acceptance remaining: on the selected Studio host, record installation,
 memory, durability/recovery, read-only MCP, migration, and removable JSON
@@ -766,20 +828,24 @@ hash it, and compare it without changing either preserved baseline.
 
 Separate advanced authoring from the show-critical runtime before lighting,
 video, projection, analysis, and AI workflows make the Stage application too
-complex. Phreqed Studio is a hosted multi-tenant SaaS control plane with a
-curated catalog plus private customer libraries. It owns editable history and
-publishes immutable, validated, fully cached show packages. Phreqed Stage runs
-an explicitly activated package offline and records bounded local changes in a
-separate adjustment journal for reviewed return sync.
+complex. Studio Basic is a complete local Relate-backed authoring product;
+higher tiers use an Aura-backed multi-tenant service with a curated catalog and
+private customer libraries. Studio owns editable history and publishes
+immutable, validated, fully cached show packages. Phreqed Stage runs an
+explicitly activated package offline and records bounded local changes in its
+separate Relate operational repository for reviewed return sync.
 
 Children: `STUDIO-001`, `PUBLISH-001`, `SYNC-002`, `STUDIO-002`, `STUDIO-003`,
 `SAAS-001`, `SAAS-002`, `SAAS-003`, `CATALOG-001`, `MEDIA-001`, `MEDIA-002`,
 `STAGE-LINK-001`, `STUDIO-004`, `AI-DATA-002`, `AI-STUDIO-001`, `STAGE-001`,
-`STUDIO-005`, and the local proof `STUDIO-006`.
+`STUDIO-005`, the local proof `STUDIO-006`, the parity umbrella `STUDIO-007`,
+and `DATA-001`.
 Existing `PROJ-001`, `PROJ-002`, `SHOW-002`, `VIDEO-001`, `AI-DATA-001`,
 `ANALYSIS-001`, and `AI-SONG-001` remain linked implementation or research
-cards rather than being duplicated. Detailed user stories and Sprints 0-11 are
-in [`studio-stage-roadmap.md`](studio-stage-roadmap.md).
+cards rather than being duplicated. Hosted product stories and Sprints 0-11 are
+in [`studio-stage-roadmap.md`](studio-stage-roadmap.md); the current local-first
+parity sequence is in
+[`studio-basic-parity-roadmap.md`](studio-basic-parity-roadmap.md).
 
 Umbrella acceptance: two hosted tenants remain isolated; the Pro reference
 customer can ingest private band media, author parallel Lighting/Video tracks,
@@ -793,9 +859,11 @@ show with Studio, graph, Internet, and media services absent.
 Define stable IDs, object and library revisions, schema versions, origin
 identity, supersession metadata, and explicit migrations for shows, songs,
 setlists, looks, scenes, Lighting/Video tracks, Video Scenes, cues, fixtures,
-catalog items, projection designs, assets, renditions, and clips. Existing
-Pi `library.json`, `songs.json`, and `tuning-profiles.json` remain authoritative
-and must migrate without loss, live behavior changes, or overwrite.
+catalog items, projection designs, assets, renditions, and clips. Existing Pi
+`library.json`, `songs.json`, and `tuning-profiles.json` remain authoritative
+during migration and must move into Relate without loss, live behavior changes,
+or overwrite. They remain rollback/export evidence until the Relate repository
+and deterministic package equivalence are accepted.
 
 User outcome: designers retain references through edits, operators can identify
 the exact loaded revision, and maintainers can round-trip legacy libraries.
@@ -1115,20 +1183,21 @@ Sprint 7.
 
 ### AI-DATA-002 — Studio knowledge graph and agent-memory integration (`P2`, AI/data)
 
-Index Studio revisions, song analysis, sections, evidence, cue proposals,
-reviews, assets, packages, and returned Stage changes in an optional graph
-sidecar. Stable library IDs remain the join boundary, and authoritative Studio
-stores plus exported evidence must be sufficient to rebuild the graph.
+Extend the authoritative Studio Relate repository with song analysis, sections,
+evidence, cue proposals, reviews, creative memory, and returned Stage changes.
+Stable library IDs remain the join boundary, and canonical export plus durable
+backup/restore must preserve all authoritative metadata.
 
 User outcome: designers can trace why a cue was proposed and how it relates to
 song structure and prior decisions, while reviewers can distinguish measured,
 generated, superseded, approved, and published information.
 
 Acceptance: one controlled writer and read-only agent access where possible;
-generated cues remain drafts requiring ordinary review and publish; JSON export
-and rebuild are tested; graph loss never blocks ordinary package publishing;
-media bytes, credentials, leases, and mutable Stage runtime state never enter
-the graph.
+generated cues remain drafts requiring ordinary review and publish; canonical
+export, migration, backup, and restore are tested; graph loss never affects an
+already published or active Stage package; and media bytes, credentials, live
+leases, frame buffers, transient blackout/arming state, and cue-loop timing
+never enter the graph.
 
 Sequencing boundary: graph-backed authoring may propose or explain a timeline,
 but publishing compiles stable ordered cues and package hashes. Stage playback

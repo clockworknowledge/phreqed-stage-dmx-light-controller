@@ -4,6 +4,27 @@ Last updated: 2026-11-18
 
 ## Next resume point -- Local Studio and Relate integration
 
+Parity planning checkpoint (2026-11-18): the Stage capability inventory is now
+mapped into a complete Studio Basic product under `STUDIO-007`. Relate is the
+primary graph-native metadata repository for Studio Basic; a separate bounded
+Stage Relate store owns installed-package inventory, active selection, setlist
+operational state, adjustments, observations, and synchronization events.
+Activated package manifests and ordered cue arrays remain the live execution
+contract. Higher tiers preserve the same IDs/revisions/packages on an
+Aura-backed repository and add collaboration, graph/library scale, hosted media
+processing, AI allowances, devices, and history. Detailed user stories, UX,
+tier boundaries, and Sprints 0–7 are in
+`docs/studio-basic-parity-roadmap.md`.
+
+Resume implementation with `DATA-001` / parity Sprint 0: extend the current
+Relate schema and writer from assets/Storylets into Workspaces, Shows, Looks,
+Lighting Scenes, Songs, cue-sheet revisions, Setlists, tuning Profiles, and
+package identity. Build an idempotent, backed-up importer for the existing
+`library.json`, `songs.json`, and `tuning-profiles.json`; produce a per-object
+reconciliation report; close/reopen/export the store; and prove the normalized
+values still generate equivalent package inputs before changing any Stage
+source of truth.
+
 The first standalone Phreqed Studio slice is implemented under `STUDIO-006`,
 and `MEDIA-004` is now In progress.
 It runs loopback-only, has no Stage/live-output imports, and provides responsive
@@ -304,22 +325,22 @@ began with representative music-video and VFX source material from the operator.
 
 ## Planning checkpoint -- Hosted Phreqed Studio and projection
 
-On 2026-11-16 the Studio roadmap expanded from a primarily local authoring app
-to a hosted, multi-tenant, AI-augmented SaaS product. The reference customer is
-a Pro (`$$$`) band workspace with private VFX/video storage, bulk resumable
-upload, non-destructive clip preparation, complete lighting and Video Scene
-authoring, AI proposal allowances, multiple paired Stage units, and deeper
-revision history. Free and Artist (`$`) tiers use the same application through
-named entitlements and quotas; exact names, prices, and limits remain product
-configuration.
+On 2026-11-16 the Studio roadmap expanded to include hosted, multi-tenant,
+AI-augmented tiers. The 2026-11-18 parity decision keeps Studio Basic as a
+complete local Relate-backed product and uses the same application/domain model
+for Aura-backed Artist and Pro tiers. The Pro reference customer adds private
+VFX/video storage, bulk resumable upload, non-destructive clip preparation,
+complete lighting and Video Scene authoring, AI proposal allowances, multiple
+paired Stage units, and deeper revision history. Exact names, prices, quotas,
+and limits remain product configuration.
 
-The authoritative hosted model uses tenant-scoped transactional metadata,
-private content-addressed object storage, asynchronous probe/transcode/AI jobs,
-an optional rebuildable graph, and a package registry. Published packages are
-signed, hash-verified, fully downloaded, and preflighted on Stage before local
-activation. Subscription, billing, graph, AI, or cloud failure can block new
-hosted work but cannot interrupt an active or cached show. Cloud, trusted LAN,
-and removable media use the same package format.
+The authoritative hosted model uses tenant-scoped Aura metadata, private
+content-addressed object storage, asynchronous probe/transcode/AI jobs, and a
+package registry. Published packages are signed, hash-verified, fully
+downloaded, and preflighted on Stage before local activation. Subscription,
+billing, graph, AI, or cloud failure can block new hosted work but cannot
+interrupt an active or cached show. Cloud, trusted LAN, and removable media use
+the same package format.
 
 Each song revision owns one shared deterministic clock with separate Lighting
 and Video tracks. A reusable Video Scene references immutable clip ranges and

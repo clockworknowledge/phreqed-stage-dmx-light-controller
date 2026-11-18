@@ -1,7 +1,7 @@
 # Phreqed Studio + Relate reference story
 
 Date: 2026-11-18
-Status: executable local foundation; Relate evaluation next
+Status: durable Relate foundation operational; domain migration next
 
 ## The story
 
@@ -71,9 +71,11 @@ dataset:
    source and VFX fragments through a sparse Video EDL, song placements,
    lighting cues, rendition, published package, and Pi observations.
 
-The first local projection contains 15 nodes and 14 relationships. The Relate
-sprint will ingest it with idempotent parameterized Cypher, then expand it to
-the Travelling source-to-package chain.
+The first durable Relate store contains 15 nodes and 14 relationships. Studio
+ingests it with idempotent parameterized Cypher, survives close/reopen, and
+answers bounded lineage and Storylet queries. The next migration expands the
+same repository contract through the Travelling source-to-package chain and
+the existing lighting/song/setlist/profile domains.
 
 ## Demo questions
 
@@ -96,12 +98,11 @@ show without contacting either graph.
 
 ## Evidence required before adoption
 
-The `MEDIA-004` evaluation will pin and hash one Relate release; verify its
-license, telemetry, installation, and interfaces; measure import, query,
-checkpoint, cold-start, memory, and store growth; prove one-writer behavior,
-backup/restore, migration, corruption recovery, deterministic rebuild, and
-full removal; and test a strictly bounded ARM64 device store only if the
-workstation results justify it.
+`MEDIA-004` has pinned Relate 1.0.1 and exercised the initial directory store.
+Remaining adoption evidence covers package hashes, license/telemetry controls,
+import/query/checkpoint/cold-start/memory/store-growth measurements,
+one-writer behavior, backup/restore, schema migration, corruption recovery,
+canonical export/import, and the bounded ARM64 Stage store.
 
 The success claim is therefore measurable: Relate must make connected asset
 discovery, provenance, impact analysis, and explainable agent proposals
