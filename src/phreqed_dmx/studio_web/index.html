@@ -112,7 +112,10 @@ black=15.0</textarea></label>
             <h3>Rebuildable relationship layer</h3>
             <p>The catalog remains authoritative. This export contains stable nodes and relationships for Relate ingestion, provenance queries, and agent memory.</p>
           </div>
-          <button id="export-graph" class="primary" type="button">Export graph projection</button>
+          <div class="graph-actions">
+            <button id="sync-relate" class="primary" type="button">Sync durable Relate</button>
+            <button id="export-graph" type="button">Export JSON projection</button>
+          </div>
         </section>
         <section class="graph-metrics">
           <article><span>Nodes</span><strong id="node-count">0</strong></article>
@@ -120,6 +123,7 @@ black=15.0</textarea></label>
           <article><span>Store policy</span><strong>Rebuildable</strong></article>
           <article><span>Stage dependency</span><strong>None</strong></article>
         </section>
+        <section class="panel graph-path"><p class="eyebrow">RELATE STORE</p><code id="relate-status">Not synchronized</code></section>
         <section class="panel graph-path"><p class="eyebrow">LAST EXPORT</p><code id="graph-path">Not exported yet</code></section>
       </div>
     </section>

@@ -9,11 +9,12 @@ not as two unrelated applications. Authoring may expose separate lanes, but the
 performer starts, stops, advances, and blackouts one show. Each published scene
 explicitly participates as **Lights**, **Video**, **Both**, or **Black**.
 
-Media bytes live in a content-addressed file/object store. Immutable manifests,
-EDLs, track revisions, packages, rights, and hashes remain authoritative data.
-Relate is a strong candidate for an optional, rebuildable relationship and
-agent-memory index over that data; it does not store media bytes or resolve live
-cues on the Pi.
+Media bytes live in a content-addressed file/object store. Relate may be the
+authoritative Studio store for graph-native metadata, revisions, relationships,
+rights, approvals, and agent memory, with deterministic exports and migrations
+for recovery and portability. It does not store media bytes or resolve live
+cues on the Pi. Immutable published manifests and packages remain the Stage
+execution contract.
 
 ## Authoritative media chain
 
@@ -36,8 +37,9 @@ cues on the Pi.
 
 Media blobs are never stored in the graph, Git, `songs.json`, or an EDL. The
 graph stores stable IDs, relationships, facts, hashes, review evidence, and
-provenance. Deleting or rebuilding the graph cannot delete or invalidate the
-authoritative catalog or any published Stage package.
+provenance. Losing the Studio graph may require restoring or rebuilding Studio
+metadata, but it cannot delete content-addressed media or invalidate an already
+published Stage package.
 
 ## Relate boundary
 
@@ -68,10 +70,12 @@ Relate must not:
 - receive live per-frame Lighting or player telemetry as unbounded graph data;
 - share one writable store between Studio and Stage.
 
-Studio is the preferred writer. An optional Pi snapshot may support read-only
-search, diagnostics, or provenance between publishes, but Stage playback uses
-only local immutable manifests and ordered arrays. The Pi snapshot is removable
-and never the sync protocol.
+Studio is the preferred writer for the hosted creative library. A separate Pi
+Relate store may support offline search, diagnostics, setlist changes,
+performance observations, and a revision-aware outbound change journal, but
+Stage playback uses only local immutable manifests and ordered arrays. Studio
+and Stage exchange explicit events/change sets rather than sharing or directly
+replicating one writable store.
 
 ## Proposed media graph
 

@@ -61,6 +61,7 @@ class StudioWebTests(unittest.TestCase):
             state = json.load(response)
         self.assertEqual(state["assets"], [])
         self.assertEqual(state["graph"]["nodes"], 1)
+        self.assertFalse(state["relate"]["configured"])
 
     def test_import_storylet_and_graph_export_through_api(self) -> None:
         with self.post(
@@ -108,6 +109,9 @@ class StudioWebTests(unittest.TestCase):
         with self.assertRaises(HTTPError) as unknown:
             self.post({"action": "shell"}, origin=self.base)
         self.assertEqual(unknown.exception.code, 400)
+        with self.assertRaises(HTTPError) as no_relate:
+            self.post({"action": "sync_relate"}, origin=self.base)
+        self.assertEqual(no_relate.exception.code, 400)
 
 
 if __name__ == "__main__":

@@ -12,6 +12,9 @@ license = { text = "MIT" }
 authors = [{ name = "clockworKnowledge" }]
 dependencies = []
 
+[project.optional-dependencies]
+studio-graph = ["relate-db==1.0.1"]
+
 [project.scripts]
 phreqed-dmx = "phreqed_dmx.app:main"
 phreqed-studio = "phreqed_dmx.studio_app:main"

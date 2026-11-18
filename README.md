@@ -52,16 +52,17 @@ Phreqed Studio is now available as a separate hardware-independent local
 application for early media and Storylet authoring:
 
 ```powershell
-py -3.12 -m pip install -e .
+py -3.12 -m pip install -e ".[studio-graph]"
 py -3.12 -m phreqed_dmx.studio_app `
   --workspace output/studio-workspace `
   serve
 ```
 
 Open `http://127.0.0.1:8090`. Studio uses an atomic local catalog and
-content-addressed blobs, and can export a rebuildable relationship projection
-for the planned Relate adapter. It cannot start Art-Net, acquire a Stage lease,
-or control fixtures/projectors. See
+content-addressed blobs, and synchronizes assets, Storylets, and semantic
+markers into a durable Relate 1.0.1 directory store through the Graph workspace
+or CLI. It cannot start Art-Net, acquire a Stage lease, or control
+fixtures/projectors. See
 [`docs/studio-local-foundation.md`](docs/studio-local-foundation.md) and the
 [`Studio + Relate reference story`](docs/neo4j-relate-reference-story.md).
 

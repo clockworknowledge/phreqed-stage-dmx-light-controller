@@ -29,7 +29,7 @@ relationships that sprint will consume.
 
 ```powershell
 cd D:\DevelopmentClockwork\phreqed-stage-dmx-light-controller
-py -3.12 -m pip install -e .
+py -3.12 -m pip install -e ".[studio-graph]"
 
 py -3.12 -m phreqed_dmx.studio_app `
   --workspace output/studio-workspace `
@@ -88,7 +88,44 @@ py -3.12 -m phreqed_dmx.studio_app `
 For the Heart Zones loop, select `--loop` and markers such as `pulse-a`,
 `pulse-b`, `charge`, `discharge`, and `recover`.
 
-## Export the Relate projection
+## Synchronize durable Relate
+
+Studio pins `relate-db` 1.0.1 through the optional `studio-graph` extra. The
+default store is the directory `WORKSPACE/relate`; Relate uses its default
+`full` durability mode. Synchronize the catalog through parameterized,
+transactional, idempotent Cypher:
+
+```powershell
+py -3.12 -m phreqed_dmx.studio_app `
+  --workspace output/studio-workspace `
+  relate-sync
+
+py -3.12 -m phreqed_dmx.studio_app `
+  --workspace output/studio-workspace `
+  relate-state
+```
+
+The browser Graph workspace exposes the same explicit synchronization. Closing
+the writer checkpoints the store; later state and query commands reopen it
+read-only.
+
+Query the Heart Zones source-to-Storylet marker chain or find compatible loop
+durations:
+
+```powershell
+py -3.12 -m phreqed_dmx.studio_app `
+  --workspace output/studio-workspace `
+  relate-lineage --asset ASSET_ID
+
+py -3.12 -m phreqed_dmx.studio_app `
+  --workspace output/studio-workspace `
+  relate-find --minimum 10 --maximum 30 --loop
+```
+
+All application queries are fixed, parameterized, workspace-scoped, read-only,
+and capped at 200 result rows.
+
+## Export the JSON projection
 
 ```powershell
 py -3.12 -m phreqed_dmx.studio_app `
@@ -96,10 +133,10 @@ py -3.12 -m phreqed_dmx.studio_app `
   export-graph
 ```
 
-This writes `graph-projection.json` atomically. It is an interchange/test
-boundary, not a graph-only source of truth. The upcoming Relate sprint will pin
-one release, translate this projection through idempotent parameterized Cypher,
-benchmark it, and prove full rebuild/removal.
+This writes `graph-projection.json` atomically as an interchange, inspection,
+and rebuild boundary. The Relate store is now operational; broader schema,
+benchmark, backup/restore, migration, removal, and ARM64 work remains under
+`MEDIA-004`.
 
 ## Current limitations
 
@@ -107,7 +144,8 @@ benchmark it, and prove full rebuild/removal.
 - local file-path import rather than resumable browser upload;
 - no media probing, thumbnails, transcoding, proxies, or playback yet;
 - Storylets are draft records; no revision editor or package publishing;
-- graph projection only; Relate is not installed or queried by this process;
+- the graph currently covers assets, Storylets, and markers rather than the
+  complete rights/rendition/placement/package/change-set domain;
 - no Stage delivery, activation, or live-output authority.
 
 These are deliberate boundaries for the first slice rather than hidden

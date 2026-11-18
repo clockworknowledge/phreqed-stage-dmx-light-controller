@@ -1,20 +1,39 @@
 # Relate media DAM and provenance sprint
 
 Date: 2026-11-17
-Status: Backlog
+Status: In progress
 Primary card: `MEDIA-004`
 Related cards: `AI-DATA-001`, `AI-DATA-002`, `MEDIA-001/002/003`, `VFX-001/002/003`, `STUDIO-001/004`
 
 ## Sprint outcome
 
-Prove and define Relate as Phreqed Studio's rebuildable relationship layer for
-media digital-asset management, storylet markers, edit decisions, Lighting/
-Video associations, provenance, approvals, packages, and agent memory.
+Prove and define Relate as Phreqed Studio's durable graph-native metadata layer
+for media digital-asset management, Storylet markers, edit decisions, Lighting/
+Video associations, provenance, approvals, packages, and agent memory. Retain
+deterministic exports and event/change-set boundaries for recovery, migration,
+portability, and Stage publication.
 
 The sprint does not move media bytes into a graph and does not make Relate a
-Stage runtime dependency. Content-addressed files/object storage and versioned
-catalog/manifests remain authoritative. The Pi continues to execute immutable
-ordered cue arrays from one song clock.
+Stage playback dependency. Content-addressed files/object storage remains the
+media authority, and immutable published manifests remain the Stage authority.
+The Pi continues to execute ordered cue arrays from one song clock.
+
+## Implementation checkpoint — 2026-11-18
+
+The first workstation slice is operational with `relate-db` 1.0.1. Studio uses
+a durable directory store and the default `full` durability mode. A
+parameterized transactional synchronizer creates stable identity schema and
+idempotently writes Workspace, AssetRevision, StoryletRevision, Marker,
+OWNS_ASSET, DERIVED_FROM, and HAS_MARKER records. It checkpoints explicitly;
+subsequent state and allowlisted query calls reopen the store read-only.
+
+The Fuse Bomb/Heart Zones reference graph synchronized repeatedly without
+duplicates and recovered after close/reopen with 15 nodes and 14 relationships.
+Bounded lineage and Storylet duration/loop queries returned the expected Heart
+Zones asset, Storylet, and five ordered semantic markers. The Studio Graph
+workspace synchronizes the same store and reports its durable state. Evidence
+and workstation measurements are recorded in
+[`validation/relate-studio-foundation-2026-11-18.md`](validation/relate-studio-foundation-2026-11-18.md).
 
 ## Product stories
 
@@ -29,10 +48,12 @@ ordered cue arrays from one song clock.
   approved decisions, superseded revisions, and observed rehearsal results.
 - As an agent, I can query connected context through a read-only surface without
   obtaining publish, playback, filesystem, or live-output authority.
-- As an operator, Studio and Stage continue to work if Relate is stopped,
-  locked, corrupt, removed, or rebuilt.
-- As a Stage technician, I can optionally inspect a bounded read-only snapshot
-  between publishes, but playback never queries it at a cue boundary.
+- As an operator, an active Stage show continues to work if either Studio or
+  its local Relate service is stopped, locked, corrupt, or unavailable.
+- As a performer, I can change a setlist, record a bounded local adjustment, or
+  add an observation offline; Stage stores it in a separate local graph/change
+  journal and later synchronizes it to Studio without mutating the active
+  package or querying the graph at a cue boundary.
 
 ## Technical facts to validate
 
@@ -135,22 +156,30 @@ unbounded, unknown, and malformed requests.
    exports and required queries.
 4. Corrupt a disposable copy and document detection/rebuild behavior.
 5. Run one reversible schema migration with pre/post counts and hashes.
-6. Remove Relate and rebuild from authoritative data without losing the ability
-   to author, render, publish, transfer, activate, or roll back a show.
+6. Export/migrate all authoritative Studio metadata before removing Relate and
+   prove published packages remain transferable, activatable, and reversible.
 
-Exit gate: graph loss is a search/memory outage only; no authoritative asset or
-published package is lost or changed.
+Exit gate: a graph failure blocks affected Studio metadata work until recovery,
+but no content-addressed media or published Stage package is lost or changed,
+and an active show remains operational.
 
-## Work package F — Studio integration and optional Pi snapshot
+## Work package F — Studio integration and bounded Pi store
 
 Studio surfaces may use graph-backed discovery, lineage, impact warnings, and
 agent context, but every edit opens/saves authoritative revisions through the
 normal application service. Publish resolves and freezes all references into a
 complete Stage package.
 
-If the optional Pi snapshot is pursued:
+The Pi store is a separate device-local graph, not a shared writable Studio
+store. It receives published context and records only allowlisted operational
+changes and observations:
 
-- deliver a versioned read-only export only between publish operations;
+- import a versioned package-context snapshot only between publish operations;
+- record setlist revisions, bounded adjustments, notes, observations, and exact
+  performed-package identity as revisioned device events;
+- synchronize idempotent outbound change sets and apply reviewed inbound state
+  only to staging, never directly to the active package;
+- use base revisions and three-way conflict handling in Studio;
 - apply a strict graph-size and systemd memory limit;
 - bind no LAN listener by default;
 - keep it outside controller dependencies, leases, readiness, and cue loops;
@@ -161,8 +190,8 @@ If the optional Pi snapshot is pursued:
 
 - Relate's exact release, hashes, license, install, telemetry, surfaces, and
   limitations are recorded.
-- The reference DAM graph rebuilds deterministically from authoritative records
-  and reconciles hashes and revisions.
+- The reference DAM graph restores or migrates deterministically from its
+  durable backup/export contract and reconciles hashes and revisions.
 - Provenance, impact, discovery, approval-memory, and package queries pass on
   Travelling, Fuse Bomb, and Heart Zones reference chains.
 - One writer, read-only agents, tenant boundaries, limits, backups, restore,
@@ -172,7 +201,7 @@ If the optional Pi snapshot is pursued:
 - Stage packages start, stop, blackout, fail black, and roll back with no graph
   process installed.
 - Adoption requires measured value over a simpler catalog/query implementation;
-  a no-go result preserves the event/catalog and deterministic Stage design.
+  a no-go result preserves deterministic exports, media, and Stage packages.
 
 ## Explicit non-goals
 

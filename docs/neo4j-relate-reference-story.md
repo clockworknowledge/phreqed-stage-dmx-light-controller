@@ -27,19 +27,20 @@ digital-asset lineage, semantic discovery, impact analysis, approval memory,
 and evidence for AI-assisted proposals.
 
 Relate is deliberately not the media store or the live sequencer. Original and
-derived bytes are content-addressed outside the graph. Atomic catalogs,
-revision records, EDLs, and package manifests remain authoritative. The graph
-is a rebuildable projection of those records and their append-only events.
+derived bytes are content-addressed outside the graph. Relate may own the
+authoritative graph-native Studio metadata and creative history, protected by
+durable backups, exports, and migrations. Immutable published package manifests
+remain the authoritative Stage execution contract.
 
-This separation creates a strong operational result: deleting Relate may make
-search and agent memory unavailable, but it cannot delete an asset, change a
-published show, interrupt playback, or prevent blackout.
+This separation creates a strong operational result: a Relate failure may pause
+Studio metadata work until recovery, but it cannot delete content-addressed
+media, change an active published show, interrupt playback, or prevent blackout.
 
 ## The onboard director
 
-The proposed onboard director is a bounded recommendation service, not an
-autonomous show operator. Between publishes or performances, it may use a
-read-only graph snapshot to:
+The proposed onboard director is a bounded recommendation and operational-
+memory service, not an autonomous show operator. Its separate device-local
+Relate store may:
 
 - discover compatible Storylets, fills, lighting recipes, and projection
   renditions;
@@ -48,6 +49,8 @@ read-only graph snapshot to:
 - identify missing media, rights, capabilities, or unreviewed dependencies;
 - compare a local Stage adjustment with the published show and prepare a change
   set for Studio review.
+- record offline setlist changes, performer notes, rehearsal observations, and
+  bounded adjustments as revisioned events for later Studio synchronization.
 
 It cannot publish, activate, start, stop, blackout, arm whites, raise output
 ceilings, access media bytes, or resolve a cue during playback. Stage executes
@@ -87,9 +90,9 @@ The reference graph should answer:
 - Which local Stage adjustments should return to Studio, and do they conflict
   with a newer revision?
 
-Every answer returns stable IDs and revisions that open authoritative Studio
-records. The graph never becomes the only copy of a fact required to reproduce
-the show.
+Every answer returns stable IDs and revisions that open the corresponding
+Studio records. Published packages retain everything required to reproduce a
+show without contacting either graph.
 
 ## Evidence required before adoption
 
@@ -97,10 +100,10 @@ The `MEDIA-004` evaluation will pin and hash one Relate release; verify its
 license, telemetry, installation, and interfaces; measure import, query,
 checkpoint, cold-start, memory, and store growth; prove one-writer behavior,
 backup/restore, migration, corruption recovery, deterministic rebuild, and
-full removal; and test a strictly bounded ARM64 read-only snapshot only if the
+full removal; and test a strictly bounded ARM64 device store only if the
 workstation results justify it.
 
 The success claim is therefore measurable: Relate must make connected asset
 discovery, provenance, impact analysis, and explainable agent proposals
-materially better than the authoritative catalog alone, without becoming a
+materially improve connected authoring and device memory without becoming a
 show-critical dependency.

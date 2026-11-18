@@ -82,6 +82,7 @@ label { display: grid; gap: 7px; color: var(--muted); font-size: 13px; font-weig
 .graph-view { flex: 1; min-height: 0; overflow-y: auto; display: grid; gap: 16px; align-content: start; }
 .graph-hero { padding: 26px; display: flex; justify-content: space-between; align-items: center; gap: 28px; }
 .graph-hero p:last-child { max-width: 70ch; color: var(--muted); line-height: 1.55; }
+.graph-actions { display: flex; flex-wrap: wrap; gap: 12px; justify-content: flex-end; }
 .graph-metrics { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; }
 .graph-metrics article { min-height: 120px; padding: 20px; border: 1px solid var(--line); border-radius: 12px; background: var(--panel); display: flex; flex-direction: column; justify-content: space-between; }
 .graph-metrics span { color: var(--muted); }

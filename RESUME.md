@@ -4,7 +4,8 @@ Last updated: 2026-11-18
 
 ## Next resume point -- Local Studio and Relate integration
 
-The first standalone Phreqed Studio slice is implemented under `STUDIO-006`.
+The first standalone Phreqed Studio slice is implemented under `STUDIO-006`,
+and `MEDIA-004` is now In progress.
 It runs loopback-only, has no Stage/live-output imports, and provides responsive
 Assets, Storylets, and Graph workspaces. Its authoritative local store uses
 atomic JSON plus SHA-256-addressed blobs; Storylets carry ordered semantic
@@ -12,15 +13,23 @@ markers; append-only events and `graph-projection.json` provide a rebuildable
 relationship boundary. Setup and commands are in
 `docs/studio-local-foundation.md`.
 
+Relate Python 1.0.1 is pinned as the optional `studio-graph` dependency. Studio
+uses parameterized transactional Cypher to synchronize a full-durability
+directory store, installs stable identity schema, checkpoints explicitly, and
+reopens read-only for bounded queries. Repeated synchronization is idempotent.
+The first asset-lineage and Storylet duration/loop discovery queries are
+available from the CLI, and the browser Graph workspace can perform the same
+explicit durable synchronization.
+
 The ignored reference workspace under `output/studio-workspace/` contains the
 Fuse Bomb concept and the supplied Heart Zones artwork, plus 15-second and
 20-second Storylet contracts. It exports 15 nodes and 14 relationships. Source
-media remains outside Git. Resume by reviewing the browser shell, rehearsing a
-catalog/blob backup and restore, then implement the `MEDIA-004` Relate adapter:
-pin a Relate release, import the projection through idempotent parameterized
-Cypher, run the documented provenance/placement/rights queries, benchmark RAM
-and rebuild time on workstation and ARM64 Pi, and prove removal leaves Studio
-and Stage operational.
+media remains outside Git. Its Relate store has been synchronized twice without
+duplicates, closed/checkpointed, reopened read-only, and verified at 15 nodes
+and 14 relationships. Resume by expanding `MEDIA-004` through rights,
+renditions, placements, reviews, packages, observations, and revision-aware
+change sets. Then benchmark RAM/rebuild time, rehearse backup/restore and
+removal, and evaluate the bounded ARM64 device store and bidirectional sync.
 
 The product story is intentionally precise: content-addressed storage and
 authoritative revision records are the digital-asset system of record; Relate

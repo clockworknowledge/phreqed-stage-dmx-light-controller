@@ -61,8 +61,8 @@ cross-surface choreography, Christmas motifs, unified Lights/Video/Both/Black
 scene participation, and the Relate DAM/provenance sprint. The simplified Fuse
 Bomb keyframe pass is retained locally under `output/vfx-concepts/`; production
 frame separation and timed rendering have not started. `SHOW-005` remains in
-Validation; the new VFX cards remain Ready; `MEDIA-004` remains Backlog and is
-not a Stage dependency. Resume details are in `RESUME.md`,
+Validation; the new VFX cards remain Ready; `MEDIA-004` is now In progress and
+is not a Stage playback dependency. Resume details are in `RESUME.md`,
 [`integrated-vfx-sprint.md`](integrated-vfx-sprint.md),
 [`media-control-architecture.md`](media-control-architecture.md), and
 [`relate-media-dam-sprint.md`](relate-media-dam-sprint.md).
@@ -72,14 +72,56 @@ hardware-independent authoring slice and is in Validation. The standalone
 loopback application imports immutable content-addressed assets, authors timed
 Storylets and semantic markers, records append-only catalog events, and exports
 a rebuildable graph projection. The local reference workspace contains the
-Fuse Bomb and Heart Zones concepts without committing their bytes. Relate is
-not yet a runtime dependency: `MEDIA-004` remains the next graph ingestion,
-query, durability, ARM64, and removal benchmark. Stage has no import or query
-path to either Studio or the graph.
+Fuse Bomb and Heart Zones concepts without committing their bytes. `MEDIA-004`
+now pins Relate 1.0.1, synchronizes that reference graph into a full-durability
+directory store, and exposes bounded lineage and discovery queries. Stage has
+no import or query path to either Studio or the graph.
 The concise external narrative and measurable reference demonstration are in
 [`neo4j-relate-reference-story.md`](neo4j-relate-reference-story.md).
 
 ## In progress
+
+### MEDIA-004 — Relate media DAM and provenance graph (`P1`, media/data)
+
+Define the content-addressed media chain from source blob through asset and
+Storylet revisions, semantic markers, renditions, EDLs, song placements,
+track/show revisions, and Stage packages. Relate may become the authoritative
+Studio store for graph-native metadata, relationships, provenance, approvals,
+and creative memory. Media bytes, rendered files, and deterministic published
+packages remain hash-addressed outside the graph.
+
+User outcome: Studio can answer where a clip came from, every show/package that
+uses it, which rights and reviews apply, how a Storylet marker aligns to
+Lighting, and what must be rebuilt after an edit. A future bounded Relate store
+on Stage may record setlist changes and performance observations without being
+queried by the real-time cue loop.
+
+Implementation checkpoint (2026-11-18): Relate Python 1.0.1 is pinned as the
+optional `studio-graph` dependency. Studio now writes its Workspace,
+AssetRevision, StoryletRevision, and Marker projection through parameterized,
+transactional, idempotent Cypher into a directory store with Relate's default
+full durability. It installs uniqueness/index schema, checkpoints explicitly,
+reopens read-only, reports store counts, answers bounded asset-lineage and
+Storylet-duration/loop discovery queries, and exposes synchronization from the
+CLI and Graph workspace. The Fuse Bomb/Heart Zones reference store survives
+close/reopen with 15 nodes and 14 relationships, and repeated synchronization
+does not duplicate either.
+
+Acceptance remaining: expand the authoritative schema through renditions,
+rights, placements, reviews, packages, observations, and change sets; reconcile
+delete/supersession semantics; benchmark memory and rebuild time; test
+writer/readers, backup/restore, migration, corruption and removal; then assess
+the bounded ARM64 Stage store and bidirectional Studio/Stage event sync. Stage
+playback continues to consume compiled manifests and ordered arrays only.
+
+Full sprint workup: [`relate-media-dam-sprint.md`](relate-media-dam-sprint.md)
+covers release verification, benchmark datasets, catalog events,
+schema/indexing, allowlisted queries, read-only agents, tenant isolation,
+durability, migration, Studio integration, and the optional Pi store.
+
+Dependencies: the local `STUDIO-006`/`MEDIA-001` slice is active. Later schema
+expansion uses `MEDIA-002/003`, `VFX-001/002`, and `STUDIO-001`. This does not
+block the Stage Storylet proof.
 
 ### PROJ-001 — Projector playback foundation (`P1`, visual output)
 
@@ -1024,37 +1066,6 @@ and missing sources fail explicitly without publishing a partial package.
 Dependencies: `MEDIA-001`, `MEDIA-002`, and the version-2 EDL contract proven
 by `SHOW-005`. Required by `STUDIO-004`; planned Sprint 5 before the production
 Video Scene editor.
-
-### MEDIA-004 — Relate media DAM and rebuildable provenance graph (`P1`, media/data)
-
-Define the authoritative content-addressed media chain from source blob through
-asset/storylet revision, semantic marker, rendition, EDL, song placement,
-track/show revision, and Stage package. Prototype Relate as a rebuildable graph
-projection for provenance, impact analysis, search, approval memory, and agent
-evidence; never store media bytes or make the graph authoritative.
-
-User outcome: Studio can answer where a clip came from, every show/package that
-uses it, which rights and reviews apply, how a storylet marker aligns to
-Lighting, and what must be rebuilt after an edit—without making Stage depend on
-the graph.
-
-Acceptance: authoritative catalog/event records rebuild an empty graph; source
-and package hashes reconcile; one controlled writer and read-only agent access
-are enforced; backup/restore/schema migration and removal pass; graph memory is
-bounded; and the full Studio/Stage path remains usable with Relate absent. Media
-bytes stay in content-addressed files/object storage. See
-[`media-control-architecture.md`](media-control-architecture.md).
-
-Full sprint workup: [`relate-media-dam-sprint.md`](relate-media-dam-sprint.md)
-covers release verification, benchmark datasets, authoritative catalog events,
-schema/indexing, allowlisted queries, read-only agents, tenant isolation,
-durability, migration, rebuild/removal, Studio integration, and the optional
-bounded Pi snapshot. Travelling, Fuse Bomb, and Heart Zones are the reference
-provenance chains.
-
-Dependencies: `MEDIA-001/002/003`, `VFX-001/002`, `STUDIO-001`, and the
-`AI-DATA-001` feasibility measurements. This does not block the Stage storylet
-proof.
 
 ### SHOW-008 — Unified per-scene Lighting/Video participation (`P1`, show control)
 

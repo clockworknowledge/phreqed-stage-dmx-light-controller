@@ -94,6 +94,10 @@ function render() {
   el('node-count').textContent = state.graph.nodes;
   el('graph-link-count').textContent = state.graph.relationships;
   el('graph-path').textContent = state.graph.export_path;
+  const relate = state.relate;
+  el('relate-status').textContent = relate.status === 'ready'
+    ? `Ready · ${relate.nodes} nodes · ${relate.relationships} links · ${relate.store}`
+    : relate.error || `${relate.status} · ${relate.store || 'not configured'}`;
   const family = el('import-family');
   if (!family.children.length) family.replaceChildren(...state.asset_families.map(value => {
     const option = document.createElement('option'); option.value = value; option.textContent = value.replaceAll('-', ' '); return option;
@@ -136,6 +140,12 @@ el('storylet-form').addEventListener('submit', async event => {
 el('export-graph').addEventListener('click', async () => {
   try { const result = await command({action: 'export_graph'}); notice(`Graph projection written to ${result.path}`); }
   catch (error) { notice(error.message, true); }
+});
+el('sync-relate').addEventListener('click', async () => {
+  try {
+    const result = await command({action: 'sync_relate'});
+    notice(`Relate synchronized: ${result.relate.nodes} nodes · ${result.relate.relationships} links`);
+  } catch (error) { notice(error.message, true); }
 });
 
 fetch('/api/state').then(response => response.json()).then(value => { state = value; render(); }).catch(error => notice(error.message, true));

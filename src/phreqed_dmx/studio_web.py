@@ -11,6 +11,7 @@ import secrets
 from urllib.parse import urlparse
 
 from .studio_catalog import StoryletMarker, StudioCatalog
+from .studio_relate import StudioRelateGraph
 
 
 MAX_REQUEST_BYTES = 64_000
@@ -23,11 +24,35 @@ MIME_TYPES = {
 
 
 class StudioController:
-    def __init__(self, catalog: StudioCatalog) -> None:
+    def __init__(
+        self,
+        catalog: StudioCatalog,
+        *,
+        relate_graph: StudioRelateGraph | None = None,
+    ) -> None:
         self.catalog = catalog
+        self.relate_graph = relate_graph
 
     def state(self) -> dict:
-        return self.catalog.state()
+        state = self.catalog.state()
+        state["relate"] = {
+            "configured": self.relate_graph is not None,
+            "status": "not-synced",
+            "store": (
+                str(self.relate_graph.store) if self.relate_graph is not None else None
+            ),
+        }
+        if self.relate_graph is not None and self.relate_graph.store.exists():
+            try:
+                state["relate"] = {
+                    "configured": True,
+                    "status": "ready",
+                    **self.relate_graph.state(self.catalog.workspace_id),
+                }
+            except Exception as exc:
+                state["relate"]["status"] = "unavailable"
+                state["relate"]["error"] = str(exc)
+        return state
 
     def command(self, value: object) -> dict:
         if not isinstance(value, dict) or not isinstance(value.get("action"), str):
@@ -71,6 +96,18 @@ class StudioController:
         if action == "export_graph":
             path = self.catalog.export_graph()
             return {"ok": True, "path": str(path), "state": self.state()}
+        if action == "sync_relate":
+            if set(value) != {"action"}:
+                raise ValueError("sync_relate fields are invalid")
+            if self.relate_graph is None:
+                raise ValueError("Relate is not configured")
+            try:
+                graph_state = self.relate_graph.sync_projection(
+                    self.catalog.graph_projection()
+                )
+            except Exception as exc:
+                raise ValueError(f"Relate synchronization failed: {exc}") from exc
+            return {"ok": True, "relate": graph_state, "state": self.state()}
         raise ValueError("unknown Studio command")
 
 
