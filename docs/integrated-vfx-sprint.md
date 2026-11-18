@@ -1,0 +1,161 @@
+# Integrated Lighting and Video VFX sprint
+
+Date: 2026-11-17  
+Cards: `SHOW-006`, `SHOW-007`  
+Reference song: **Travelling on a Floating Rock**
+
+## Goal
+
+Make the Betopper cubes and projection feel like one choreographed visual
+instrument. Short VFX phrases should occupy selected spaces between primary
+band-video clips, answer Lighting events, and occasionally appear to travel
+from a fixture to the screen and back. The performer remains the focus and
+intentional black remains part of the composition.
+
+The first sprint uses the proven offline EDL/package path. It does not add live
+Pi compositing, a second show clock, or an audio-to-video control loop. Lighting
+and the pre-rendered Video package receive deterministic events from the same
+song timeline; Video failure remains contained from Lighting.
+
+## Performer and designer stories
+
+- As a performer, I see visual motion pass between Lighting and projection in a
+  way that supports musical accents without requiring another control surface.
+- As an audience member, I can read an intentional call, response, throw, or
+  impact across the whole stage rather than seeing unrelated loops.
+- As a show designer, I can place short VFX phrases between primary clips and
+  preserve darkness/rest instead of filling every available second.
+- As a show designer, I can reuse a small choreography vocabulary across songs
+  while changing palette, asset, direction, intensity, and timing.
+- As an operator, Start, Stop, Blackout, song selection, Video-disabled mode,
+  and projector failure retain their current safe behavior.
+- As a Studio designer, I can later represent the proven patterns as editable
+  cross-surface cues rather than reverse-engineering one-off rendered videos.
+
+## Choreography vocabulary
+
+The first implementation should prove a small, named language:
+
+- **Echo:** a Lighting accent is answered by a related screen event after a
+  reviewed short delay, followed by an optional low-level Lighting tail.
+- **Throw:** a directional Lighting sweep starts on Cube A or B, crosses the
+  projector frame, and resolves on the opposite cube.
+- **Catch:** a screen object or energy path reaches an edge and triggers a
+  bounded fixture bloom, chase, or authored white impact.
+- **Ping-pong:** two to four clearly timed exchanges move between one cube, the
+  screen, and the other cube; it stops before becoming visual noise.
+- **Bridge:** a short abstract VFX phrase occupies selected space between two
+  primary band-video clips and carries palette or motion into the next scene.
+- **Unison:** Lighting and Video strike together for an important section or
+  ending. Use sparingly so it remains meaningful.
+- **Counterpoint:** Video sustains one slow motion while Lighting performs a
+  related faster rhythm, or vice versa, without competing focal motion.
+
+These names are authoring semantics, not new Stage runtime commands. The first
+versions compile to ordinary Lighting cues and a hash-verified Video package.
+
+## Timing and layout contract
+
+- Use the authoritative song clock and absolute cue times. Do not derive Stage
+  behavior from media-player completion callbacks or live network messages.
+- Record musical anchor, direction, initiating surface, receiving surface,
+  expected visual path, Video interval, Lighting scene/pattern, and transition
+  for every cross-surface phrase.
+- Author with the commissioned physical layout: Cube A, portrait projector,
+  Cube B. The projector render retains the clockwise rear-screen transform;
+  authoring coordinates remain upright portrait coordinates.
+- Treat Lighting at 25 FPS and Video at 30 FPS as separate render rates. Judge
+  perceptual alignment at rehearsal and record measured start/end drift rather
+  than requiring frame-number equality.
+- Keep most handoffs between one and eight seconds. Longer passages require an
+  explicit reason and a low-motion/rest treatment.
+- Preserve intentional black and visual rests. VFX cycling means curated
+  phrases, not a continuously occupied projector.
+- Use existing RGB master/ceiling controls and the White Output contract.
+  Deliberate white impacts remain governed by white arm, prepared level, power
+  mode, blackout, pulse shaping, and existing high-output acknowledgement.
+
+## Sprint plan
+
+### Slice 1 — Layout calibration and four proof loops
+
+Create a simple physical stage map and four short review loops: left-to-screen,
+screen-to-right, full left-screen-right throw, and a two-exchange ping-pong.
+Use simple high-contrast energy shapes so timing and direction can be judged
+without relying on the artistic quality of a source clip.
+
+Deliverables:
+
+- authored cue-table format for cross-surface events;
+- projector edge/focal calibration for the portrait screen;
+- four fixed-time Lighting regression sequences and Video proxies;
+- one repeatable bench checklist for perceptual handoff timing.
+
+### Slice 2 — Travelling integrated revision
+
+Create a new immutable Travelling Video/Lighting revision. Retain the primary
+master-video phrases that passed review, then add selected VFX bridges in some
+of the current black intervals. Include at least one Echo, Throw, Catch,
+Ping-pong, and Counterpoint passage. Do not replace every black interval.
+
+Review the revision with the song and both cubes before publishing it beside
+the current hybrid revision. Record cue changes, visible duty cycle, package
+hash, render cost, projector playback, and end-of-song drift.
+
+### Slice 3 — Christmas mini-pack
+
+Build three reusable visual motifs that fit the existing dark/acid stage
+identity and can be recoloured for different songs:
+
+1. **Neon Snow:** sparse cool-white/cyan particles fall on screen, land as
+   short cube ripples, and occasionally reverse upward on a musical lift.
+2. **Signal Garland:** red, green, gold, and acid-green pulses travel as a
+   segmented garland from Cube A through the screen to Cube B; avoid constant
+   red/green full-frame output.
+3. **Electric Ornament / Starburst:** one screen object charges from alternating
+   cube pulses and releases a bounded screen burst plus optional authored white
+   impact on a major accent.
+
+Optionally explore a darker **Krampus Signal** treatment for appropriate songs,
+but keep it separate from the generally usable pack. Use owned/licensed source
+material or procedural assets; do not introduce unverified seasonal footage or
+music rights.
+
+Each motif needs portrait and future landscape composition notes, palette and
+intensity variants, a black fallback, and an example placement in at least one
+real song. The pack must remain optional and removable from a show package.
+
+### Slice 4 — Pi rehearsal and extraction for Studio
+
+Run the integrated Travelling revision and selected Christmas motifs on the Pi
+with projector, both cubes, audio, Ampero, browser, and kiosk active. Capture
+operator notes and turn the vocabulary, cue fields, and preview needs into
+requirements for the `STUDIO-004` Video Scene/timeline editor.
+
+## Acceptance
+
+- At least five named choreography patterns are recognizable in the full-stage
+  rehearsal without explanation and feel intentionally timed to the song.
+- Primary performer/video phrases remain legible; interstitial VFX support them
+  and do not create continuous screen activity or obscure black rests.
+- Directional throws read correctly across Cube A, portrait projector, and
+  Cube B from the audience viewpoint, including rear-screen mirroring.
+- Start, Stop, Blackout, no-autostart, song change, Video-disabled mode, player
+  failure, and projector disconnect retain the accepted fail-black behavior.
+- Lighting sustains 25 FPS with zero deadline misses while Video plays; CPU,
+  RSS, temperature, player exit, and final Lighting/Video drift are recorded.
+- Audio-reactive brightness/strobe behavior remains bounded by the current
+  controls; no VFX cue can arm whites, enable live output, or raise a ceiling.
+- The Travelling revision and Christmas pack publish as new immutable revisions
+  with rollback to the currently accepted hybrid package.
+- The rehearsal produces a concrete Studio field list for cross-surface path,
+  direction, timing anchor, initiating/receiving surface, palette, intensity,
+  transition, and fallback—not a Stage dependency on Studio or AI.
+
+## Explicit non-goals
+
+- Live generative Video or real-time shader composition on the Pi.
+- Beat detection directly controlling projector frames during a show.
+- Filling all intentional-black intervals.
+- Allowing projection failure or render load to influence Lighting timing.
+- Replacing the existing deterministic package, sidecar, or rollback model.

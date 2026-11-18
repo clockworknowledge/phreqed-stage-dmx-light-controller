@@ -545,6 +545,16 @@ Stage Portrait scene at time zero. Studio must evolve that seed into editable
 section cues and VFX layers rather than treating a monolithic video as the final
 authoring experience.
 
+Stage rehearsal seed (2026-11-17): `SHOW-006` will prove a reusable
+cross-surface choreography vocabulary before the full editor is built. Studio
+must be able to express Echo, Throw, Catch, Ping-pong, Bridge, Unison, and
+Counterpoint patterns using an initiating surface, receiving surface, audience-
+view direction/path, musical/absolute timing anchor, palette, intensity,
+transition, and black fallback. These fields compile to ordinary deterministic
+Lighting and Video tracks; they do not create a new Stage clock or live Studio
+dependency. `SHOW-007` uses the same model for an optional Christmas mini-pack.
+See [`integrated-vfx-sprint.md`](integrated-vfx-sprint.md).
+
 ### AI-DATA-002 — Studio knowledge graph and agent-memory integration
 
 - As a designer, I can ask how a cue proposal relates to song sections,
@@ -753,6 +763,11 @@ Cards: `PROJ-002`, optional `VIDEO-001`.
 Add bounded overlays, colour/still layers, crop/fit, opacity, blend, intensity,
 and transitions after the playback foundation is stable. Video-to-grid remains
 an optional lighting input and never becomes the media store or show clock.
+
+The earlier Stage-first `SHOW-006/007` rehearsal provides the cross-surface
+vocabulary and perceptual timing evidence for this editor work. Preserve its
+deterministic compiled-package implementation as the fallback even when Studio
+later offers richer composition previews.
 
 ### Sprint 9 — AI-assisted authoring and memory
 

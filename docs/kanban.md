@@ -1,6 +1,6 @@
 # Project Kanban
 
-Last reviewed: 2026-11-16
+Last reviewed: 2026-11-17
 
 This board is the repository's source of truth for feature status. Keep card IDs
 stable in commits, issues, and implementation reports. Move a card between
@@ -164,6 +164,56 @@ show-level transport only after projection black is fault-tested.
 
 ## Ready
 
+### SHOW-006 — Cross-surface Lighting/Video choreography (`P1`, show authoring)
+
+Create a reusable stage language for short **Echo**, **Throw**, **Catch**,
+**Ping-pong**, **Bridge**, **Unison**, and **Counterpoint** phrases across Cube A,
+the portrait projector, and Cube B. Use the existing shared song clock,
+deterministic Lighting cues, and pre-rendered Video package; do not add a live
+compositor or allow Video timing/failure into the 25 FPS Lighting loop.
+
+User outcome: primary clips can breathe while selected VFX cycle through the
+spaces between them, and motion can appear to bounce from light to screen to
+light as one intentional stage composition. Preserve black/rest intervals and
+keep the performer, not the projection, as the focal point.
+
+Acceptance: calibrate the audience-view stage path; prove at least five named
+patterns in a Travelling revision; record every event's musical anchor,
+initiating/receiving surface, direction, palette, intensity, transition, and
+fallback; retain Start/Stop/Blackout/no-autostart/Video-disabled/fail-black
+behavior; sustain 25 FPS with measured Pi CPU/RSS/temperature and final drift;
+publish beside the accepted hybrid revision with rollback. Extract the proven
+fields and preview needs into `STUDIO-004` rather than making Studio or AI a
+Stage runtime dependency.
+
+Dependencies: the accepted parts of `SHOW-002`, `PROJ-001`, `PROJ-004`, and the
+deployed `SHOW-005` hybrid. Detailed slices and user stories are in
+[`integrated-vfx-sprint.md`](integrated-vfx-sprint.md).
+
+### SHOW-007 — Christmas integrated VFX mini-pack (`P1`, seasonal show authoring)
+
+Author a small optional seasonal pack using the `SHOW-006` cross-surface
+language: **Neon Snow**, **Signal Garland**, and **Electric Ornament / Starburst**,
+with an optional darker **Krampus Signal** variant. Keep the visual direction
+consistent with the existing charcoal, acid-green, energetic stage identity
+rather than producing continuous novelty footage.
+
+User outcome: upcoming Christmas shows can gain recognizable seasonal moments
+that interact with the cubes and projection while remaining suitable for a
+live band and removable from any non-seasonal show.
+
+Acceptance: each motif has owned/licensed or procedural sources, portrait and
+future-landscape notes, palette/intensity variants, an explicit black fallback,
+and one real-song example; deliberate white accents retain all current White
+Output controls; the pack is optional, versioned, rollback-safe, and passes the
+same Pi coexistence/fail-black rehearsal as `SHOW-006`.
+
+Dependencies: `SHOW-006`; source preparation uses `MEDIA-001/002` concepts but
+the Stage proof may use the current local EDL workflow. Target the upcoming
+Christmas performances without making an untested pack show-critical.
+
+## Validation
+
 ### SHOW-005 — Travelling synchronized Lighting/Video scene (`P1`, show authoring)
 
 Build the first intentionally authored hybrid scene for **Travelling on a
@@ -197,19 +247,23 @@ Chaotic Energy, Duality, Energy Disperse, Ember Patterns, Fluid Smoke, Electric
 Ribbons, and two shockwave sources from the existing Infinity VFX library and
 combines them with master-video fragments no longer than ten seconds. A local
 source-review board and four-second previews support source review without
-committing licensed media. Remaining acceptance is the full local render,
-audio/Lighting review, Pi package preflight, measured drift check, and publishing
-as a new Video Show revision without replacing the current baseline sidecar.
+committing licensed media.
 
 Render checkpoint (2026-11-17): the complete 180-second Stage package rendered
 successfully in 70 minutes 48 seconds and passed local hash/package preflight at
 1280×720/30 FPS. The 55,413,480-byte MP4 has SHA-256
 `b3e9049e4e908e9e62de7d03646f0e5b085b0055e31dacb7e0fb2661fd376274`.
 Contact-sheet sampling confirms all seven visual phrases and every sampled
-intentional-black interval. Remaining acceptance is full-motion review with the
-song, Pi transfer/preflight, Lighting/video drift observation, and publication.
+intentional-black interval.
 
-## Validation
+Pi checkpoint (2026-11-17): the hybrid package was transferred, preflighted,
+and published as a new immutable Video revision while preserving the baseline
+revision and existing song/setlist/configuration data. Bench operation is
+working well and the operator reports that the sparse primary clips and VFX
+already create promising interplay with the Lighting sequence. Remaining
+acceptance is a recorded full-song drift observation plus player-failure and
+projector-disconnect confirmation for this exact package. The successful
+interplay seeds `SHOW-006` rather than expanding this card indefinitely.
 
 ### DISPLAY-001 — Adaptive local stage touchscreen umbrella (`P1`, operations)
 

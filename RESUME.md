@@ -2,16 +2,26 @@
 
 Last updated: 2026-11-17
 
-## Next resume point -- Review and publish the Travelling hybrid scene
+## Next resume point -- Integrated Lighting and Video VFX sprint
 
-Continue `SHOW-005` from the authored sparse hybrid baseline. Review the full
-180-second render against the song and Lighting cues, refine source ranges or
-focal points from rehearsal evidence, copy the hash-verified package to the Pi,
-and publish it as a new Video Show revision only after approval. Preserve the
-current full-length Travelling package, `video-show.json`, songs, setlists, and
-tuning profiles until the new revision passes Start/Stop/Blackout, drift, and
-Video-disabled acceptance. Detailed acceptance is in
-`docs/travelling-hybrid-video.md` and `docs/kanban.md`.
+Begin `SHOW-006` with a calibrated Cube A -> portrait projector -> Cube B stage
+path and four short proof loops: left-to-screen, screen-to-right, a complete
+left-screen-right throw, and a two-exchange ping-pong. Prove perceptual timing
+and direction with simple high-contrast shapes before starting another
+full-song render. Then author a new immutable Travelling revision using Echo,
+Throw, Catch, Ping-pong, Bridge, Unison, and Counterpoint phrases while
+preserving meaningful black/rest intervals.
+
+Develop `SHOW-007` in the same sprint as an optional Christmas mini-pack:
+Neon Snow, Signal Garland, and Electric Ornament / Starburst, with a darker
+Krampus Signal variant kept separate. Detailed stories, contracts, slices, and
+acceptance are in `docs/integrated-vfx-sprint.md` and `docs/kanban.md`.
+
+The current sparse hybrid package is deployed as a new immutable Video revision
+on the Pi. Initial bench operation is working well and the operator likes the
+interplay with Lighting. Keep the previous baseline revision available for
+rollback. `SHOW-005` remains in Validation only for recorded full-song drift,
+player-failure, and projector-disconnect evidence for this exact package.
 
 The reference workstation render completed on 2026-11-17 in 70 minutes 48
 seconds. It produced a 55,413,480-byte, 1280×720/30 FPS Stage package with
