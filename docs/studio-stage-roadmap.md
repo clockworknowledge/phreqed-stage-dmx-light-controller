@@ -445,6 +445,47 @@ Acceptance:
   and successfully package/play them on the target Pi before accepting the
   pipeline.
 
+### MEDIA-003 — Incremental cached composition renderer
+
+- As a designer, I receive a low-resolution proxy quickly and can review a
+  changed phrase without waiting for the entire song to render again.
+- As an operator, I see staging, chunk, assembly, hash, and preflight progress;
+  I can cancel, retry, or resume without losing valid completed chunks.
+- As a platform operator, I can bound CPU, memory, temporary storage, wall time,
+  and concurrent jobs per tenant while keeping render workers outside the web
+  and Stage control processes.
+
+The initial 2026-11-17 Travelling proof established the performance baseline:
+180 seconds, 23 sparse layers, 720×1280 at 30 FPS, a 285 MB cloud-mounted master,
+eight local VFX sources, and four FFmpeg 4.2.3 filter workers. The monolithic
+graph remained stable but exceeded one hour, approached 4 GB RSS, and provided
+no useful incremental artifact or frame progress before atomic completion. The
+completed reference measurement was 70 minutes 48 seconds and 4.78 GiB observed
+peak RSS for a 55.4 MB preflight-valid package, confirming that correctness is
+adequate but the monolithic build architecture is not production-acceptable.
+
+Acceptance:
+
+- Stage and hash-verify remote/cloud-mounted originals into a local
+  content-addressed source cache before decode.
+- Compile the composition into disjoint active phrases and true-black gaps;
+  render/cache phrases independently and assemble the exact song duration
+  without cumulative drift or re-encoding unchanged chunks.
+- Cache keys include every source hash, source range, transform, blend/fade,
+  projection, renderer-version, and encoding input that affects pixels.
+- Persist explicit queued/staging/probing/rendering/assembling/hashing/
+  preflighting/complete/failed/cancelled states with progress and worker
+  resource telemetry.
+- On the reference worker, begin proxy review within 60 seconds, render a
+  changed phrase within 30 seconds, and target the complete Travelling Stage
+  package within 10 minutes and 4 GiB RSS. Any platform exception must be
+  measured and reviewed rather than hidden behind an indefinite spinner.
+- Cancellation and worker loss retain valid chunks but never expose a partial
+  package. Corrupt cache, missing source, quota, and preflight failures are
+  explicit and recoverable.
+- Build on `MEDIA-001` and `MEDIA-002`; complete this before accepting
+  `STUDIO-004` as a production authoring surface.
+
 ### STUDIO-004 — Video and projection design surface
 
 - As a show designer, I can create reusable Video Scenes from clips, stills,
@@ -467,7 +508,7 @@ Acceptance:
 
 Acceptance:
 
-- Build on `MEDIA-001`, `MEDIA-002`, `PROJ-001`, and `SHOW-002`; do not create a
+- Build on `MEDIA-001`, `MEDIA-002`, `MEDIA-003`, `PROJ-001`, and `SHOW-002`; do not create a
   second projection runtime or cue model. Overlay controls that require the
   compositor remain disabled until `PROJ-002` is available.
 - Define a versioned Video Scene containing ordered visual layers, clip/range
@@ -675,15 +716,15 @@ and tuning profiles. Deliver revision history, autosaved drafts, validation,
 the zoomable lighting timeline, simulator scrub, undo/redo, and package publish.
 Publish and run a lighting-only higher-tier customer show before adding media.
 
-### Sprint 5 — Private media and clip pipeline
+### Sprint 5 — Private media, clip, and production-render pipeline
 
-Cards: `MEDIA-001`, `MEDIA-002`.
+Cards: `MEDIA-001`, `MEDIA-002`, `MEDIA-003`.
 
 Add resumable private upload, content addressing, probing, previews, storyboards,
-manual tags, non-destructive clip ranges, one Stage rendition, quota accounting,
-and reference-aware retention. Bulk-import representative band VFX/video files
-and produce a reusable short-clip library without placing media in Git or the
-graph.
+manual tags, non-destructive clip ranges, cached phrase rendering, fast review
+proxies, resumable Stage assembly, quota accounting, and reference-aware
+retention. Bulk-import representative band VFX/video files and produce a
+reusable short-clip library without placing media in Git or the graph.
 
 ### Sprint 6 — Projection playback foundation
 

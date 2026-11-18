@@ -13,6 +13,16 @@ tuning profiles until the new revision passes Start/Stop/Blackout, drift, and
 Video-disabled acceptance. Detailed acceptance is in
 `docs/travelling-hybrid-video.md` and `docs/kanban.md`.
 
+The reference workstation render completed on 2026-11-17 in 70 minutes 48
+seconds. It produced a 55,413,480-byte, 1280×720/30 FPS Stage package with
+SHA-256
+`b3e9049e4e908e9e62de7d03646f0e5b085b0055e31dacb7e0fb2661fd376274`.
+Local package/hash preflight passed, all seven authored visual phrases appear in
+the sampled contact sheet, and all sampled intentional-black intervals remain
+near-black. The dated run evidence and derived production-render requirements
+are in `docs/validation/travelling-hybrid-render-2026-11-17.md`; the follow-up
+pipeline card is `MEDIA-003`.
+
 ## Current checkpoint -- Sparse hybrid Video composition
 
 Version 2 of the Video EDL is implemented without changing version 1 packages.
@@ -34,10 +44,12 @@ licensed media, previews, source paths, and rendered packages remain ignored.
 
 The real-source filter probe confirms true-black idle frames, correct portrait
 crop, transparent normal-layer padding, and screen-blended VFX. The committed
-cue map and local asset-map template document repeatable rendering. The current
-Pi sidecar has not been replaced or modified. Windows Python 3.12 passes all
-308 tests; focused EDL/render/preflight tests, Python compilation, and diff
-checks pass. The full 180-second visual review and Pi publication remain open.
+cue map and local asset-map template document repeatable rendering. The full
+180-second package now passes local structural preflight and contact-sheet
+sampling. The current Pi sidecar has not been replaced or modified. Windows
+Python 3.12 passes all 308 tests; focused EDL/render/preflight tests, Python
+compilation, and diff checks pass. Full-motion review with the song and Pi
+publication remain open.
 
 The Relate decision was revisited against its current 1.0.1 documentation.
 Relate remains a strong candidate for Studio-side relationships, evidence, and

@@ -201,6 +201,14 @@ committing licensed media. Remaining acceptance is the full local render,
 audio/Lighting review, Pi package preflight, measured drift check, and publishing
 as a new Video Show revision without replacing the current baseline sidecar.
 
+Render checkpoint (2026-11-17): the complete 180-second Stage package rendered
+successfully in 70 minutes 48 seconds and passed local hash/package preflight at
+1280×720/30 FPS. The 55,413,480-byte MP4 has SHA-256
+`b3e9049e4e908e9e62de7d03646f0e5b085b0055e31dacb7e0fb2661fd376274`.
+Contact-sheet sampling confirms all seven visual phrases and every sampled
+intentional-black interval. Remaining acceptance is full-motion review with the
+song, Pi transfer/preflight, Lighting/video drift observation, and publication.
+
 ## Validation
 
 ### DISPLAY-001 — Adaptive local stage touchscreen umbrella (`P1`, operations)
@@ -759,6 +767,71 @@ results remain proposals; representative band clips package and play on the Pi.
 
 Dependencies: `SAAS-001`, `SAAS-002`, `MEDIA-001`. Planned Sprint 5.
 
+### MEDIA-003 — Incremental cached composition renderer (`P1`, media production)
+
+Replace the monolithic multi-layer FFmpeg graph with a production job pipeline
+that stages sources locally, renders only active timeline intervals, caches
+content-addressed intermediates, assembles intentional-black gaps, and resumes
+without recomputing completed phrases. The Stage output remains one atomic,
+audio-free, hash-verified H.264 package; the Pi never runs this build pipeline.
+
+User outcome: a Studio designer receives a fast proxy for visual review, sees
+honest progress for the full Stage rendition, can cancel/retry/resume a job, and
+does not lose completed work when one source or worker fails.
+
+Measured baseline (2026-11-17): the first Travelling sparse hybrid build uses a
+180-second 720×1280 logical canvas rotated/mirrored to 1280×720 at 30 FPS, 23
+layers, one 285 MB/146-second master on a Google Drive-mounted volume, eight
+local Infinity VFX sources, H.264 High 4.1 output, and four complex-filter
+workers. The current FFmpeg 4.2.3 graph shares decoders and completed correctly,
+but performs a long pre-output buffer pass: the reference workstation took 70
+minutes 48 seconds, grew from about 1.1 GB to an observed 4.78 GiB RSS, sustained
+multiple CPU cores, and exposed no frame-level progress or reviewable partial
+file before final atomic completion. The 55.4 MB result passed hash/package
+preflight and structural frame sampling. This is valid for an initial proof but
+fails Studio UX and capacity requirements. Dated evidence is in
+[`validation/travelling-hybrid-render-2026-11-17.md`](validation/travelling-hybrid-render-2026-11-17.md).
+
+Implementation requirements:
+
+- Stage cloud/remote-mounted originals into a local content-addressed cache and
+  verify their hashes before decoding. Source locality is a first-class job
+  phase, not an incidental filesystem assumption.
+- Compile the EDL into disjoint active intervals. Render sparse visual phrases
+  and explicit black spans as deterministic chunks, then assemble them without
+  cumulative timing drift or re-encoding unchanged chunks.
+- Key intermediates by source hash, source range, transform/crop, opacity,
+  blend/fade semantics, projection profile, renderer version, and encoding
+  profile. A changed phrase invalidates only dependent chunks.
+- Provide separate low-resolution review proxies and conservative Stage
+  renditions. Proxy generation must not weaken final package preflight or allow
+  proxy media to be activated on Stage accidentally.
+- Persist job states for queued, staging, probing, rendering chunk N/M,
+  assembling, hashing, preflighting, complete, cancelled, and failed. Emit
+  monotonic progress, recent activity, resource use, and actionable errors.
+- Make cancellation bounded and recoverable. Completed chunks survive retry;
+  abandoned partials are quarantined or garbage-collected only when no retained
+  job/package references them.
+- Run isolated workers with explicit CPU, memory, wall-time, temporary-disk,
+  tenant-quota, and concurrency limits. Never render in the Studio web process
+  or any Stage/DMX service.
+- Record FFmpeg build, command plan, source/intermediate hashes, durations,
+  worker metrics, warnings, final manifest hash, and preflight result.
+
+Acceptance: on a documented reference worker, cached-source proxy review begins
+within 60 seconds and a changed sparse phrase is reviewable within 30 seconds;
+the complete Travelling Stage rendition finishes within 10 minutes or records a
+reviewed platform-specific exception; peak worker RSS remains at or below 4
+GiB; progress updates at least every five seconds; cancel/resume avoids
+re-rendering completed chunks; unchanged reruns hit the cache; black intervals,
+fades, orientation, 180-second duration, package hashes, and Pi preflight match
+the reference composition. Worker loss, corrupt cache entries, quota failure,
+and missing sources fail explicitly without publishing a partial package.
+
+Dependencies: `MEDIA-001`, `MEDIA-002`, and the version-2 EDL contract proven
+by `SHOW-005`. Required by `STUDIO-004`; planned Sprint 5 before the production
+Video Scene editor.
+
 ### STUDIO-004 — Video Scene manager and parallel song track (`P1`, media authoring)
 
 Add reusable Video Scenes and a separate Video track beside the Lighting track
@@ -778,8 +851,9 @@ timing and fallback; explicit song start/stop/pause/seek addresses both runners
 without autostart; a multi-clip band song publishes and plays while player kill
 fails black and the 25 FPS lighting runner stays on time.
 
-Dependencies: `STUDIO-003`, `MEDIA-001`, `MEDIA-002`, `PROJ-001`, and the
-required subset of `SHOW-002`; later work uses `PROJ-002`. Planned Sprint 7.
+Dependencies: `STUDIO-003`, `MEDIA-001`, `MEDIA-002`, `MEDIA-003`, `PROJ-001`,
+and the required subset of `SHOW-002`; later work uses `PROJ-002`. Planned
+Sprint 7.
 
 ### AI-DATA-002 — Studio knowledge graph and agent-memory integration (`P2`, AI/data)
 
