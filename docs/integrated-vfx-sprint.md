@@ -1,7 +1,7 @@
 # Integrated Lighting and Video VFX sprint
 
 Date: 2026-11-17  
-Cards: `SHOW-006`, `SHOW-007`  
+Cards: `VFX-001`, `SHOW-006`, `SHOW-007`
 Reference song: **Travelling on a Floating Rock**
 
 ## Goal
@@ -11,6 +11,13 @@ instrument. Short VFX phrases should occupy selected spaces between primary
 band-video clips, answer Lighting events, and occasionally appear to travel
 from a fixture to the screen and back. The performer remains the focus and
 intentional black remains part of the composition.
+
+The primary reusable media unit is a **visual storylet**: a self-contained,
+audio-free, 10–30 second rendered clip with a simple readable setup, action,
+impact, and return to black. Storylets may contain characters, props, abstract
+effects, or a short visual joke. Full-song and continuous video remain valid
+choices, but they are secondary treatments rather than the default Stage media
+model.
 
 The first sprint uses the proven offline EDL/package path. It does not add live
 Pi compositing, a second show clock, or an audio-to-video control loop. Lighting
@@ -25,12 +32,45 @@ song timeline; Video failure remains contained from Lighting.
   impact across the whole stage rather than seeing unrelated loops.
 - As a show designer, I can place short VFX phrases between primary clips and
   preserve darkness/rest instead of filling every available second.
+- As a show designer, I can reuse one 10–30 second storylet in different songs
+  by aligning its named event markers to different Lighting cues without
+  editing the source master.
 - As a show designer, I can reuse a small choreography vocabulary across songs
   while changing palette, asset, direction, intensity, and timing.
 - As an operator, Start, Stop, Blackout, song selection, Video-disabled mode,
   and projector failure retain their current safe behavior.
 - As a Studio designer, I can later represent the proven patterns as editable
   cross-surface cues rather than reverse-engineering one-off rendered videos.
+
+## Reusable storylet contract
+
+Each storylet is versioned independently from a song and contains:
+
+- stable storylet ID, revision, title, duration, rights/source provenance, and
+  source hashes;
+- one primary action and a compact setup/action/impact/decay structure;
+- named event markers such as `reveal`, `ignite`, `handoff`, `impact`, `decay`,
+  and `black`, expressed as seconds from the storylet start;
+- portrait rendition now and optional landscape rendition later, with the same
+  semantic markers even when framing differs;
+- dominant palette, energy, motion direction, mood, intensity range, and
+  suitability tags for deterministic search and later AI-assisted proposals;
+- explicit first/last black frames, no audio, bounded transitions, and a black
+  fallback;
+- an optional companion Lighting recipe that references existing scenes or
+  deterministic pattern parameters but never DMX addresses or live-output
+  authority.
+
+A song placement references the storylet revision, start time, selected
+rendition/surface, palette/intensity variant, and marker-to-Lighting
+assignments. It does not copy the media or mutate the published storylet.
+Multiple placements may reuse the same rendered asset when their pixel output
+is identical. Song-specific cross-surface lead-ins and tails remain Lighting
+cues around the placement.
+
+Storylets compile into the existing pre-rendered, hash-verified Stage package
+and Video Show contracts. Stage does not fetch remote media, interpret an AI
+proposal, or wait for a media callback before advancing Lighting.
 
 ## Choreography vocabulary
 
@@ -91,6 +131,25 @@ Deliverables:
 - four fixed-time Lighting regression sequences and Video proxies;
 - one repeatable bench checklist for perceptual handoff timing.
 
+The first complete storylet is **Fuse Bomb**. It uses an original cartoon round
+bomb silhouette and long burning fuse—drawing on the general classic spy/cartoon
+visual language without copying a protected character or a specific production
+design. A cube accent ignites the fuse; the screen carries the fuse burn and
+alternating sparks; the impact marker triggers the screen explosion and a
+bounded full-stage Lighting blast; smoke/embers decay back to black. The clip
+should be approximately 12–18 seconds, with the exact impact marker reusable at
+different song positions.
+
+Fuse Bomb must prove:
+
+- readable bomb, fuse, spark, impact, and decay at projector distance;
+- at least one light-to-screen ignition handoff and one screen-to-light impact;
+- a companion low, medium, and high Lighting recipe governed by existing RGB
+  and White Output controls;
+- marker-accurate placement without embedding song-specific timing in the
+  storylet itself;
+- clean black before reveal and after decay so it can sit between other clips.
+
 ### Slice 2 — Travelling integrated revision
 
 Create a new immutable Travelling Video/Lighting revision. Retain the primary
@@ -148,6 +207,9 @@ requirements for the `STUDIO-004` Video Scene/timeline editor.
   controls; no VFX cue can arm whites, enable live output, or raise a ceiling.
 - The Travelling revision and Christmas pack publish as new immutable revisions
   with rollback to the currently accepted hybrid package.
+- Fuse Bomb can be placed at two different absolute song times without
+  re-rendering its media, and both placements trigger their Lighting recipes
+  from the same named `impact` marker.
 - The rehearsal produces a concrete Studio field list for cross-surface path,
   direction, timing anchor, initiating/receiving surface, palette, intensity,
   transition, and fallback—not a Stage dependency on Studio or AI.

@@ -555,6 +555,15 @@ Lighting and Video tracks; they do not create a new Stage clock or live Studio
 dependency. `SHOW-007` uses the same model for an optional Christmas mini-pack.
 See [`integrated-vfx-sprint.md`](integrated-vfx-sprint.md).
 
+Media-model refinement (2026-11-17): `VFX-001` makes the 10–30 second visual
+storylet—not a continuous music video—the primary reusable Video asset. Studio
+stores an immutable storylet revision with portrait/landscape renditions,
+rights/source hashes, semantic event markers, palette/energy/motion tags,
+black entry/exit, and optional companion Lighting recipes. Song tracks place
+and variant-map storylets without copying them. The initial Fuse Bomb proof
+must be reusable at two song positions from one rendition, with its named
+impact marker aligning the bounded Lighting blast in both placements.
+
 ### AI-DATA-002 — Studio knowledge graph and agent-memory integration
 
 - As a designer, I can ask how a cue proposal relates to song sections,
@@ -748,13 +757,17 @@ the 25 FPS lighting loop.
 
 ### Sprint 7 — Video Scene manager and parallel song track
 
-Cards: `STUDIO-004`, `SHOW-002`.
+Cards: `STUDIO-004`, `SHOW-002`, `VFX-001`.
 
 Deliver reusable Video Scenes and the separate Video lane beside Lighting with
 a shared ruler, playhead, song transport, deterministic metadata templates,
 preview, trim/split, transitions, gaps, and validation. Publish a multi-clip
 band song; Lighting and Video start from the same explicit song event, while
 video pre-roll remains invisible.
+
+Treat reusable 10–30 second storylets as first-class library objects with named
+event markers and companion Lighting recipes. Continuous video remains a valid
+scene type, not the assumed unit of every song layout.
 
 ### Sprint 8 — Projection composition and optional video-to-grid
 

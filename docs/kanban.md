@@ -164,6 +164,37 @@ show-level transport only after projection black is fault-tested.
 
 ## Ready
 
+### VFX-001 — Reusable 10–30 second visual storylets (`P1`, media/show authoring)
+
+Make short, self-contained, audio-free rendered clips the primary reusable
+Stage Video unit. Each versioned storylet carries a readable setup/action/
+impact/decay structure, named timing markers, portrait and future-landscape
+renditions, palette/energy/motion tags, rights and source hashes, first/last
+black frames, and an optional companion Lighting recipe. Continuous music video
+remains supported but is not the default authoring model.
+
+User outcome: characters, props, abstract effects, and short burst-style
+stories can be reused in different songs and aligned to Lighting without
+re-editing or re-rendering identical media. A song placement selects a storylet
+revision and maps its semantic markers to deterministic Lighting cues.
+
+First proof: a 12–18 second original cartoon **Fuse Bomb** storylet. A cube
+accent ignites the long fuse, the screen presents the fuse burn/sparks, the
+named `impact` marker triggers a bounded screen explosion plus full-stage light
+blast, and smoke/embers decay to black. Use the general round-bomb cartoon
+language without copying a protected character or specific production design.
+
+Acceptance: place the same immutable Fuse Bomb rendition at two different song
+times without rebuilding it; both placements align their Lighting blast to the
+same marker; low/medium/high recipes remain governed by existing RGB/white
+ceilings and arming; Start/Stop/Blackout and Video-disabled operation remain
+safe; package hashes and source rights are recorded; the Stage needs no cloud,
+AI, or live media callback.
+
+Dependencies: `VIDEO-002`, `MEDIA-002/003` concepts, `SHOW-002`, and the
+accepted projection path. Detailed contract is in
+[`integrated-vfx-sprint.md`](integrated-vfx-sprint.md).
+
 ### SHOW-006 — Cross-surface Lighting/Video choreography (`P1`, show authoring)
 
 Create a reusable stage language for short **Echo**, **Throw**, **Catch**,
@@ -186,9 +217,9 @@ publish beside the accepted hybrid revision with rollback. Extract the proven
 fields and preview needs into `STUDIO-004` rather than making Studio or AI a
 Stage runtime dependency.
 
-Dependencies: the accepted parts of `SHOW-002`, `PROJ-001`, `PROJ-004`, and the
-deployed `SHOW-005` hybrid. Detailed slices and user stories are in
-[`integrated-vfx-sprint.md`](integrated-vfx-sprint.md).
+Dependencies: `VFX-001`, the accepted parts of `SHOW-002`, `PROJ-001`,
+`PROJ-004`, and the deployed `SHOW-005` hybrid. Detailed slices and user stories
+are in [`integrated-vfx-sprint.md`](integrated-vfx-sprint.md).
 
 ### SHOW-007 — Christmas integrated VFX mini-pack (`P1`, seasonal show authoring)
 

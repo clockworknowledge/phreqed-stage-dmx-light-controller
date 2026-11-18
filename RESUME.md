@@ -4,13 +4,20 @@ Last updated: 2026-11-17
 
 ## Next resume point -- Integrated Lighting and Video VFX sprint
 
-Begin `SHOW-006` with a calibrated Cube A -> portrait projector -> Cube B stage
-path and four short proof loops: left-to-screen, screen-to-right, a complete
-left-screen-right throw, and a two-exchange ping-pong. Prove perceptual timing
-and direction with simple high-contrast shapes before starting another
-full-song render. Then author a new immutable Travelling revision using Echo,
-Throw, Catch, Ping-pong, Bridge, Unison, and Counterpoint phrases while
-preserving meaningful black/rest intervals.
+Begin `VFX-001/SHOW-006` with a calibrated Cube A -> portrait projector -> Cube
+B stage path and the reusable 12–18 second Fuse Bomb storylet. Prove the
+light-to-screen fuse ignition, screen fuse-burn/sparks, named explosion marker,
+bounded full-stage Lighting blast, smoke/ember decay, and return to black.
+Place the same immutable clip at two different song times without re-rendering
+it. Then build the remaining left-to-screen, screen-to-right, complete throw,
+and ping-pong loops before another full-song render.
+
+The primary media model is now a reusable, audio-free 10–30 second visual
+storylet with semantic markers and optional companion Lighting recipes.
+Continuous/full-song video remains supported as a secondary treatment. After
+the proof loops, author a new immutable Travelling revision using Echo, Throw,
+Catch, Ping-pong, Bridge, Unison, and Counterpoint phrases while preserving
+meaningful black/rest intervals.
 
 Develop `SHOW-007` in the same sprint as an optional Christmas mini-pack:
 Neon Snow, Signal Garland, and Electric Ornament / Starburst, with a darker
