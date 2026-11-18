@@ -54,6 +54,19 @@ authoring, AI proposal allowances, and paired Stage delivery. Published Stage
 packages remain complete, cached, and playable offline; subscription or cloud
 failure can block new hosted work but never an active show.
 
+Pause checkpoint (2026-11-17): the integrated VFX direction is fully logged.
+`VFX-001/002/003`, `SHOW-006/007/008`, and `MEDIA-004` define reusable visual
+storylets, scene-fill augmentation, the Heart Zones source-preserved loop,
+cross-surface choreography, Christmas motifs, unified Lights/Video/Both/Black
+scene participation, and the Relate DAM/provenance sprint. The simplified Fuse
+Bomb keyframe pass is retained locally under `output/vfx-concepts/`; production
+frame separation and timed rendering have not started. `SHOW-005` remains in
+Validation; the new VFX cards remain Ready; `MEDIA-004` remains Backlog and is
+not a Stage dependency. Resume details are in `RESUME.md`,
+[`integrated-vfx-sprint.md`](integrated-vfx-sprint.md),
+[`media-control-architecture.md`](media-control-architecture.md), and
+[`relate-media-dam-sprint.md`](relate-media-dam-sprint.md).
+
 ## In progress
 
 ### PROJ-001 — Projector playback foundation (`P1`, visual output)

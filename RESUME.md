@@ -4,6 +4,13 @@ Last updated: 2026-11-17
 
 ## Next resume point -- Integrated Lighting and Video VFX sprint
 
+Pause checkpoint (2026-11-17): planning and concept work is committed through
+`73b1bee`. Resume by reviewing the simplified Fuse Bomb keyframe sheet at
+`output/vfx-concepts/fuse-bomb-keyframes-v2-simple.png`, then separate the
+approved design into consistent production frames and define the 12–18 second
+marker/timing sheet before rendering video. The concept images are local,
+generated review assets and are intentionally ignored by Git.
+
 Begin `VFX-001/SHOW-006` with a calibrated Cube A -> portrait projector -> Cube
 B stage path and the reusable 12–18 second Fuse Bomb storylet. Prove the
 light-to-screen fuse ignition, screen fuse-burn/sparks, named explosion marker,
@@ -54,6 +61,8 @@ Add `VFX-003` as the source-preservation reference: a 15–30 second seamless
 Heart Zones loop that preserves the supplied heart, texture, rainbow bands,
 wordmark, subtitle, palette, and proportions while adding pulse/breathing,
 internal glow, electrical paths, and marker-synchronized Lighting recipes.
+The supplied artwork remains at its user-provided media location and has not
+been copied into Git or altered.
 
 The current sparse hybrid package is deployed as a new immutable Video revision
 on the Pi. Initial bench operation is working well and the operator likes the
