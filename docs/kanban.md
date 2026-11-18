@@ -219,6 +219,30 @@ Dependencies: `VFX-001` asset identity/marker contract and `MEDIA-002/003`
 preparation/render concepts. The initial proof can use existing Infinity VFX
 sources without committing licensed media.
 
+### VFX-003 — Heart Zones pulse and electrical loop (`P1`, media/show authoring)
+
+Create a reusable 15–30 second seamless loop from the supplied **Phreqed Heart
+Zones** artwork. Preserve the exact heart silhouette, hand-drawn texture,
+rainbow bands, lettering, palette, and logo identity. Animate only controlled
+breathing/pulse scale, internal glow, electrical paths, and compatible VFX
+overlays, synchronized to semantic markers and companion Lighting recipes.
+
+User outcome: the album/brand artwork becomes a recognizable stage character
+that can pulse with the song, send electrical energy into the Betopper cubes,
+receive light-to-screen echoes, or serve as a lower-motion visual bed without
+losing the original art identity.
+
+Acceptance: create portrait and future-landscape framing notes; publish a
+seamless audio-free loop with named `pulse-a`, `pulse-b`, `charge`, `discharge`,
+and `recover` markers; provide restrained/medium/high Lighting recipes under the
+existing RGB/white controls; preserve exact approved text and artwork details;
+record source hash/rights and derived lineage; pass black fallback, loop seam,
+Start/Stop/Blackout, Video-disabled, and 25 FPS Pi coexistence checks.
+
+Dependencies: `VFX-001/002`, `SHOW-006/008`, and the `MEDIA-004` reference-chain
+schema. The supplied source remains authoritative and is not committed to Git
+unless the media policy explicitly allows it.
+
 ### SHOW-006 — Cross-surface Lighting/Video choreography (`P1`, show authoring)
 
 Create a reusable stage language for short **Echo**, **Throw**, **Catch**,
@@ -942,6 +966,60 @@ and missing sources fail explicitly without publishing a partial package.
 Dependencies: `MEDIA-001`, `MEDIA-002`, and the version-2 EDL contract proven
 by `SHOW-005`. Required by `STUDIO-004`; planned Sprint 5 before the production
 Video Scene editor.
+
+### MEDIA-004 — Relate media DAM and rebuildable provenance graph (`P1`, media/data)
+
+Define the authoritative content-addressed media chain from source blob through
+asset/storylet revision, semantic marker, rendition, EDL, song placement,
+track/show revision, and Stage package. Prototype Relate as a rebuildable graph
+projection for provenance, impact analysis, search, approval memory, and agent
+evidence; never store media bytes or make the graph authoritative.
+
+User outcome: Studio can answer where a clip came from, every show/package that
+uses it, which rights and reviews apply, how a storylet marker aligns to
+Lighting, and what must be rebuilt after an edit—without making Stage depend on
+the graph.
+
+Acceptance: authoritative catalog/event records rebuild an empty graph; source
+and package hashes reconcile; one controlled writer and read-only agent access
+are enforced; backup/restore/schema migration and removal pass; graph memory is
+bounded; and the full Studio/Stage path remains usable with Relate absent. Media
+bytes stay in content-addressed files/object storage. See
+[`media-control-architecture.md`](media-control-architecture.md).
+
+Full sprint workup: [`relate-media-dam-sprint.md`](relate-media-dam-sprint.md)
+covers release verification, benchmark datasets, authoritative catalog events,
+schema/indexing, allowlisted queries, read-only agents, tenant isolation,
+durability, migration, rebuild/removal, Studio integration, and the optional
+bounded Pi snapshot. Travelling, Fuse Bomb, and Heart Zones are the reference
+provenance chains.
+
+Dependencies: `MEDIA-001/002/003`, `VFX-001/002`, `STUDIO-001`, and the
+`AI-DATA-001` feasibility measurements. This does not block the Stage storylet
+proof.
+
+### SHOW-008 — Unified per-scene Lighting/Video participation (`P1`, show control)
+
+Keep one song/scene transport while allowing each published scene to activate
+**Lights**, **Video**, **Both**, or **Black**. Compile that friendly choice into
+explicit fixed actions (`select`, `hold`, or `black`) for each lane so no output
+is accidentally inherited.
+
+Perform adds pre-show **Lights + Video**, **Lights only**, and **Video only**
+selectors plus immediate lane mute and explicit rejoin/next-boundary behavior.
+Start, Stop, Previous, Next, Blackout, song selection, and Ampero remain
+show-level rather than gaining a separate Video timeline.
+
+Acceptance: all four participation modes share one monotonic song clock; schema
+validation rejects contradictory/implicit lane states; Video failure leaves
+Lighting on time; lane controls cannot enable live output, arm whites, bypass
+blackout, raise ceilings, or autostart; global Blackout always blacks both and
+release starts neither. See
+[`media-control-architecture.md`](media-control-architecture.md).
+
+Dependencies: `SHOW-002`, `PROJ-001/004`, and the published scene/track model.
+`STUDIO-004` authors the policy; Stage consumes deterministic manifests without
+Relate or cloud access.
 
 ### STUDIO-004 — Video Scene manager and parallel song track (`P1`, media authoring)
 

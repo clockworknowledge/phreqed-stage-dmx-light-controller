@@ -33,6 +33,28 @@ replace storylets or become continuous wallpaper. Detailed stories, contracts,
 slices, and acceptance are in `docs/integrated-vfx-sprint.md` and
 `docs/kanban.md`.
 
+Plan `SHOW-008` as the Stage control model: one song/scene transport with each
+scene explicitly authored as Lights, Video, Both, or Black. Perform may select
+the available lanes before Start and mute/rejoin a lane during a song, but
+Start/Stop/Previous/Next/Blackout and Ampero remain show-level. The compiled
+manifest stores explicit `select`/`hold`/`black` actions per lane so no output is
+accidentally inherited.
+
+Plan `MEDIA-004` as the media-management boundary. Content-addressed files and
+authoritative revision/manifest records own media and EDL truth. Relate may
+index provenance, storylet markers, renditions, placements, reviews, rights,
+packages, and agent evidence, but it stores no bytes and is never queried in
+the Pi cue loop. This is now a full backlog sprint covering adoption benchmarks,
+catalog events, graph schema/indexing, queries, tenant/read-only boundaries,
+durability, migration, rebuild/removal, and optional Pi snapshots. Detailed
+design is in `docs/media-control-architecture.md` and
+`docs/relate-media-dam-sprint.md`.
+
+Add `VFX-003` as the source-preservation reference: a 15–30 second seamless
+Heart Zones loop that preserves the supplied heart, texture, rainbow bands,
+wordmark, subtitle, palette, and proportions while adding pulse/breathing,
+internal glow, electrical paths, and marker-synchronized Lighting recipes.
+
 The current sparse hybrid package is deployed as a new immutable Video revision
 on the Pi. Initial bench operation is working well and the operator likes the
 interplay with Lighting. Keep the previous baseline revision available for

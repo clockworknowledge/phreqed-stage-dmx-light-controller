@@ -5,7 +5,8 @@ Last updated: 2026-11-17
 ## Decision
 
 Relate is a plausible **optional offline sidecar** for song-analysis evidence,
-agent memory, and cue proposals. It is not adopted as a show dependency. The
+agent memory, cue proposals, and media-chain/provenance relationships. It is
+not adopted as a show dependency or media-byte store. The
 existing atomic `library.json` and `songs.json` stores remain authoritative,
 and only reviewed, explicitly published cue sheets may cross into live-show
 data.
@@ -23,6 +24,12 @@ cluster failover. Those properties fit one analysis tool on one Pi or
 workstation, but not the availability and fail-dark requirements of fixture
 control. The current documentation is verified against Relate 1.0.1, so schema
 and store migrations must be treated as part of every upgrade.
+
+Relate is an experimental Neo4j Labs project and uses Cypher, but it is not an
+embedded edition of the Neo4j server. The repository is Apache-2.0 licensed.
+The authoritative media catalog and content-addressed blob store must remain
+usable and rebuild the graph without Relate. The expanded media/control model is
+in [`media-control-architecture.md`](media-control-architecture.md).
 
 Sources:
 
@@ -70,6 +77,13 @@ RAM-resident, single-writer design.
 | `TrackRevision` | Lighting or Video track revision and publish/review status |
 | `StagePackage` | Immutable package ID, manifest hash, target capabilities, publication status |
 | `AdjustmentChangeSet` | Local Stage changes returned for explicit Studio review and reconciliation |
+| `SourceBlob` | Content hash, size, media type, rights/owner identity; never stores bytes |
+| `StoryletRevision` | Immutable short-form media revision and semantic markers |
+| `Marker` | Named relative event such as reveal, ignite, impact, decay, or black |
+| `Rendition` | Derived proxy/Stage output and projection/encoding identity |
+| `EDLRevision` | Immutable composition decision graph backed by authoritative JSON |
+| `Placement` | Song-relative use of an asset/storylet revision and marker mapping |
+| `LightingRecipe` | Existing-scene/pattern references aligned to media markers |
 
 Relationships include `ANALYZES`, `HAS_SECTION`, `MEASURED`, `PROPOSES`,
 `SUPPORTED_BY`, `REVIEWS`, `USES_ASSET`, `COMPILES_TO`, `PUBLISHED_AS`,

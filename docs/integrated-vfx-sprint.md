@@ -1,7 +1,7 @@
 # Integrated Lighting and Video VFX sprint
 
 Date: 2026-11-17  
-Cards: `VFX-001`, `VFX-002`, `SHOW-006`, `SHOW-007`
+Cards: `VFX-001`, `VFX-002`, `VFX-003`, `SHOW-006`, `SHOW-007`
 Reference song: **Travelling on a Floating Rock**
 
 ## Goal
@@ -121,6 +121,22 @@ arming, flash-rate, and blackout controls.
 
 These concepts should support low, medium, and high-energy recipes without
 changing their media or semantic markers.
+
+### Heart Zones pulse loop
+
+Use the supplied Phreqed Heart Zones art as a source-preserved 15–30 second
+loop. Keep the heart silhouette, hand-drawn surface, rainbow bands, wordmark,
+subtitle, palette, and proportions recognizable. Animate a two-beat organic
+pulse, subtle red internal glow, and purple/yellow/cyan electrical paths that
+travel from the heart into the screen edges and hand off to the Betopper cubes.
+Add an optional screen-to-light discharge and a quiet recovery phase that loops
+without a visible jump.
+
+The artwork is not restyled or regenerated for the first proof. Motion and VFX
+are non-destructive overlays/transforms, with named `pulse-a`, `pulse-b`,
+`charge`, `discharge`, and `recover` markers. This becomes the source-
+preservation reference chain for `MEDIA-004` and the first brand-owned looping
+storylet for Studio.
 
 ## Choreography vocabulary
 

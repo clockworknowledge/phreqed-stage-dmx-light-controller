@@ -572,6 +572,26 @@ reviewed palette/energy role from a Lighting scene but retain explicit start,
 end, intensity, purpose, rights/source identity, and black fallback. They never
 become unbounded wallpaper or a live dependency between Video and Lighting.
 
+Control refinement (2026-11-17): `SHOW-008` keeps one song transport but gives
+each authored scene an explicit **Lights**, **Video**, **Both**, or **Black**
+participation mode. Studio compiles the friendly mode to fixed per-lane
+`select`/`hold`/`black` actions and rejects contradictory or accidental inherited
+state. Stage exposes pre-show lane availability, immediate mute, and explicit
+rejoin while Start/Stop/Previous/Next/Blackout and Ampero remain show-level.
+
+Media/DAM refinement: `MEDIA-004` treats Relate as a rebuildable relationship
+and provenance index over authoritative content-addressed assets, revisions,
+markers, renditions, EDLs, placements, reviews, rights, and packages. Media
+bytes and authoritative manifests remain outside the graph. Stage never queries
+Relate to resolve or advance a cue. See
+[`media-control-architecture.md`](media-control-architecture.md).
+
+The full `MEDIA-004` backlog sprint is specified in
+[`relate-media-dam-sprint.md`](relate-media-dam-sprint.md). It uses Travelling,
+Fuse Bomb, and the source-preserved Heart Zones pulse/electrical loop as three
+different lineage cases: imported multi-source composition, generated reusable
+storylet, and owned brand artwork with non-destructive animation.
+
 ### AI-DATA-002 — Studio knowledge graph and agent-memory integration
 
 - As a designer, I can ask how a cue proposal relates to song sections,
